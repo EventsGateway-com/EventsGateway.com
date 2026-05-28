@@ -10,6 +10,16 @@ const categorySections = compareContent.categories.map((category) => ({
   ...category,
   cards: compareContent.cards.filter((item) => item.category === category.title)
 }));
+
+const categorySlug = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
+
+const categoryBadge: Record<string, string> = {
+  Analytics: "Best for analytics teams",
+  CDP: "Best for pipeline-heavy teams",
+  "Tag Manager": "Best for tag-manager-first teams",
+  "Ad Pixel": "Best for direct ad tracking teams",
+  "Privacy Analytics": "Best for privacy-first teams"
+};
 ---
 
 <BaseLayout
@@ -27,8 +37,24 @@ const categorySections = compareContent.categories.map((category) => ({
           <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
           <Button href="/docs/" variant="secondary" icon="arrow-right">Read Documentation</Button>
         </div>
+        <div class="compare-toolbar">
+          <label class="compare-search">
+            <span class="compare-search__label">Search comparisons</span>
+            <input id="compare-search" type="search" placeholder="Search by tool, stack, or use case" />
+          </label>
+          <div class="pill-row compare-filter-row">
+            <button class="status-pill status-pill--button is-active" type="button" data-filter="all">All</button>
+            {
+              compareContent.categories.map((item) => (
+                <button class="status-pill status-pill--button" type="button" data-filter={item.title}>
+                  {item.title}
+                </button>
+              ))
+            }
+          </div>
+        </div>
         <div class="pill-row compare-pills">
-          {compareContent.categories.map((item) => <a class="status-pill status-pill--link" href={`#${item.title.toLowerCase().replace(/\s+/g, "-")}`}>{item.title}</a>)}
+          {compareContent.categories.map((item) => <a class="status-pill status-pill--link" href={`#${categorySlug(item.title)}`}>{item.title}</a>)}
         </div>
       </div>
     </Container>
@@ -45,7 +71,7 @@ const categorySections = compareContent.categories.map((category) => ({
         {
           compareContent.categories.map((item) => (
             <PremiumCard title={item.title} text={item.description} eyebrow="Category" icon="layers">
-              <Button href={`#${item.title.toLowerCase().replace(/\s+/g, "-")}`} variant="secondary" icon="arrow-right">Open category</Button>
+              <Button href={`#${categorySlug(item.title)}`} variant="secondary" icon="arrow-right">Open category</Button>
             </PremiumCard>
           ))
         }
@@ -55,19 +81,30 @@ const categorySections = compareContent.categories.map((category) => ({
 
   {
     categorySections.map((section) => (
-      <section class="section section--tight" id={section.title.toLowerCase().replace(/\s+/g, "-")}>
+      <section class="section section--tight compare-section" id={categorySlug(section.title)} data-category-section={section.title}>
         <Container>
           <SectionHeader eyebrow="Category" title={section.title} description={section.description} />
           <div class="card-grid">
             {
               section.cards.map((item) => (
-                <PremiumCard title={item.title} text={item.text} eyebrow={item.eyebrow} icon="layers">
-                  <div class="button-row compare-card-actions">
-                    <Button href={`/compare/${item.slug}/`} variant="primary" icon="arrow-right">Read comparison</Button>
-                    <Button href="/install/" variant="secondary" icon="download">Install</Button>
-                    <Button href="/docs/" variant="secondary" icon="arrow-right">Docs</Button>
-                  </div>
-                </PremiumCard>
+                <div
+                  class="compare-entry"
+                  data-category={item.category}
+                  data-title={item.title.toLowerCase()}
+                  data-text={item.text.toLowerCase()}
+                  data-badge={categoryBadge[item.category].toLowerCase()}
+                >
+                  <PremiumCard title={item.title} text={item.text} eyebrow={item.eyebrow} icon="layers">
+                    <div class="compare-card-meta">
+                      <span class="status-pill">{categoryBadge[item.category]}</span>
+                    </div>
+                    <div class="button-row compare-card-actions">
+                      <Button href={`/compare/${item.slug}/`} variant="primary" icon="arrow-right">Read comparison</Button>
+                      <Button href="/install/" variant="secondary" icon="download">Install</Button>
+                      <Button href="/docs/" variant="secondary" icon="arrow-right">Docs</Button>
+                    </div>
+                  </PremiumCard>
+                </div>
               ))
             }
           </div>
@@ -95,7 +132,47 @@ const categorySections = compareContent.categories.map((category) => ({
 </BaseLayout>
 
 <style>
+  .compare-toolbar {
+    display: grid;
+    gap: 1rem;
+    width: 100%;
+    max-width: 64rem;
+    margin: 0 auto;
+  }
+
+  .compare-search {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .compare-search__label {
+    color: var(--color-subtle);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .compare-search input {
+    width: 100%;
+    min-height: 3.4rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(8, 12, 22, 0.9);
+    color: var(--color-text);
+    outline: none;
+  }
+
+  .compare-search input:focus {
+    border-color: rgba(125, 211, 252, 0.45);
+    box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.12);
+  }
+
   .compare-pills {
+    justify-content: center;
+  }
+
+  .compare-filter-row {
     justify-content: center;
   }
 
@@ -103,7 +180,72 @@ const categorySections = compareContent.categories.map((category) => ({
     text-decoration: none;
   }
 
+  .status-pill--button {
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .status-pill--button.is-active {
+    border-color: rgba(125, 211, 252, 0.45);
+    color: var(--color-text);
+    background: rgba(125, 211, 252, 0.12);
+  }
+
+  .compare-entry[hidden],
+  .compare-section[hidden] {
+    display: none;
+  }
+
+  .compare-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
   .compare-card-actions {
     flex-wrap: wrap;
   }
 </style>
+
+<script is:inline>
+  const searchInput = document.querySelector("#compare-search");
+  const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
+  const compareEntries = Array.from(document.querySelectorAll(".compare-entry"));
+  const compareSections = Array.from(document.querySelectorAll(".compare-section"));
+
+  let activeFilter = "all";
+
+  const syncCompareView = () => {
+    const query = (searchInput?.value ?? "").trim().toLowerCase();
+
+    compareEntries.forEach((entry) => {
+      const category = entry.getAttribute("data-category") ?? "";
+      const haystack = [
+        entry.getAttribute("data-title") ?? "",
+        entry.getAttribute("data-text") ?? "",
+        entry.getAttribute("data-badge") ?? "",
+        category.toLowerCase()
+      ].join(" ");
+
+      const matchesFilter = activeFilter === "all" || category === activeFilter;
+      const matchesQuery = query.length === 0 || haystack.includes(query);
+      entry.hidden = !(matchesFilter && matchesQuery);
+    });
+
+    compareSections.forEach((section) => {
+      const visibleCards = section.querySelectorAll(".compare-entry:not([hidden])").length;
+      section.hidden = visibleCards === 0;
+    });
+  };
+
+  filterButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeFilter = button.getAttribute("data-filter") ?? "all";
+      filterButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+      syncCompareView();
+    });
+  });
+
+  searchInput?.addEventListener("input", syncCompareView);
+  syncCompareView();
+</script>
