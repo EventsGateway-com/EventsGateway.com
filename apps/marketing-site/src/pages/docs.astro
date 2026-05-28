@@ -101,6 +101,28 @@ const docsJsonLd = {
     </Container>
   </section>
 
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Playbooks"
+        title="Implementation guides for real funnels."
+        description="Move beyond a raw event catalog and see how the canonical e_g model should be applied in common business models."
+      />
+      <div class="card-grid">
+        {
+          docsContent.playbooks.map((item) => (
+            <PremiumCard icon="layers" title={item.title} text={item.text}>
+              <Button href={`/docs/playbooks/${item.slug}/`} variant="secondary" icon="arrow-right">Open playbook</Button>
+            </PremiumCard>
+          ))
+        }
+      </div>
+      <div class="button-row docs-actions">
+        <Button href="/docs/playbooks/" variant="primary" icon="arrow-right">Browse all playbooks</Button>
+      </div>
+    </Container>
+  </section>
+
   <section class="section">
     <Container>
       <SectionHeader
@@ -225,5 +247,10 @@ const docsJsonLd = {
   .section-copy code {
     font-family: var(--font-mono);
     color: var(--color-text);
+  }
+
+  .docs-actions {
+    margin-top: 1.25rem;
+    justify-content: center;
   }
 </style>

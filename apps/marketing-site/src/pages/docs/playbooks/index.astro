@@ -1,0 +1,46 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Button from "../../../components/Button.astro";
+import Container from "../../../components/Container.astro";
+import PremiumCard from "../../../components/PremiumCard.astro";
+import SectionHeader from "../../../components/SectionHeader.astro";
+import { docsContent } from "../../../content/docs";
+---
+
+<BaseLayout
+  title="EventsGateway Playbooks"
+  description="Implementation playbooks for ecommerce, lead generation, SaaS, courses, and donation funnels using e_g."
+  canonicalPath="/docs/playbooks/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">Implementation Playbooks</span>
+        <h1 class="page-title">Use-case playbooks for e_g.</h1>
+        <p class="page-copy">
+          These guides show how to apply the canonical EventsGateway event model in real funnels instead of treating all
+          websites the same.
+        </p>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Vertical Guides"
+        title="Choose the event model that fits your revenue flow."
+        description="Each playbook starts from the canonical e_g model and explains the most important events and payload choices."
+      />
+      <div class="card-grid">
+        {
+          docsContent.playbooks.map((item) => (
+            <PremiumCard title={item.title} text={item.text} icon="layers">
+              <Button href={`/docs/playbooks/${item.slug}/`} variant="secondary" icon="arrow-right">Open playbook</Button>
+            </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

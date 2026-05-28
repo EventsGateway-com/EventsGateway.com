@@ -1,0 +1,112 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Button from "../../../components/Button.astro";
+import Container from "../../../components/Container.astro";
+import PremiumCard from "../../../components/PremiumCard.astro";
+import SectionHeader from "../../../components/SectionHeader.astro";
+import { docsPlaybooks, type DocsPlaybookSlug } from "../../../content/docs-playbooks";
+
+export function getStaticPaths() {
+  return Object.keys(docsPlaybooks).map((slug) => ({
+    params: { slug },
+    props: { playbook: docsPlaybooks[slug as DocsPlaybookSlug] }
+  }));
+}
+
+const { playbook } = Astro.props as {
+  playbook: (typeof docsPlaybooks)[DocsPlaybookSlug];
+};
+---
+
+<BaseLayout
+  title={playbook.title}
+  description={playbook.description}
+  canonicalPath={`/docs/playbooks/${Astro.params.slug}/`}
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">Playbook</span>
+        <h1 class="page-title">{playbook.title}</h1>
+        <p class="page-copy">{playbook.description}</p>
+        <div class="button-row">
+          <Button href="/docs/playbooks/" variant="secondary" icon="arrow-right">Back to playbooks</Button>
+          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="two-column">
+        <div>
+          <SectionHeader
+            eyebrow="Strategy"
+            title="How this playbook should be modeled."
+            description={playbook.summary}
+          />
+        </div>
+        <div>
+          <SectionHeader
+            eyebrow="Core Events"
+            title="Recommended canonical events."
+            description="These are the main e_g events this funnel should emit consistently."
+          />
+          <div class="pill-row">
+            {playbook.events.map((item) => <span class="status-pill">{item}</span>)}
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <SectionHeader
+        eyebrow="Implementation"
+        title="Example e_g calls."
+        description="Use this as a starting point, then enrich payloads with your own business identifiers."
+      />
+      <div class="surface-panel">
+        <div class="surface-panel__inner">
+          <pre class="command-block"><code>{playbook.code}</code></pre>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Recommendations"
+        title="What to keep consistent."
+        description="These habits reduce platform mismatch and make downstream routing simpler."
+      />
+      <div class="card-grid">
+        {
+          playbook.recommendations.map((item) => (
+            <PremiumCard icon="check" title="Recommendation" text={item} />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .command-block {
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(5, 10, 24, 0.9);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+</style>

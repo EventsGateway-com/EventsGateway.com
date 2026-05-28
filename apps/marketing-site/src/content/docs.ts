@@ -45,6 +45,33 @@ export const docsContent = {
     "For Google Ads, EventsGateway maps canonical events to conversion actions and remarketing-friendly payloads because Google Ads does not use one single standard event list across all use cases.",
     "For Meta and TikTok, prefer standard events whenever possible because ad platforms optimize and report better on recognized event names."
   ],
+  playbooks: [
+    {
+      slug: "ecommerce",
+      title: "Ecommerce",
+      text: "Track product views, cart intent, checkout steps, and purchase with catalog-friendly payloads."
+    },
+    {
+      slug: "lead-generation",
+      title: "Lead Generation",
+      text: "Separate lead submits, contact intent, booked calls, and qualified application milestones."
+    },
+    {
+      slug: "saas",
+      title: "SaaS",
+      text: "Track signup, trial start, pricing intent, demo requests, and paid subscription milestones."
+    },
+    {
+      slug: "courses",
+      title: "Courses",
+      text: "Model webinar signups, course views, checkout, enrollment, and downloadable assets cleanly."
+    },
+    {
+      slug: "donations",
+      title: "Donations",
+      text: "Track one-time donations, recurring giving, campaign IDs, and nonprofit lead flows."
+    }
+  ],
   eventFields: [
     {
       name: "value",
