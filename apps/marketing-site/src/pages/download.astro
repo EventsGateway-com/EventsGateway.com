@@ -1,0 +1,94 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { downloadContent } from "../content/download";
+import { siteConfig } from "../config/site";
+---
+
+<BaseLayout
+  title={`Download ${siteConfig.name}`}
+  description="Installation overview for EventsGateway, including tracker setup, Cloudflare Workers deployment, and domain install guidance."
+  canonicalPath="/download/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{downloadContent.status}</span>
+        <h1 class="page-title">{downloadContent.title}</h1>
+        <p class="page-copy">{downloadContent.intro}</p>
+        <div class="button-row">
+          <Button href="/install-guide/" variant="primary" icon="arrow-right">Open domain install guide</Button>
+          <Button href="/contact/" variant="secondary" icon="mail">Contact</Button>
+          <Button href="/" variant="ghost" icon="arrow-right">View platform overview</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="kicker">{downloadContent.version}</span>
+          <div class="platform-grid">
+            {
+              downloadContent.platforms.map((platform) => (
+                <PremiumCard icon="download" title={platform.name} text={platform.detail} eyebrow={platform.status}>
+                  <Button href="/install-guide/" variant="secondary" icon="arrow-right">Read install guide</Button>
+                </PremiumCard>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="two-column">
+        <div>
+          <SectionHeader
+            eyebrow="Install Path"
+            title="Installation starts from GitHub and ends on your own domain."
+            description="Use this page as the high-level overview, then follow the dedicated guide for the full GitHub to domain setup flow."
+          />
+          <ul class="simple-list">
+            {downloadContent.releaseNotes.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+        <div>
+          <SectionHeader
+            eyebrow="Deployment Requirements"
+            title="What you need to put the project on a live domain."
+            description="EventsGateway is designed for a lightweight install path, but it still needs a clear runtime and domain setup."
+          />
+          <ul class="simple-list">
+            {downloadContent.requirements.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="eyebrow">Deployment help</span>
+          <h2 class="section-title">Need help installing EventsGateway on your domain?</h2>
+          <p class="section-copy">
+            Reach out if you want help with Cloudflare Workers deployment, collector subdomain mapping, or tracker installation on the live site.
+          </p>
+          <div class="button-row">
+            <Button href="/install-guide/" variant="secondary" icon="arrow-right">Read install guide</Button>
+            <Button href="/contact/" variant="primary" icon="mail">Contact</Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

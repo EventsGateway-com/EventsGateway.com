@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eventsgateway-api-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-28",
+  "vars": {
+    "CORS_ORIGIN": "http://localhost:4326"
+  },
+  "workers_dev": false,
+  "env": {
+    "production": {
+      "vars": {
+        "CORS_ORIGIN": "https://dash.eventsgateway.com"
+      },
+      "routes": [
+        {
+          "pattern": "api.eventsgateway.com",
+          "custom_domain": true
+        }
+      ]
+    }
+  }
+}

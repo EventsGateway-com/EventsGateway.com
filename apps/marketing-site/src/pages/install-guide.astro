@@ -1,0 +1,185 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { installGuideContent } from "../content/install-guide";
+import { siteConfig } from "../config/site";
+
+const repositoryUrl = siteConfig.social.github;
+const repositoryConfigured = Boolean(repositoryUrl);
+
+const installJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "Install EventsGateway on your domain",
+  description:
+    "A step by step guide to deploy EventsGateway from the GitHub repository to Cloudflare Workers and connect it to a live domain.",
+  step: installGuideContent.steps.map((item) => ({
+    "@type": "HowToStep",
+    name: item.title,
+    text: item.text
+  }))
+};
+---
+
+<BaseLayout
+  title={`Install ${siteConfig.name} On Your Domain`}
+  description="Step by step guide for installing EventsGateway from the GitHub repository to Cloudflare Workers on a real domain."
+  canonicalPath="/install-guide/"
+  jsonLd={installJsonLd}
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{installGuideContent.eyebrow}</span>
+        <h1 class="page-title">{installGuideContent.title}</h1>
+        <p class="page-copy">{installGuideContent.intro}</p>
+        <div class="button-row">
+          {
+            repositoryConfigured ? (
+              <Button href={repositoryUrl} variant="primary" icon="arrow-right">Open GitHub Repository</Button>
+            ) : (
+              <Button variant="primary" icon="arrow-right" disabled>Set GitHub Repository URL</Button>
+            )
+          }
+          <Button href="/download/" variant="secondary" icon="download">Back To Install Overview</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Preflight"
+        title="What you need before you start."
+        description="The installation path is intentionally direct: start from GitHub, deploy the Workers runtime, and attach the tracker to the site you already own."
+      />
+      <div class="card-grid">
+        {
+          installGuideContent.preflight.map((item) => (
+            <PremiumCard icon="check" title={item.title} text={item.text} />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="two-column">
+        <div class="stack">
+          <SectionHeader
+            eyebrow="Installation Flow"
+            title="From GitHub page to live domain."
+            description="These steps describe the simplest operational path for a team that wants to deploy EventsGateway on its own Cloudflare account."
+          />
+          <ul class="info-list">
+            <li>The public website can stay on its own domain while the event collector runs on a dedicated subdomain.</li>
+            <li>The tracker can be added to marketing sites, stores, landing pages, and custom applications.</li>
+            <li>The same Cloudflare Workers runtime can receive events from multiple pages or products.</li>
+          </ul>
+        </div>
+        <div class="timeline">
+          {
+            installGuideContent.steps.map((item) => (
+              <PremiumCard class="timeline-card" title={item.title} text={item.text} step={item.step} />
+            ))
+          }
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Domain Example"
+        title="A simple production layout."
+        description="Use separate hostnames so the event entry point is explicit and easy to manage."
+      />
+      <div class="card-grid">
+        <PremiumCard
+          icon="cloud"
+          title={installGuideContent.domainExample.appDomain}
+          text="Your public site. This can stay on any frontend stack as long as you can add the tracker snippet."
+          eyebrow="Public site"
+        />
+        <PremiumCard
+          icon="terminal"
+          title={installGuideContent.domainExample.collectorDomain}
+          text="Your Cloudflare Workers collector endpoint. The tracker sends events here first."
+          eyebrow="Collector"
+        />
+        <PremiumCard
+          icon="layers"
+          title={installGuideContent.domainExample.apiDomain}
+          text="Optional management API hostname for dashboard calls and operational tooling."
+          eyebrow="API"
+        />
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="two-column">
+        <div class="surface-panel cta-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">GitHub Start</span>
+            <h2 class="section-title">Start from the repository, not from a blank setup.</h2>
+            <p class="section-copy">
+              Clone the project from GitHub, deploy the Workers runtime on Cloudflare, then connect your domain and
+              add the tracker snippet to the target site.
+            </p>
+            {
+              repositoryConfigured ? (
+                <a class="repository-link" href={repositoryUrl}>{repositoryUrl}</a>
+              ) : (
+                <p class="repository-note">
+                  Add the public repository URL in <code>src/config/site.ts</code> to expose the direct GitHub link here.
+                </p>
+              )
+            }
+          </div>
+        </div>
+        <div class="surface-panel cta-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Readiness Checklist</span>
+            <ul class="simple-list">
+              {installGuideContent.checklist.map((item) => <li>{item}</li>)}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .repository-link,
+  .repository-note {
+    display: inline-flex;
+    align-items: center;
+    min-height: 3rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-muted);
+    line-height: 1.6;
+    word-break: break-all;
+  }
+
+  .repository-link:hover {
+    border-color: rgba(125, 211, 252, 0.35);
+    color: var(--color-text);
+  }
+
+  .repository-note code {
+    font-family: var(--font-mono);
+    color: var(--color-text);
+  }
+</style>

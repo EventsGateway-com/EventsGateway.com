@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eventsgateway-collector-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-28",
+  "vars": {
+    "CORS_ORIGIN": "*"
+  },
+  "workers_dev": false,
+  "env": {
+    "production": {
+      "vars": {
+        "CORS_ORIGIN": "*"
+      },
+      "routes": [
+        {
+          "pattern": "e.eventsgateway.com",
+          "custom_domain": true
+        }
+      ]
+    }
+  }
+}

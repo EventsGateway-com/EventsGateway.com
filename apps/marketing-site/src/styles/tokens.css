@@ -1,0 +1,36 @@
+:root {
+  --color-bg: #05070d;
+  --color-bg-elevated: #0a0d16;
+  --color-bg-panel: rgba(9, 14, 25, 0.88);
+  --color-surface: rgba(255, 255, 255, 0.055);
+  --color-surface-strong: rgba(255, 255, 255, 0.09);
+  --color-surface-soft: rgba(255, 255, 255, 0.035);
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-border-strong: rgba(255, 255, 255, 0.2);
+  --color-text: #f7f8fb;
+  --color-muted: #a7adbd;
+  --color-subtle: #737b91;
+  --color-accent: #7dd3fc;
+  --color-accent-2: #a78bfa;
+  --color-accent-3: #22d3ee;
+  --color-success: #34d399;
+  --color-warning: #f8d78d;
+  --color-danger: #fb7185;
+  --font-display: "Segoe UI Variable Display", "SF Pro Display", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Segoe UI Variable Text", "SF Pro Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --radius-xs: 10px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --radius-xl: 36px;
+  --container: 1180px;
+  --header-height: 76px;
+  --section-space: clamp(5rem, 7vw, 8.75rem);
+  --shadow-premium: 0 30px 100px rgba(0, 0, 0, 0.45);
+  --shadow-glow: 0 0 80px rgba(125, 211, 252, 0.16);
+  --shadow-card: 0 24px 70px rgba(0, 0, 0, 0.35);
+  --noise-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 100%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 100%);
+}

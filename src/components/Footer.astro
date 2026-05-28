@@ -1,0 +1,71 @@
+---
+import BrandMark from "./BrandMark.astro";
+import Container from "./Container.astro";
+import { primaryNav } from "../config/nav";
+import { siteConfig } from "../config/site";
+---
+
+<footer class="site-footer section section--tight">
+  <Container>
+    <div class="site-footer__grid">
+      <div class="stack">
+        <BrandMark />
+        <p class="small-note">{siteConfig.footerStatus}</p>
+      </div>
+      <nav class="site-footer__links" aria-label="Footer">
+        {
+          primaryNav.map((item) => (
+            <a href={item.href}>{item.label}</a>
+          ))
+        }
+        <a href={siteConfig.social.github} target="_blank" rel="noreferrer">GitHub</a>
+      </nav>
+      <div class="site-footer__contact">
+        <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>
+        <p class="small-note">&copy; {new Date().getFullYear()} {siteConfig.name}. Open source public site.</p>
+      </div>
+    </div>
+  </Container>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 2rem;
+  }
+
+  .site-footer__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .site-footer__links {
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .site-footer__links a,
+  .site-footer__contact a {
+    color: var(--color-muted);
+    transition: color 180ms ease;
+  }
+
+  .site-footer__links a:hover,
+  .site-footer__contact a:hover {
+    color: var(--color-text);
+  }
+
+  .site-footer__contact {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .site-footer__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

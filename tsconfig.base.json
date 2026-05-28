@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@eventsgateway/shared": ["packages/shared/src/index.ts"],
+      "@eventsgateway/shared/*": ["packages/shared/src/*"],
+      "@eventsgateway/schemas": ["packages/schemas/src/index.ts"],
+      "@eventsgateway/schemas/*": ["packages/schemas/src/*"],
+      "@eventsgateway/routing-engine": ["packages/routing-engine/src/index.ts"],
+      "@eventsgateway/routing-engine/*": ["packages/routing-engine/src/*"],
+      "@eventsgateway/runtime": ["packages/runtime/src/index.ts"],
+      "@eventsgateway/runtime/*": ["packages/runtime/src/*"],
+      "@eventsgateway/platform-data": ["packages/platform-data/src/index.ts"],
+      "@eventsgateway/platform-data/*": ["packages/platform-data/src/*"],
+      "@eventsgateway/tracker-sdk": ["packages/tracker-sdk/src/index.ts"],
+      "@eventsgateway/tracker-sdk/*": ["packages/tracker-sdk/src/*"]
+    }
+  }
+}

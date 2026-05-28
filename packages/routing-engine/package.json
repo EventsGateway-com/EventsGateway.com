@@ -1,0 +1,20 @@
+{
+  "name": "@eventsgateway/routing-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc --project tsconfig.json --noEmit",
+    "build": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@eventsgateway/schemas": "workspace:*",
+    "@eventsgateway/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

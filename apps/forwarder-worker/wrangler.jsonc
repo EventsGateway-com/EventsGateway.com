@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eventsgateway-forwarder-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-28",
+  "vars": {
+    "CORS_ORIGIN": "*"
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "CORS_ORIGIN": "https://dash.eventsgateway.com"
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+---
+const { as: Tag = "div", class: className = "" } = Astro.props;
+---
+
+<Tag class:list={["container", className]}>
+  <slot />
+</Tag>
+
+<style>
+  .container {
+    width: min(var(--container), calc(100% - 2.5rem));
+    margin: 0 auto;
+  }
+
+  @media (max-width: 720px) {
+    .container {
+      width: min(var(--container), calc(100% - 2rem));
+    }
+  }
+</style>

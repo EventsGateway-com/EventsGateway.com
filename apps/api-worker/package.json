@@ -1,0 +1,16 @@
+{
+  "name": "@eventsgateway/api-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "check": "tsc --project tsconfig.json --noEmit",
+    "build": "tsc --project tsconfig.json --noEmit",
+    "deploy": "wrangler deploy --env production"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "wrangler": "^4.20.3"
+  }
+}

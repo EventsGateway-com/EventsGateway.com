@@ -1,0 +1,94 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { downloadContent } from "../content/download";
+import { siteConfig } from "../config/site";
+---
+
+<BaseLayout
+  title={`Download ${siteConfig.name}`}
+  description="Download guidance, release notes, and self-hosting direction for the EventsGateway public site."
+  canonicalPath="/download/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{downloadContent.status}</span>
+        <h1 class="page-title">{downloadContent.title}</h1>
+        <p class="page-copy">{downloadContent.intro}</p>
+        <div class="button-row">
+          <Button href={siteConfig.social.github} variant="primary" icon="arrow-right">View GitHub</Button>
+          <Button href="/" variant="ghost" icon="arrow-right">View platform overview</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="kicker">{downloadContent.version}</span>
+          <div class="platform-grid">
+            {
+              downloadContent.platforms.map((platform) => (
+                <PremiumCard icon="download" title={platform.name} text={platform.detail} eyebrow={platform.status}>
+                  <Button href={siteConfig.social.github} variant="secondary" icon="arrow-right">
+                    Open source assets
+                  </Button>
+                </PremiumCard>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="two-column">
+        <div>
+          <SectionHeader
+            eyebrow="Release Notes"
+            title="Public release notes focus on architecture and deployment clarity."
+            description="This page is positioned around source access, self-hosting readiness, and the product surface described by the site."
+          />
+          <ul class="simple-list">
+            {downloadContent.releaseNotes.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+        <div>
+          <SectionHeader
+            eyebrow="System Requirements"
+            title="Baseline requirements for running and shipping the public site."
+            description="The gateway platform grows beyond this static surface, but the public site remains simple to build and deploy."
+          />
+          <ul class="simple-list">
+            {downloadContent.requirements.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="eyebrow">Next step</span>
+          <h2 class="section-title">Need help with routing architecture or self-hosting decisions?</h2>
+          <p class="section-copy">
+            Reach out if you want to discuss destination strategy, collector design, attribution requirements, or deployment posture.
+          </p>
+          <div class="button-row">
+            <Button href="/contact/" variant="primary" icon="mail">Contact</Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

@@ -1,0 +1,411 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import CommandCenterMockup from "../components/CommandCenterMockup.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import SurfaceGlow from "../components/SurfaceGlow.astro";
+import { homeContent } from "../content/homepage";
+import { siteConfig } from "../config/site";
+
+const heroTelemetry = [
+  { label: "Execution graph", value: "Live", detail: "Task rails synchronized across planning, build, and review" },
+  { label: "Trace visibility", value: "Full", detail: "Readable steps, approvals, and diff checkpoints" },
+  { label: "Edge target", value: "Static", detail: "Low-runtime deployment profile for fast delivery" }
+];
+
+const heroSignals = [
+  "Telemetry-aligned delivery",
+  "Diff-aware execution",
+  "Instruction-visible control loop"
+];
+
+const softwareJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: siteConfig.name,
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "macOS, Windows, Linux"
+};
+---
+
+<BaseLayout
+  title={`${siteConfig.name} — Premium AI Development System`}
+  description={siteConfig.description}
+  canonicalPath="/"
+  jsonLd={softwareJsonLd}
+>
+  <section class="section section--hero">
+    <Container>
+      <div class="hero-grid">
+        <div class="stack">
+          <span class="eyebrow">{homeContent.eyebrow}</span>
+          <div class="hero-signal-bar">
+            {
+              heroSignals.map((item) => (
+                <span class="hero-signal">{item}</span>
+              ))
+            }
+          </div>
+          <h1 class="hero-title">{homeContent.title}</h1>
+          <p class="hero-copy">{homeContent.description}</p>
+          <div class="hero-actions">
+            <Button href={siteConfig.cta.primary.href} variant="primary" icon="download">
+              {siteConfig.cta.primary.label}
+            </Button>
+            <Button href={siteConfig.cta.secondary.href} variant="secondary" icon="mail">
+              {siteConfig.cta.secondary.label}
+            </Button>
+          </div>
+          <div class="pill-row">
+            {
+              homeContent.trustMarks.map((mark) => (
+                <span class="status-pill">{mark}</span>
+              ))
+            }
+          </div>
+          <div class="stats-grid">
+            {
+              heroTelemetry.map((stat) => (
+                <div class="surface-panel">
+                  <div class="surface-panel__inner stat-card">
+                    <span class="kicker">{stat.label}</span>
+                    <strong>{stat.value}</strong>
+                    <p>{stat.detail}</p>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <SurfaceGlow class="hero-visual__glow hero-visual__glow--primary" />
+          <SurfaceGlow class="hero-visual__glow hero-visual__glow--secondary" />
+          <div class="hero-orbit hero-orbit--outer"></div>
+          <div class="hero-orbit hero-orbit--inner"></div>
+          <div class="hero-visual__badge hero-visual__badge--top">Structured execution</div>
+          <div class="hero-visual__badge hero-visual__badge--bottom">Reasoning visibility</div>
+          <div class="hero-side-panel hero-side-panel--left">
+            <span class="hero-side-panel__label">Node mesh</span>
+            <strong>14 active rails</strong>
+            <small>Planning, code, review, deployment</small>
+          </div>
+          <div class="hero-side-panel hero-side-panel--right">
+            <span class="hero-side-panel__label">Inference profile</span>
+            <strong>Low-noise</strong>
+            <small>Scoped output with explicit verification</small>
+          </div>
+          <CommandCenterMockup instanceId="hero" />
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Positioning"
+        title="Built for teams that need more than fast output."
+        description="The interface is shaped for product and engineering teams that value predictable delivery, visible reasoning, and premium operational clarity."
+      />
+      <div class="card-grid">
+        {
+          homeContent.problems.map((item) => (
+            <PremiumCard icon={item.icon} title={item.title} text={item.text} />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <SectionHeader
+        eyebrow="Capability Grid"
+        title="A serious workflow layer for modern software delivery."
+        description="Every capability is framed around control, documentation quality, and production-minded execution."
+      />
+      <div class="capability-grid">
+        {
+          homeContent.capabilities.map((item) => (
+            <PremiumCard icon={item.icon} title={item.title} text={item.text} />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="two-column">
+        <div class="stack">
+          <SectionHeader
+            eyebrow="Workflow"
+            title="A disciplined path from build target to deploy."
+            description="Instead of prompting into the void, the workflow emphasizes planning, scoped execution, and verification before release."
+          />
+          <ul class="info-list">
+            <li>Built for founders, CTOs, platform teams, and senior developers.</li>
+            <li>Designed to keep implementation readable across product and technical stakeholders.</li>
+            <li>Optimized for low-runtime, high-clarity delivery on the edge.</li>
+          </ul>
+        </div>
+        <div class="timeline">
+          {
+            homeContent.workflow.map((item) => (
+              <PremiumCard class="timeline-card" title={item.title} text={item.text} step={item.step} />
+            ))
+          }
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <SectionHeader
+        eyebrow="Visual Proof"
+        title="A command center aesthetic that suggests a real product."
+        description="The mockup surfaces terminal actions, reasoning phases, code diffs, deployment posture, and audit readiness without pretending to be interactive."
+      />
+      <CommandCenterMockup instanceId="proof" />
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Security, Control, Cloud"
+        title="Edge delivery without losing operational discipline."
+        description="The public site stays static, fast, and deployment-friendly while the product story speaks directly to enterprise expectations."
+      />
+      <div class="triple-grid">
+        {
+          homeContent.controlColumns.map((item) => (
+            <PremiumCard icon={item.icon} title={item.title} text={item.text} />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="eyebrow">Final CTA</span>
+          <h2 class="section-title">{homeContent.finalCtaTitle}</h2>
+          <p class="section-copy">{homeContent.finalCtaText}</p>
+          <div class="button-row">
+            <Button href="/download/" variant="primary" icon="download">Download</Button>
+            <Button href="/contact/" variant="secondary" icon="mail">Contact</Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .stat-card {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1.25rem;
+    min-height: 100%;
+  }
+
+  .stat-card strong {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .stat-card p {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.55;
+  }
+
+  .hero-signal-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .hero-signal {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.15rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(125, 211, 252, 0.16);
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.08), rgba(255, 255, 255, 0.02)),
+      rgba(6, 10, 20, 0.72);
+    color: var(--color-muted);
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .hero-visual {
+    position: relative;
+    padding-block: 2.25rem;
+  }
+
+  .hero-visual__glow--primary {
+    top: -12%;
+    right: -5%;
+  }
+
+  .hero-visual__glow--secondary {
+    bottom: -18%;
+    left: -8%;
+    background:
+      radial-gradient(circle, rgba(167, 139, 250, 0.2), rgba(167, 139, 250, 0.04) 42%, transparent 72%);
+  }
+
+  .hero-orbit {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    border: 1px solid rgba(125, 211, 252, 0.12);
+    border-radius: 999px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .hero-orbit::before,
+  .hero-orbit::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    background: var(--color-accent);
+    box-shadow: 0 0 18px rgba(125, 211, 252, 0.7);
+  }
+
+  .hero-orbit--outer {
+    width: min(42rem, 92%);
+    aspect-ratio: 1;
+    opacity: 0.28;
+  }
+
+  .hero-orbit--outer::before {
+    top: 12%;
+    left: 72%;
+    width: 0.55rem;
+    height: 0.55rem;
+  }
+
+  .hero-orbit--outer::after {
+    bottom: 16%;
+    left: 14%;
+    width: 0.4rem;
+    height: 0.4rem;
+  }
+
+  .hero-orbit--inner {
+    width: min(28rem, 62%);
+    aspect-ratio: 1;
+    opacity: 0.2;
+  }
+
+  .hero-orbit--inner::before {
+    top: 15%;
+    left: 26%;
+    width: 0.42rem;
+    height: 0.42rem;
+  }
+
+  .hero-orbit--inner::after {
+    bottom: 20%;
+    right: 22%;
+    width: 0.35rem;
+    height: 0.35rem;
+  }
+
+  .hero-visual__badge {
+    position: absolute;
+    z-index: 2;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: rgba(7, 11, 20, 0.82);
+    box-shadow: var(--shadow-card);
+    color: var(--color-muted);
+    font-size: 0.86rem;
+  }
+
+  .hero-visual__badge--top {
+    top: 5%;
+    right: -2%;
+  }
+
+  .hero-visual__badge--bottom {
+    bottom: 5%;
+    left: -4%;
+  }
+
+  .hero-side-panel {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    gap: 0.35rem;
+    width: min(12.5rem, 38vw);
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(125, 211, 252, 0.14);
+    border-radius: 1rem;
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.08), rgba(255, 255, 255, 0.02)),
+      rgba(8, 12, 23, 0.9);
+    box-shadow: var(--shadow-card);
+  }
+
+  .hero-side-panel__label {
+    color: var(--color-subtle);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .hero-side-panel strong {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    letter-spacing: -0.03em;
+  }
+
+  .hero-side-panel small {
+    color: var(--color-muted);
+    line-height: 1.5;
+  }
+
+  .hero-side-panel--left {
+    top: 22%;
+    left: -8%;
+  }
+
+  .hero-side-panel--right {
+    right: -8%;
+    bottom: 18%;
+  }
+
+  @media (max-width: 960px) {
+    .hero-visual__badge {
+      position: static;
+      display: inline-flex;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-side-panel {
+      position: static;
+      width: 100%;
+      margin-bottom: 0.75rem;
+    }
+
+    .hero-orbit {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,124 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { contactContent } from "../content/contact";
+import { siteConfig } from "../config/site";
+---
+
+<BaseLayout
+  title={`Contact ${siteConfig.name}`}
+  description="Contact paths for EventsGateway architecture, destination routing, self-hosting, and partnerships."
+  canonicalPath="/contact/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="two-column">
+        <div class="stack">
+          <span class="eyebrow">Contact</span>
+          <h1 class="page-title">{contactContent.title}</h1>
+          <p class="page-copy">{contactContent.intro}</p>
+          <p class="small-note">{contactContent.responseTime}</p>
+        </div>
+        <div class="surface-panel cta-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">How to engage</span>
+            <ul class="simple-list">
+              {contactContent.inquiryTypes.map((item) => <li>{item}</li>)}
+            </ul>
+            <p class="small-note">{contactContent.confidentialityNote}</p>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Contact methods"
+        title="Choose the path that matches the routing or deployment conversation."
+        description="This public site keeps contact explicit and simple while still supporting serious technical discussions."
+      />
+      <div class="contact-grid">
+        {
+          contactContent.methods.map((item) => (
+            <PremiumCard icon={item.icon} title={item.title} text={item.text}>
+              <Button href={item.href} variant="secondary" icon="arrow-right">
+                {item.actionLabel}
+              </Button>
+            </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="two-column">
+        <div>
+          <SectionHeader
+            eyebrow="Response expectations"
+            title="Built for direct technical outreach."
+            description="Use email when you need help around source access, routing design, destination mapping, or self-hosting."
+          />
+          <div class="surface-panel cta-panel">
+            <div class="surface-panel__inner stack">
+              <span class="kicker">Direct email</span>
+              <a class="contact-email" href={`mailto:${siteConfig.email}`}>
+                {siteConfig.email}
+              </a>
+              <p class="section-copy">
+                Share your current stack, required destinations, consent model, and the deployment path you want to validate.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <SectionHeader
+            eyebrow="FAQ"
+            title="Common questions before the first conversation."
+            description="Short answers keep the page useful without pretending there is a backend workflow behind it."
+          />
+          <div class="stack">
+            {
+              contactContent.faq.map((item) => (
+                <PremiumCard title={item.question} text={item.answer} />
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="eyebrow">Direct channel</span>
+          <h2 class="section-title">For architecture, self-hosting, and integration questions, email is the live channel.</h2>
+          <p class="section-copy">
+            The site stays static on purpose, so every contact path remains simple, verifiable, and easy to maintain.
+          </p>
+          <div class="button-row">
+            <Button href={`mailto:${siteConfig.email}?subject=EventsGateway%20inquiry`} variant="primary" icon="mail">
+              Contact by email
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact-email {
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 3vw, 2.15rem);
+    letter-spacing: -0.03em;
+  }
+</style>

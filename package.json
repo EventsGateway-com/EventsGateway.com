@@ -1,0 +1,34 @@
+{
+  "name": "ai-dev-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Premium Astro marketing site for AI development workflows.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "check": "astro check",
+    "build": "astro check && astro build",
+    "postbuild": "node scripts/minify-html.mjs",
+    "preview": "astro preview",
+    "deploy": "npm run build && wrangler deploy --env production",
+    "deploy:dashboard": "npm --prefix apps/dashboard run deploy",
+    "deploy:api": "npm --prefix apps/api-worker run deploy",
+    "deploy:collector": "npm --prefix apps/collector-worker run deploy",
+    "deploy:forwarder": "npm --prefix apps/forwarder-worker run deploy",
+    "deploy:all": "npm run deploy && npm run deploy:dashboard && npm run deploy:api && npm run deploy:collector && npm run deploy:forwarder",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.6.0",
+    "astro": "^6.3.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "html-minifier-terser": "^7.2.0",
+    "typescript": "^5.9.2",
+    "wrangler": "^4.20.3"
+  }
+}
