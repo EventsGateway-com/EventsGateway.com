@@ -11,6 +11,7 @@ export const siteConfig = {
     { label: "Home", href: "/" },
     { label: "Install", href: "/install/" },
     { label: "Docs", href: "/docs/" },
+    { label: "Playbooks", href: "/docs/playbooks/" },
     { label: "Compare", href: "/compare/" },
     { label: "Contact", href: "/contact/" }
   ],

@@ -6,6 +6,7 @@ import { primaryNav } from "../config/nav";
 import { siteConfig } from "../config/site";
 
 const pathname = Astro.url.pathname;
+const isActivePath = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 ---
 
 <header class="site-header">
@@ -13,11 +14,11 @@ const pathname = Astro.url.pathname;
     <div class="site-header__inner">
       <BrandMark />
       <div class="desktop-nav-shell">
-        <span class="desktop-nav-shell__label">Navigation</span>
+        <span class="desktop-nav-shell__label">Explore</span>
         <nav class="desktop-nav" aria-label="Primary">
           {
             primaryNav.map((item) => (
-              <a class:list={["nav-link", pathname === item.href && "is-active"]} href={item.href}>
+              <a class:list={["nav-link", isActivePath(item.href) && "is-active"]} href={item.href}>
                 <span class="nav-link__dot"></span>
                 {item.label}
               </a>
@@ -26,7 +27,7 @@ const pathname = Astro.url.pathname;
         </nav>
       </div>
       <div class="desktop-cta">
-        <span class="header-status">Free-tier friendly</span>
+        <span class="header-status">Cloudflare-native</span>
         <Button href={siteConfig.cta.primary.href} variant="secondary" icon="download">
           {siteConfig.cta.primary.label}
         </Button>
@@ -41,7 +42,7 @@ const pathname = Astro.url.pathname;
         <nav aria-label="Mobile">
           {
             primaryNav.map((item) => (
-              <a class:list={["mobile-link", pathname === item.href && "is-active"]} href={item.href}>
+              <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
                 <span class="nav-link__dot"></span>
                 {item.label}
               </a>
