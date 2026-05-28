@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "eventsgateway-marketing-site",
+  "name": "eventsgateway",
   "main": "./worker/index.js",
   "compatibility_date": "2026-05-28",
   "assets": {
