@@ -7,6 +7,7 @@ import {
 } from "../../../packages/runtime/src/control-plane";
 import {
   createRequestContext,
+  type DeliveryQueueMessage,
   ensureMethod,
   errorResponse,
   json,
@@ -23,6 +24,21 @@ type CollectBody = Partial<EventGatewayEvent> &
   Pick<EventGatewayEvent, "type" | "source" | "environment"> & {
     api_key?: string;
   };
+
+async function enqueueCollectedDelivery(
+  env: EnvironmentBindings | undefined,
+  message: DeliveryQueueMessage
+) {
+  if (!env?.EVENTS_QUEUE) {
+    return;
+  }
+
+  try {
+    await env.EVENTS_QUEUE.send(message);
+  } catch {
+    // D1 remains the durable source of truth and manual flush stays available as fallback.
+  }
+}
 
 async function handleCollect(request: Request, env?: EnvironmentBindings) {
   const context = createRequestContext(request);
@@ -54,7 +70,7 @@ async function handleCollect(request: Request, env?: EnvironmentBindings) {
       return errorResponse(context, "unauthorized_site", "The site_id, api_key or origin is not allowed.", 401);
     }
 
-    await storeCollectedEvent(env.DB, {
+    const stored = await storeCollectedEvent(env.DB, {
       siteId: body.site_id,
       originDomain: authorization.origin_domain,
       event: {
@@ -69,6 +85,12 @@ async function handleCollect(request: Request, env?: EnvironmentBindings) {
         consent: body.consent,
         payload: body
       }
+    });
+
+    await enqueueCollectedDelivery(env, {
+      site_id: stored.site_id,
+      delivery_attempt_id: stored.delivery_attempt_id,
+      event_id: stored.event_id
     });
   }
 
@@ -98,7 +120,7 @@ async function handleBatch(request: Request, env?: EnvironmentBindings) {
 
       if (!authorization) continue;
 
-      await storeCollectedEvent(env.DB, {
+      const stored = await storeCollectedEvent(env.DB, {
         siteId: event.site_id,
         originDomain: authorization.origin_domain,
         event: {
@@ -113,6 +135,12 @@ async function handleBatch(request: Request, env?: EnvironmentBindings) {
           consent: event.consent,
           payload: event
         }
+      });
+
+      await enqueueCollectedDelivery(env, {
+        site_id: stored.site_id,
+        delivery_attempt_id: stored.delivery_attempt_id,
+        event_id: stored.event_id
       });
     }
   }
@@ -150,7 +178,7 @@ async function handleIdentify(request: Request, env?: EnvironmentBindings) {
       return errorResponse(context, "unauthorized_site", "The site_id, api_key or origin is not allowed.", 401);
     }
 
-    await storeCollectedEvent(env.DB, {
+    const stored = await storeCollectedEvent(env.DB, {
       siteId: body.site_id,
       originDomain: authorization.origin_domain,
       event: {
@@ -163,6 +191,12 @@ async function handleIdentify(request: Request, env?: EnvironmentBindings) {
         consent: body.consent,
         payload: body
       }
+    });
+
+    await enqueueCollectedDelivery(env, {
+      site_id: stored.site_id,
+      delivery_attempt_id: stored.delivery_attempt_id,
+      event_id: stored.event_id
     });
   }
 

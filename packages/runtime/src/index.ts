@@ -44,10 +44,33 @@ export type DatabaseBinding = {
   batch: (statements: DatabaseStatement[]) => Promise<unknown[]>;
 };
 
+export type QueueSendBinding<T = unknown> = {
+  send: (message: T) => Promise<void>;
+};
+
+export type QueueMessage<T = unknown> = {
+  id: string;
+  body: T;
+  attempts: number;
+  ack: () => void;
+  retry: () => void;
+};
+
+export type QueueBatch<T = unknown> = {
+  messages: Array<QueueMessage<T>>;
+};
+
+export type DeliveryQueueMessage = {
+  site_id: string;
+  delivery_attempt_id: string;
+  event_id: string;
+};
+
 export type EnvironmentBindings = {
   API_TOKEN?: string;
   CORS_ORIGIN?: string;
   DB?: DatabaseBinding;
+  EVENTS_QUEUE?: QueueSendBinding<DeliveryQueueMessage>;
 };
 
 export function createRequestContext(request: Request): WorkerRequestContext {

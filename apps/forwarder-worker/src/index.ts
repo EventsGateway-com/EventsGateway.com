@@ -1,4 +1,5 @@
 import {
+  processQueuedDeliveryAttempt,
   ensureControlPlane,
   flushPendingDeliveries,
   getOperationsQueues,
@@ -6,6 +7,8 @@ import {
 } from "../../../packages/runtime/src/control-plane";
 import {
   createRequestContext,
+  type DeliveryQueueMessage,
+  type QueueBatch,
   ensureMethod,
   errorResponse,
   json,
@@ -68,5 +71,24 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
 export default {
   async fetch(request: Request, env?: EnvironmentBindings) {
     return routeRequest(request, env);
+  },
+  async queue(batch: QueueBatch<DeliveryQueueMessage>, env?: EnvironmentBindings) {
+    if (!env?.DB) {
+      return;
+    }
+
+    await ensureControlPlane(env.DB);
+
+    for (const message of batch.messages) {
+      try {
+        await processQueuedDeliveryAttempt(env.DB, {
+          deliveryAttemptId: message.body.delivery_attempt_id,
+          siteId: message.body.site_id
+        });
+        message.ack();
+      } catch {
+        message.retry();
+      }
+    }
   }
 };

@@ -16,6 +16,17 @@
       "remote": true
     }
   ],
+  "queues": {
+    "consumers": [
+      {
+        "queue": "eventsgateway-ingest-production",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 3,
+        "retry_delay": 10
+      }
+    ]
+  },
   "env": {
     "production": {
       "d1_databases": [
@@ -26,6 +37,17 @@
           "remote": true
         }
       ],
+      "queues": {
+        "consumers": [
+          {
+            "queue": "eventsgateway-ingest-production",
+            "max_batch_size": 10,
+            "max_batch_timeout": 5,
+            "max_retries": 3,
+            "retry_delay": 10
+          }
+        ]
+      },
       "vars": {
         "CORS_ORIGIN": "https://dash.eventsgateway.com"
       }

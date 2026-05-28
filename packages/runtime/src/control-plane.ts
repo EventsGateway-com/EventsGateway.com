@@ -104,6 +104,15 @@ export type DeliveryAttemptRecord = {
   sent_at?: number;
 };
 
+export type StoredCollectedEvent = {
+  accepted: true;
+  collected_event_id: string;
+  delivery_attempt_id: string;
+  site_id: string;
+  event_id: string;
+  received_at: string;
+};
+
 export type OperationJobRecord = {
   id: string;
   site_id: string;
@@ -620,46 +629,10 @@ export async function flushPendingDeliveries(
 
   const processed: DeliveryAttemptRecord[] = [];
   for (const record of records) {
-    const attempts = asNumber(record.attempts) + 1;
-    const eventType = asString(record.event_type).toLowerCase();
-    const updatedAt = nowIso();
-    const hardFailure = eventType.includes("failed") || eventType.includes("error");
-
-    let status: DeliveryAttemptRecord["status"] = "retrying";
-    let latencyMs: number | null = null;
-    let sentAt: string | null = null;
-    let lastError: string | null = "Transient upstream timeout";
-
-    if (hardFailure) {
-      status = "failed";
-      lastError = "Destination rejected the delivery payload.";
-    } else if (attempts >= 2 || eventType === "identify") {
-      status = "healthy";
-      latencyMs = 120 + Math.min(380, attempts * 35);
-      sentAt = updatedAt;
-      lastError = null;
+    const processedRecord = await processDeliveryAttemptRecord(db, record);
+    if (processedRecord) {
+      processed.push(processedRecord);
     }
-
-    await db.prepare(
-      `
-        UPDATE delivery_attempts
-        SET status = ?, latency_ms = ?, attempts = ?, last_error = ?, sent_at = ?, updated_at = ?
-        WHERE id = ?
-      `
-    )
-      .bind(status, latencyMs, attempts, lastError, sentAt, updatedAt, asString(record.id))
-      .run();
-
-    processed.push(
-      toDeliveryAttemptRecord({
-        ...record,
-        status,
-        latency_ms: latencyMs,
-        attempts,
-        last_error: lastError,
-        sent_at: sentAt
-      })
-    );
   }
 
   await createOperationJob(db, {
@@ -671,6 +644,78 @@ export async function flushPendingDeliveries(
   });
 
   return processed;
+}
+
+async function processDeliveryAttemptRecord(db: DatabaseBinding, record: DatabaseRecord): Promise<DeliveryAttemptRecord | null> {
+  const currentStatus = asString(record.status) as DeliveryAttemptRecord["status"];
+  if (currentStatus !== "pending" && currentStatus !== "retrying") {
+    return toDeliveryAttemptRecord(record);
+  }
+
+  const attempts = asNumber(record.attempts) + 1;
+  const eventType = asString(record.event_type).toLowerCase();
+  const updatedAt = nowIso();
+  const hardFailure = eventType.includes("failed") || eventType.includes("error");
+
+  let status: DeliveryAttemptRecord["status"] = "healthy";
+  let latencyMs: number | null = null;
+  let sentAt: string | null = updatedAt;
+  let lastError: string | null = null;
+
+  if (hardFailure) {
+    status = "failed";
+    latencyMs = null;
+    sentAt = null;
+    lastError = "Destination rejected the delivery payload.";
+  } else {
+    latencyMs = 120 + Math.min(380, attempts * 35);
+  }
+
+  await db.prepare(
+    `
+      UPDATE delivery_attempts
+      SET status = ?, latency_ms = ?, attempts = ?, last_error = ?, sent_at = ?, updated_at = ?
+      WHERE id = ?
+    `
+  )
+    .bind(status, latencyMs, attempts, lastError, sentAt, updatedAt, asString(record.id))
+    .run();
+
+  return toDeliveryAttemptRecord({
+    ...record,
+    status,
+    latency_ms: latencyMs,
+    attempts,
+    last_error: lastError,
+    sent_at: sentAt
+  });
+}
+
+export async function processQueuedDeliveryAttempt(
+  dbInput: DatabaseBinding | undefined,
+  input: { deliveryAttemptId: string; siteId?: string }
+): Promise<DeliveryAttemptRecord | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const record = await firstRecord(
+    db,
+    `
+      SELECT da.id, da.site_id, da.event_id, da.route_id, da.destination_id, da.status, da.latency_ms, da.attempts, da.last_error, da.queued_at, da.sent_at, ce.event_type
+      FROM delivery_attempts da
+      INNER JOIN collected_events ce ON ce.id = da.collected_event_id
+      WHERE da.id = ? AND (? IS NULL OR da.site_id = ?)
+      LIMIT 1
+    `,
+    input.deliveryAttemptId,
+    input.siteId ?? null,
+    input.siteId ?? null
+  );
+
+  if (!record) {
+    return null;
+  }
+
+  return processDeliveryAttemptRecord(db, record);
 }
 
 export async function replayDlqOperations(dbInput: DatabaseBinding | undefined, siteId: string) {
@@ -1692,6 +1737,7 @@ export async function storeCollectedEvent(
   const receivedAt = nowIso();
   const eventId = input.event.event_id?.trim() || crypto.randomUUID();
   const collectedEventId = crypto.randomUUID();
+  const deliveryAttemptId = crypto.randomUUID();
 
   await db.prepare(
     `
@@ -1761,7 +1807,7 @@ export async function storeCollectedEvent(
     `
   )
     .bind(
-      crypto.randomUUID(),
+      deliveryAttemptId,
       input.siteId,
       collectedEventId,
       eventId,
@@ -1836,7 +1882,10 @@ export async function storeCollectedEvent(
 
   return {
     accepted: true,
+    collected_event_id: collectedEventId,
+    delivery_attempt_id: deliveryAttemptId,
+    site_id: input.siteId,
     event_id: eventId,
     received_at: receivedAt
-  };
+  } satisfies StoredCollectedEvent;
 }

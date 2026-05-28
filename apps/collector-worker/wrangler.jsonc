@@ -16,6 +16,14 @@
       "remote": true
     }
   ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "EVENTS_QUEUE",
+        "queue": "eventsgateway-ingest-production"
+      }
+    ]
+  },
   "env": {
     "production": {
       "d1_databases": [
@@ -26,6 +34,14 @@
           "remote": true
         }
       ],
+      "queues": {
+        "producers": [
+          {
+            "binding": "EVENTS_QUEUE",
+            "queue": "eventsgateway-ingest-production"
+          }
+        ]
+      },
       "vars": {
         "CORS_ORIGIN": "*"
       },
