@@ -1,38 +1,28 @@
 import {
-  backfillAttribution,
   createDestination,
   createRoute,
   deleteDestination,
   deleteRoute,
   duplicateRoute,
-  exportRaw,
   getCompiledRouting,
   getConsent,
   getDestination,
-  getDlq,
   getEvent,
-  getHealth,
   getInstallConfig,
-  getJob,
   getJourneys,
   getOverview,
-  getQueues,
   getRealtime,
   getRoute,
   getTransformation,
   listDeliveries,
   listDestinations,
   listEvents,
-  listJobs,
   listRouteVersions,
   listRoutes,
   listSchemas,
   listTransformations,
   listUsers,
-  processPendingDeliveries,
   publishRoutes,
-  replayDlq,
-  replayEvent,
   rollbackRoutes,
   rotateDestinationSecret,
   simulateRoute,
@@ -44,6 +34,7 @@ import {
 import {
   addSiteDomain,
   adminSetUserPassword,
+  backfillAttributionJob,
   createAdminSite,
   createAdminSiteKey,
   createUserSession,
@@ -51,15 +42,24 @@ import {
   deleteAdminUser,
   deleteSiteDomain,
   ensureControlPlane,
+  exportRawJob,
   getAdminOverview,
   getBootstrap,
   getInstallConfigFromDb,
+  getOperationJob,
+  getOperationsHealth,
+  getOperationsQueues,
   getSessionByToken,
   listAdminSites,
   listAdminUsers,
+  listOperationJobs,
+  listOperationsDlq,
   listSiteDomains,
   listSiteKeys,
   loginUserSession,
+  flushPendingDeliveries,
+  replayCollectedEvent,
+  replayDlqOperations,
   revokeSession,
   revokeAdminSiteKey,
   updateAdminUser
@@ -507,46 +507,86 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
   }
 
   if (segments[3] === "operations" && segments[4] === "health" && method === "GET") {
-    return json(context, getHealth(siteId));
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, await getOperationsHealth(env.DB, siteId));
   }
 
   if (segments[3] === "operations" && segments[4] === "queues" && method === "GET") {
-    return json(context, getQueues(siteId));
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, await getOperationsQueues(env.DB, siteId));
   }
 
   if (segments[3] === "operations" && segments[4] === "dlq" && segments.length === 5 && method === "GET") {
-    return json(context, getDlq(siteId));
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, await listOperationsDlq(env.DB, siteId));
   }
 
   if (segments[3] === "operations" && segments[4] === "dlq" && segments[5] === "replay" && method === "POST") {
-    return json(context, replayDlq(siteId), { status: 202 });
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, await replayDlqOperations(env.DB, siteId), { status: 202 });
   }
 
   if (segments[3] === "operations" && segments[4] === "replay" && method === "POST") {
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
     const body = await readJson<{ event_id: string }>(request);
-    const result = replayEvent(siteId, body.event_id);
+    const result = await replayCollectedEvent(env.DB, siteId, body.event_id);
     return result ? json(context, result, { status: 202 }) : notFound(context, `Event ${body.event_id} not found`);
   }
 
   if (segments[3] === "operations" && segments[4] === "backfill-attribution" && method === "POST") {
-    return json(context, backfillAttribution(siteId), { status: 202 });
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, await backfillAttributionJob(env.DB, siteId), { status: 202 });
   }
 
   if (segments[3] === "operations" && segments[4] === "export" && method === "POST") {
-    return json(context, exportRaw(siteId), { status: 202 });
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, await exportRawJob(env.DB, siteId), { status: 202 });
   }
 
   if (segments[3] === "operations" && segments[4] === "jobs" && segments[5] && method === "GET") {
-    const job = getJob(siteId, segments[5]);
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    const job = await getOperationJob(env.DB, siteId, segments[5]);
     return job ? json(context, job) : notFound(context, `Job ${segments[5]} not found`);
   }
 
   if (segments[3] === "operations" && segments[4] === "jobs" && method === "GET") {
-    return json(context, listJobs(siteId));
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, await listOperationJobs(env.DB, siteId));
   }
 
   if (segments[3] === "operations" && segments[4] === "flush-forwarder" && method === "POST") {
-    return json(context, { processed: processPendingDeliveries(siteId) }, { status: 202 });
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, { processed: (await flushPendingDeliveries(env.DB, siteId)).length }, { status: 202 });
   }
 
   const methodResponse = ensureMethod(context, []);

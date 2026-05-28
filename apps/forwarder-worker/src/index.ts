@@ -1,7 +1,13 @@
-import { getDlq, getQueues, processPendingDeliveries } from "../../../packages/platform-data/src/index";
+import {
+  ensureControlPlane,
+  flushPendingDeliveries,
+  getOperationsQueues,
+  listOperationsDlq
+} from "../../../packages/runtime/src/control-plane";
 import {
   createRequestContext,
   ensureMethod,
+  errorResponse,
   json,
   notFound,
   ok,
@@ -14,7 +20,7 @@ function extractSiteId(url: URL) {
   return url.searchParams.get("siteId") ?? "site_alpha";
 }
 
-async function routeRequest(request: Request) {
+async function routeRequest(request: Request, env?: EnvironmentBindings) {
   const context = createRequestContext(request);
   const optionsResponse = withOptions(context);
   if (optionsResponse) return optionsResponse;
@@ -23,29 +29,36 @@ async function routeRequest(request: Request) {
   const path = `/${segments.join("/")}`;
   const siteId = extractSiteId(context.url);
 
+  if (!env?.DB) {
+    return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+  }
+
+  await ensureControlPlane(env.DB);
+
   if (path === "/health") {
     const methodResponse = ensureMethod(context, ["GET"]);
     if (methodResponse) return methodResponse;
     return json(context, {
       service: "forwarder-worker",
       status: "healthy",
-      queue: getQueues(siteId)
+      queue: await getOperationsQueues(env.DB, siteId)
     });
   }
 
   if (path === "/v1/flush") {
     const methodResponse = ensureMethod(context, ["POST"]);
     if (methodResponse) return methodResponse;
+    const processed = await flushPendingDeliveries(env.DB, siteId);
     return json(context, {
-      processed: processPendingDeliveries(siteId),
-      queue: getQueues(siteId)
+      processed,
+      queue: await getOperationsQueues(env.DB, siteId)
     });
   }
 
   if (path === "/v1/dlq") {
     const methodResponse = ensureMethod(context, ["GET"]);
     if (methodResponse) return methodResponse;
-    return json(context, getDlq(siteId));
+    return json(context, await listOperationsDlq(env.DB, siteId));
   }
 
   if (request.method === "OPTIONS") return ok();
@@ -53,7 +66,7 @@ async function routeRequest(request: Request) {
 }
 
 export default {
-  async fetch(request: Request, _env?: EnvironmentBindings) {
-    return routeRequest(request);
+  async fetch(request: Request, env?: EnvironmentBindings) {
+    return routeRequest(request, env);
   }
 };

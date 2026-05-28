@@ -1105,6 +1105,8 @@ function ReplayPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: qk.deliveries(currentContext.siteId) });
       void queryClient.invalidateQueries({ queryKey: qk.queues(currentContext.siteId) });
+      void queryClient.invalidateQueries({ queryKey: qk.dlq(currentContext.siteId) });
+      void queryClient.invalidateQueries({ queryKey: qk.jobs(currentContext.siteId) });
     }
   });
   const exportMutation = useMutation({
@@ -1419,6 +1421,7 @@ function HealthPage() {
 }
 
 function QueuesPage() {
+  const queryClient = useQueryClient();
   const queuesQuery = useQuery({
     queryKey: qk.queues(currentContext.siteId),
     queryFn: dashboardApi.fetchQueues,
@@ -1428,13 +1431,26 @@ function QueuesPage() {
     queryKey: qk.jobs(currentContext.siteId),
     queryFn: dashboardApi.fetchJobs
   });
+  const flushMutation = useMutation({
+    mutationFn: dashboardApi.flushForwarder,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.queues(currentContext.siteId) });
+      void queryClient.invalidateQueries({ queryKey: qk.jobs(currentContext.siteId) });
+      void queryClient.invalidateQueries({ queryKey: qk.dlq(currentContext.siteId) });
+      void queryClient.invalidateQueries({ queryKey: qk.deliveries(currentContext.siteId) });
+    }
+  });
 
   return (
     <div className="eg-page">
       <PageIntro
         title="Queues and Jobs"
         description="Inspect forwarder backlog, DLQ pressure and operation jobs from replay and export flows."
-        action={<button className="eg-button">Flush forwarder</button>}
+        action={
+          <button className="eg-button" disabled={flushMutation.isPending} onClick={() => flushMutation.mutate()} type="button">
+            {flushMutation.isPending ? "Flushing..." : "Flush forwarder"}
+          </button>
+        }
       />
       <section className="eg-grid eg-grid--two">
         <SurfaceCard title="Queue state" subtitle="Operational view of pending and failed deliveries">

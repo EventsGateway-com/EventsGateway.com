@@ -3,11 +3,29 @@
   "name": "eventsgateway-forwarder-worker",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-28",
+  "account_id": "63e37d6abff509f43d4d9a722361d03a",
+  "workers_dev": true,
   "vars": {
     "CORS_ORIGIN": "*"
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "eventsgateway-control-plane",
+      "database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
+      "remote": true
+    }
+  ],
   "env": {
     "production": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "eventsgateway-control-plane",
+          "database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
+          "remote": true
+        }
+      ],
       "vars": {
         "CORS_ORIGIN": "https://dash.eventsgateway.com"
       }

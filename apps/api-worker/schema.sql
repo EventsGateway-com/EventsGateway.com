@@ -84,3 +84,30 @@ CREATE TABLE IF NOT EXISTS identity_profiles (
   updated_at TEXT NOT NULL,
   PRIMARY KEY (site_id, canonical_user_id)
 );
+
+CREATE TABLE IF NOT EXISTS delivery_attempts (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL,
+  collected_event_id TEXT NOT NULL,
+  event_id TEXT NOT NULL,
+  route_id TEXT NOT NULL,
+  destination_id TEXT NOT NULL,
+  status TEXT NOT NULL,
+  latency_ms INTEGER,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  last_error TEXT,
+  queued_at TEXT NOT NULL,
+  sent_at TEXT,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS operation_jobs (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  status TEXT NOT NULL,
+  progress INTEGER NOT NULL DEFAULT 0,
+  detail TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  finished_at TEXT
+);
