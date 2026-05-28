@@ -1,6 +1,6 @@
 export const homeContent = {
   eyebrow: "Cloudflare-Native Event Gateway",
-  title: "Tracking that looks premium, installs fast, and can stay free for many small sites.",
+  title: "Premium event routing and tracking that installs fast and stays lean on Cloudflare.",
   description:
     "EventsGateway is a Cloudflare-native event gateway for Meta, GA4, Google Ads, and custom pipelines. Add one lightweight tracker to any website, send events to one endpoint, and control routing, delivery, retries, and observability from a single dashboard. For many small sites, the runtime can stay inside Cloudflare free-tier limits before the paid plan is even needed.",
   trustMarks: [

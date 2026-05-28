@@ -1,0 +1,672 @@
+import type { DatabaseBinding } from "./index";
+
+type DatabaseRecord = Record<string, unknown>;
+
+export type DashboardUser = {
+  id: string;
+  name: string;
+  email: string;
+  created_at: string;
+};
+
+export type DashboardSession = {
+  id: string;
+  token: string;
+  user_id: string;
+  expires_at: string;
+  created_at: string;
+};
+
+export type DashboardSite = {
+  id: string;
+  org_id: string;
+  org_name: string;
+  project_id: string;
+  project_name: string;
+  name: string;
+  environment: string;
+  collector_url: string;
+  created_at: string;
+};
+
+export type SiteDomain = {
+  id: string;
+  site_id: string;
+  domain: string;
+  kind: string;
+  status: string;
+  description: string | null;
+  created_at: string;
+};
+
+export type SiteKey = {
+  id: string;
+  site_id: string;
+  label: string;
+  public_key: string;
+  status: string;
+  created_at: string;
+  last_used_at: string | null;
+};
+
+export type BootstrapPayload = {
+  user: DashboardUser;
+  site: DashboardSite;
+  domains: SiteDomain[];
+};
+
+const DEFAULT_SITE_ID = "site_alpha";
+const DEFAULT_SITE_NAME = "goldring.ro";
+const DEFAULT_ORG_ID = "org_open";
+const DEFAULT_ORG_NAME = "Open Commerce Lab";
+const DEFAULT_PROJECT_ID = "project_gateway";
+const DEFAULT_PROJECT_NAME = "Events Core";
+const DEFAULT_ENVIRONMENT = "production";
+
+let ensurePromise: Promise<void> | null = null;
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function ensureDb(db?: DatabaseBinding): DatabaseBinding {
+  if (!db) {
+    throw new Error("Missing D1 database binding.");
+  }
+
+  return db;
+}
+
+function asString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function toDashboardUser(record: DatabaseRecord): DashboardUser {
+  return {
+    id: asString(record.id),
+    name: asString(record.name),
+    email: asString(record.email),
+    created_at: asString(record.created_at)
+  };
+}
+
+function toDashboardSite(record: DatabaseRecord): DashboardSite {
+  return {
+    id: asString(record.id),
+    org_id: asString(record.org_id),
+    org_name: asString(record.org_name),
+    project_id: asString(record.project_id),
+    project_name: asString(record.project_name),
+    name: asString(record.name),
+    environment: asString(record.environment),
+    collector_url: asString(record.collector_url),
+    created_at: asString(record.created_at)
+  };
+}
+
+function toSiteDomain(record: DatabaseRecord): SiteDomain {
+  return {
+    id: asString(record.id),
+    site_id: asString(record.site_id),
+    domain: asString(record.domain),
+    kind: asString(record.kind),
+    status: asString(record.status),
+    description: typeof record.description === "string" ? record.description : null,
+    created_at: asString(record.created_at)
+  };
+}
+
+function toSiteKey(record: DatabaseRecord): SiteKey {
+  return {
+    id: asString(record.id),
+    site_id: asString(record.site_id),
+    label: asString(record.label),
+    public_key: asString(record.public_key),
+    status: asString(record.status),
+    created_at: asString(record.created_at),
+    last_used_at: typeof record.last_used_at === "string" ? record.last_used_at : null
+  };
+}
+
+export function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+export function normalizeDomain(domain: string) {
+  return domain
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .replace(/:\d+$/, "")
+    .replace(/\.$/, "");
+}
+
+export async function sha256Hex(value: string) {
+  const encoded = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", encoded);
+  return Array.from(new Uint8Array(digest))
+    .map((item) => item.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function createSessionToken() {
+  return `${crypto.randomUUID()}${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
+function createPublicKey() {
+  return `egp_${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
+async function firstRecord(db: DatabaseBinding, sql: string, ...params: unknown[]) {
+  const record = await db.prepare(sql).bind(...params).first<DatabaseRecord>();
+  return record ?? null;
+}
+
+async function allRecords(db: DatabaseBinding, sql: string, ...params: unknown[]) {
+  const result = await db.prepare(sql).bind(...params).all<DatabaseRecord>();
+  return result.results ?? [];
+}
+
+export async function ensureControlPlane(dbInput?: DatabaseBinding) {
+  ensureDb(dbInput);
+  if (!ensurePromise) {
+    ensurePromise = Promise.resolve();
+  }
+
+  await ensurePromise;
+}
+
+export async function createUserSession(
+  dbInput: DatabaseBinding | undefined,
+  input: { name: string; email: string; password: string }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const name = input.name.trim();
+  const email = normalizeEmail(input.email);
+  const password = input.password;
+
+  if (name.length < 2) throw new Error("Name must contain at least 2 characters.");
+  if (!email.includes("@")) throw new Error("Enter a valid email address.");
+  if (password.length < 8) throw new Error("Password must contain at least 8 characters.");
+
+  const existingUser = await firstRecord(db, "SELECT id FROM dashboard_users WHERE email = ? LIMIT 1", email);
+  if (existingUser) {
+    throw new Error("An account already exists for this email.");
+  }
+
+  const userId = crypto.randomUUID();
+  const createdAt = nowIso();
+
+  await db.prepare(
+    "INSERT INTO dashboard_users (id, name, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?)"
+  )
+    .bind(userId, name, email, await sha256Hex(password), createdAt)
+    .run();
+
+  return createSession(db, userId);
+}
+
+export async function loginUserSession(
+  dbInput: DatabaseBinding | undefined,
+  input: { email: string; password: string }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const email = normalizeEmail(input.email);
+  const record = await firstRecord(
+    db,
+    "SELECT id, name, email, password_hash, created_at FROM dashboard_users WHERE email = ? LIMIT 1",
+    email
+  );
+
+  if (!record) {
+    throw new Error("No account exists for this email yet.");
+  }
+
+  const passwordHash = await sha256Hex(input.password);
+  if (passwordHash !== asString(record.password_hash)) {
+    throw new Error("The email or password is incorrect.");
+  }
+
+  return createSession(db, asString(record.id), record);
+}
+
+async function createSession(db: DatabaseBinding, userId: string, existingUser?: DatabaseRecord | null) {
+  const createdAt = nowIso();
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString();
+  const token = createSessionToken();
+  const sessionId = crypto.randomUUID();
+
+  await db.prepare(
+    "INSERT INTO dashboard_sessions (id, token, user_id, expires_at, created_at) VALUES (?, ?, ?, ?, ?)"
+  )
+    .bind(sessionId, token, userId, expiresAt, createdAt)
+    .run();
+
+  const userRecord =
+    existingUser ??
+    (await firstRecord(db, "SELECT id, name, email, created_at FROM dashboard_users WHERE id = ? LIMIT 1", userId));
+
+  if (!userRecord) {
+    throw new Error("User not found.");
+  }
+
+  return {
+    session: {
+      id: sessionId,
+      token,
+      user_id: userId,
+      expires_at: expiresAt,
+      created_at: createdAt
+    } satisfies DashboardSession,
+    user: toDashboardUser(userRecord)
+  };
+}
+
+export async function getSessionByToken(dbInput: DatabaseBinding | undefined, token: string) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const session = await firstRecord(
+    db,
+    `
+      SELECT s.id, s.token, s.user_id, s.expires_at, s.created_at, u.name, u.email, u.created_at AS user_created_at
+      FROM dashboard_sessions s
+      JOIN dashboard_users u ON u.id = s.user_id
+      WHERE s.token = ?
+      LIMIT 1
+    `,
+    token
+  );
+
+  if (!session) return null;
+  if (Date.parse(asString(session.expires_at)) <= Date.now()) {
+    await revokeSession(db, token);
+    return null;
+  }
+
+  return {
+    session: {
+      id: asString(session.id),
+      token: asString(session.token),
+      user_id: asString(session.user_id),
+      expires_at: asString(session.expires_at),
+      created_at: asString(session.created_at)
+    } satisfies DashboardSession,
+    user: {
+      id: asString(session.user_id),
+      name: asString(session.name),
+      email: asString(session.email),
+      created_at: asString(session.user_created_at)
+    } satisfies DashboardUser
+  };
+}
+
+export async function revokeSession(dbInput: DatabaseBinding | undefined, token: string) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  await db.prepare("DELETE FROM dashboard_sessions WHERE token = ?").bind(token).run();
+}
+
+export async function getDefaultSite(dbInput: DatabaseBinding | undefined) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const site = await firstRecord(
+    db,
+    `
+      SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at
+      FROM sites
+      WHERE id = ?
+      LIMIT 1
+    `,
+    DEFAULT_SITE_ID
+  );
+
+  if (!site) {
+    throw new Error("Default site is missing.");
+  }
+
+  return toDashboardSite(site);
+}
+
+export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId: string): Promise<BootstrapPayload> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const user = await firstRecord(db, "SELECT id, name, email, created_at FROM dashboard_users WHERE id = ? LIMIT 1", userId);
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  const site = await getDefaultSite(db);
+  const domains = await listSiteDomains(db, site.id);
+  return {
+    user: toDashboardUser(user),
+    site,
+    domains
+  };
+}
+
+export async function listSiteDomains(dbInput: DatabaseBinding | undefined, siteId: string) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const records = await allRecords(
+    db,
+    `
+      SELECT id, site_id, domain, kind, status, description, created_at
+      FROM site_domains
+      WHERE site_id = ?
+      ORDER BY kind ASC, domain ASC
+    `,
+    siteId
+  );
+  return records.map(toSiteDomain);
+}
+
+export async function addSiteDomain(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  input: { domain: string; kind?: string; description?: string }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const domain = normalizeDomain(input.domain);
+  if (!domain) {
+    throw new Error("Enter a valid domain.");
+  }
+
+  const existing = await firstRecord(db, "SELECT id FROM site_domains WHERE domain = ? LIMIT 1", domain);
+  if (existing) {
+    throw new Error("This domain already exists.");
+  }
+
+  const createdAt = nowIso();
+  const record = {
+    id: crypto.randomUUID(),
+    site_id: siteId,
+    domain,
+    kind: (input.kind ?? "production").trim() || "production",
+    status: "verified",
+    description: input.description?.trim() || null,
+    created_at: createdAt
+  };
+
+  await db.prepare(
+    `
+      INSERT INTO site_domains (id, site_id, domain, kind, status, description, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(record.id, record.site_id, record.domain, record.kind, record.status, record.description, record.created_at)
+    .run();
+
+  return record;
+}
+
+export async function deleteSiteDomain(dbInput: DatabaseBinding | undefined, siteId: string, domainId: string) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const domain = await firstRecord(db, "SELECT id, domain FROM site_domains WHERE id = ? AND site_id = ? LIMIT 1", domainId, siteId);
+  if (!domain) return false;
+
+  const normalized = asString(domain.domain);
+  if (normalized === "goldring.ro" || normalized === "www.goldring.ro") {
+    throw new Error("The seeded production domains cannot be removed.");
+  }
+
+  await db.prepare("DELETE FROM site_domains WHERE id = ?").bind(domainId).run();
+  return true;
+}
+
+export async function listSiteKeys(dbInput: DatabaseBinding | undefined, siteId: string) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const records = await allRecords(
+    db,
+    `
+      SELECT id, site_id, label, public_key, status, created_at, last_used_at
+      FROM site_keys
+      WHERE site_id = ?
+      ORDER BY created_at ASC
+    `,
+    siteId
+  );
+  return records.map(toSiteKey);
+}
+
+export async function getPrimarySiteKey(dbInput: DatabaseBinding | undefined, siteId: string) {
+  const keys = await listSiteKeys(dbInput, siteId);
+  const key = keys[0];
+  if (!key) {
+    throw new Error("No active site key exists.");
+  }
+
+  return key;
+}
+
+export async function getInstallConfigFromDb(dbInput: DatabaseBinding | undefined, siteId: string) {
+  const site = await getDefaultSite(dbInput);
+  if (site.id !== siteId) {
+    throw new Error("Site not found.");
+  }
+
+  const key = await getPrimarySiteKey(dbInput, siteId);
+  const snippet = [
+    "<script>",
+    "  (function () {",
+    "    const collector = 'https://e.eventsgateway.com/v1/collect';",
+    `    const siteId = '${site.id}';`,
+    `    const apiKey = '${key.public_key}';`,
+    "    window.e_g = window.e_g || function (type, properties) {",
+    "      const payload = {",
+    "        site_id: siteId,",
+    "        api_key: apiKey,",
+    "        type: type,",
+    "        source: 'browser',",
+    "        environment: 'production',",
+    "        page: { path: location.pathname, url: location.href, title: document.title },",
+    "        properties: properties || {}",
+    "      };",
+    "      navigator.sendBeacon(",
+    "        collector,",
+    "        new Blob([JSON.stringify(payload)], { type: 'application/json' })",
+    "      );",
+    "    };",
+    "    window.e_g('PageView');",
+    "  })();",
+    "</script>"
+  ].join("\n");
+
+  return {
+    collector_url: site.collector_url,
+    npm_package: "@eventsgateway/tracker-sdk",
+    site_id: site.id,
+    site_name: site.name,
+    public_key: key.public_key,
+    sdk_loader: snippet,
+    sample_init: [
+      "window.e_g('Purchase', {",
+      "  order_id: 'ORDER-1001',",
+      "  value: 249.99,",
+      "  currency: 'RON'",
+      "});"
+    ].join("\n")
+  };
+}
+
+export async function validateCollectAccess(
+  dbInput: DatabaseBinding | undefined,
+  input: { siteId: string; apiKey: string; origin?: string | null }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const site = await firstRecord(db, "SELECT id, name FROM sites WHERE id = ? LIMIT 1", input.siteId);
+  if (!site) return null;
+
+  const keyHash = await sha256Hex(input.apiKey);
+  const key = await firstRecord(
+    db,
+    "SELECT id FROM site_keys WHERE site_id = ? AND key_hash = ? AND status = 'active' LIMIT 1",
+    input.siteId,
+    keyHash
+  );
+  if (!key) return null;
+
+  const normalizedOrigin = input.origin ? normalizeDomain(input.origin) : "";
+  if (normalizedOrigin) {
+    const allowed = await firstRecord(
+      db,
+      "SELECT id FROM site_domains WHERE site_id = ? AND domain = ? LIMIT 1",
+      input.siteId,
+      normalizedOrigin
+    );
+    if (!allowed) return null;
+  }
+
+  await db.prepare("UPDATE site_keys SET last_used_at = ? WHERE id = ?").bind(nowIso(), asString(key.id)).run();
+  return {
+    site_id: asString(site.id),
+    site_name: asString(site.name),
+    origin_domain: normalizedOrigin || null
+  };
+}
+
+export async function storeCollectedEvent(
+  dbInput: DatabaseBinding | undefined,
+  input: {
+    siteId: string;
+    originDomain?: string | null;
+    event: {
+      event_id?: string;
+      type: string;
+      source: string;
+      environment: string;
+      canonical_user_id?: string;
+      anonymous_id?: string;
+      session_id?: string;
+      page?: { path?: string; url?: string };
+      destination?: string;
+      consent?: { analytics?: boolean; ads?: boolean; functional?: boolean };
+      payload: unknown;
+    };
+  }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const receivedAt = nowIso();
+  const eventId = input.event.event_id?.trim() || crypto.randomUUID();
+
+  await db.prepare(
+    `
+      INSERT INTO collected_events (
+        id,
+        site_id,
+        event_id,
+        event_type,
+        source,
+        environment,
+        canonical_user_id,
+        anonymous_id,
+        session_id,
+        page_path,
+        page_url,
+        origin_domain,
+        destination,
+        status,
+        consent_analytics,
+        consent_ads,
+        consent_functional,
+        payload_json,
+        received_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      crypto.randomUUID(),
+      input.siteId,
+      eventId,
+      input.event.type,
+      input.event.source,
+      input.event.environment,
+      input.event.canonical_user_id ?? null,
+      input.event.anonymous_id ?? null,
+      input.event.session_id ?? null,
+      input.event.page?.path ?? null,
+      input.event.page?.url ?? null,
+      input.originDomain ?? null,
+      input.event.destination ?? null,
+      "accepted",
+      input.event.consent?.analytics ? 1 : 0,
+      input.event.consent?.ads ? 1 : 0,
+      input.event.consent?.functional ? 1 : 0,
+      JSON.stringify(input.event.payload),
+      receivedAt
+    )
+    .run();
+
+  if (input.event.canonical_user_id) {
+    const existing = await firstRecord(
+      db,
+      `
+        SELECT anonymous_ids_json, session_ids_json
+        FROM identity_profiles
+        WHERE site_id = ? AND canonical_user_id = ?
+        LIMIT 1
+      `,
+      input.siteId,
+      input.event.canonical_user_id
+    );
+
+    const anonymousIds = new Set<string>(
+      existing?.anonymous_ids_json ? (JSON.parse(asString(existing.anonymous_ids_json)) as string[]) : []
+    );
+    const sessionIds = new Set<string>(
+      existing?.session_ids_json ? (JSON.parse(asString(existing.session_ids_json)) as string[]) : []
+    );
+
+    if (input.event.anonymous_id) anonymousIds.add(input.event.anonymous_id);
+    if (input.event.session_id) sessionIds.add(input.event.session_id);
+
+    await db.prepare(
+      `
+        INSERT INTO identity_profiles (
+          site_id,
+          canonical_user_id,
+          anonymous_ids_json,
+          session_ids_json,
+          consent_analytics,
+          consent_ads,
+          consent_functional,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(site_id, canonical_user_id) DO UPDATE SET
+          anonymous_ids_json = excluded.anonymous_ids_json,
+          session_ids_json = excluded.session_ids_json,
+          consent_analytics = excluded.consent_analytics,
+          consent_ads = excluded.consent_ads,
+          consent_functional = excluded.consent_functional,
+          updated_at = excluded.updated_at
+      `
+    )
+      .bind(
+        input.siteId,
+        input.event.canonical_user_id,
+        JSON.stringify(Array.from(anonymousIds)),
+        JSON.stringify(Array.from(sessionIds)),
+        input.event.consent?.analytics ? 1 : 0,
+        input.event.consent?.ads ? 1 : 0,
+        input.event.consent?.functional ? 1 : 0,
+        receivedAt
+      )
+      .run();
+  }
+
+  return {
+    accepted: true,
+    event_id: eventId,
+    received_at: receivedAt
+  };
+}

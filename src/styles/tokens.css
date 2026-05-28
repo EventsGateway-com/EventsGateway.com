@@ -25,8 +25,8 @@
   --radius-lg: 28px;
   --radius-xl: 36px;
   --container: 1180px;
-  --header-height: 76px;
-  --section-space: clamp(5rem, 7vw, 8.75rem);
+  --header-height: 62px;
+  --section-space: clamp(2.5rem, 4vw, 4.35rem);
   --shadow-premium: 0 30px 100px rgba(0, 0, 0, 0.45);
   --shadow-glow: 0 0 80px rgba(125, 211, 252, 0.16);
   --shadow-card: 0 24px 70px rgba(0, 0, 0, 0.35);

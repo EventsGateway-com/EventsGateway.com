@@ -27,7 +27,7 @@ const categoryBadge: Record<string, string> = {
   description={compareContent.intro}
   canonicalPath="/compare/"
 >
-  <section class="section page-hero">
+  <section class="section page-hero compare-page-hero">
     <Container>
       <div class="stack">
         <span class="eyebrow">{compareContent.eyebrow}</span>
@@ -136,15 +136,19 @@ const categoryBadge: Record<string, string> = {
 <style>
   .compare-toolbar {
     display: grid;
-    gap: 1rem;
+    gap: 0.7rem;
     width: 100%;
     max-width: 64rem;
     margin: 0 auto;
   }
 
+  .compare-page-hero {
+    padding-bottom: 1.35rem;
+  }
+
   .compare-search {
     display: grid;
-    gap: 0.55rem;
+    gap: 0.42rem;
   }
 
   .compare-search__label {
@@ -156,8 +160,8 @@ const categoryBadge: Record<string, string> = {
 
   .compare-search input {
     width: 100%;
-    min-height: 3.4rem;
-    padding: 0.95rem 1rem;
+    min-height: 3rem;
+    padding: 0.82rem 0.92rem;
     border: 1px solid var(--color-border);
     border-radius: 1rem;
     background: rgba(8, 12, 22, 0.9);
@@ -168,6 +172,11 @@ const categoryBadge: Record<string, string> = {
   .compare-search input:focus {
     border-color: rgba(125, 211, 252, 0.45);
     box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.12);
+  }
+
+  .compare-pills,
+  .compare-filter-row {
+    gap: 0.45rem;
   }
 
   .compare-pills {
@@ -206,6 +215,10 @@ const categoryBadge: Record<string, string> = {
 
   .compare-card-actions {
     flex-wrap: wrap;
+  }
+
+  .compare-page-hero + .section--tight {
+    padding-top: 1.35rem;
   }
 </style>
 <script is:inline src="/scripts/compare-filters.js" defer></script>

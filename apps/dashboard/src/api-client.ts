@@ -1,6 +1,5 @@
 import {
   backfillAttribution,
-  exportRaw,
   getCompiledRouting,
   getConsent,
   getDlq,
@@ -23,7 +22,6 @@ import {
   listSchemas,
   listTransformations,
   listUsers,
-  processPendingDeliveries,
   replayDlq,
   replayEvent,
   simulateRoute
@@ -39,57 +37,215 @@ type Envelope<T> = {
   };
 };
 
-const API_BASE_URL = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "").replace(/\/$/, "");
-const API_TOKEN = import.meta.env.VITE_API_TOKEN as string | undefined;
+type ErrorEnvelope = {
+  error?: {
+    message?: string;
+  };
+};
+
+export type DashboardUser = {
+  id: string;
+  name: string;
+  email: string;
+  created_at: string;
+};
+
+export type DashboardSession = {
+  id: string;
+  token: string;
+  user_id: string;
+  expires_at: string;
+  created_at: string;
+};
+
+export type DashboardBootstrap = {
+  user: DashboardUser;
+  site: {
+    id: string;
+    org_id: string;
+    org_name: string;
+    project_id: string;
+    project_name: string;
+    name: string;
+    environment: string;
+    collector_url: string;
+    created_at: string;
+  };
+  domains: Array<{
+    id: string;
+    site_id: string;
+    domain: string;
+    kind: string;
+    status: string;
+    description: string | null;
+    created_at: string;
+  }>;
+};
+
+export type SiteDomainRecord = DashboardBootstrap["domains"][number];
+export type SiteKeyRecord = {
+  id: string;
+  site_id: string;
+  label: string;
+  public_key: string;
+  status: string;
+  created_at: string;
+  last_used_at: string | null;
+};
+
+type OverviewData = ReturnType<typeof getOverview>;
+type RealtimeData = ReturnType<typeof getRealtime>;
+type EventListData = ReturnType<typeof listEvents>;
+type SchemaListData = ReturnType<typeof listSchemas>;
+type RoutesListData = ReturnType<typeof listRoutes>;
+type RouteVersionsData = ReturnType<typeof listRouteVersions>;
+type CompiledRoutingData = ReturnType<typeof getCompiledRouting>;
+type RouteSimulationData = ReturnType<typeof simulateRoute>;
+type DeliveriesListData = ReturnType<typeof listDeliveries>;
+type EventDetailData = ReturnType<typeof getEvent>;
+type HealthData = ReturnType<typeof getHealth>;
+type DestinationsListData = ReturnType<typeof listDestinations>;
+type TransformationsListData = ReturnType<typeof listTransformations>;
+type TransformationDetailData = ReturnType<typeof getTransformation>;
+type UsersListData = ReturnType<typeof listUsers>;
+type JourneysData = ReturnType<typeof getJourneys>;
+type ConsentData = ReturnType<typeof getConsent>;
+type InstallData = ReturnType<typeof getInstallConfig> & {
+  site_id: string;
+  site_name: string;
+  public_key: string;
+};
+type QueuesData = ReturnType<typeof getQueues>;
+type JobsData = ReturnType<typeof listJobs>;
+type DestinationDetailData = ReturnType<typeof getDestination>;
+type DlqData = ReturnType<typeof getDlq>;
+type RouteDetailData = ReturnType<typeof getRoute>;
+type ReplayDlqData = ReturnType<typeof replayDlq>;
+type ReplayEventData = ReturnType<typeof replayEvent>;
+type BackfillAttributionData = ReturnType<typeof backfillAttribution>;
+
+export type RoutesDashboardData = {
+  routes: RoutesListData;
+  versions: RouteVersionsData;
+  compiledConfig: CompiledRoutingData;
+  routeSimulation: RouteSimulationData;
+};
+
+export type DeliveryRow = {
+  eventId: string;
+  destination: string;
+  status: string;
+  latency: string;
+  attempts: number;
+  route: string;
+};
+
+const API_BASE_URL = (
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
+  (import.meta.env.PROD ? "https://api.eventsgateway.com" : "")
+).replace(/\/$/, "");
+const API_TOKEN = (import.meta.env.VITE_API_TOKEN as string | undefined) ?? "";
+const SESSION_TOKEN_STORAGE_KEY = "eventsgateway-dashboard-session-token-v2";
+
+export function readSessionToken() {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY) ?? "";
+}
+
+export function writeSessionToken(token: string | null) {
+  if (typeof window === "undefined") return;
+  if (token) {
+    window.localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
+    return;
+  }
+
+  window.localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+}
 
 function buildUrl(path: string) {
   return `${API_BASE_URL}${path}`;
 }
 
-async function requestJson<T>(path: string, fallback: () => T | Promise<T>, init?: RequestInit): Promise<T> {
-  const url = buildUrl(path);
-  try {
-    const response = await fetch(url, {
-      ...init,
-      headers: {
-        "content-type": "application/json",
-        ...(API_TOKEN ? { "x-api-token": API_TOKEN } : {}),
-        ...(init?.headers ?? {})
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const payload = (await response.json()) as Envelope<T>;
-    return payload.data;
-  } catch {
-    return fallback();
+async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+  if (!API_BASE_URL) {
+    throw new Error("VITE_API_BASE_URL is missing.");
   }
+
+  const url = buildUrl(path);
+  const sessionToken = readSessionToken();
+  const authorization = sessionToken || API_TOKEN;
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "content-type": "application/json",
+      ...(authorization ? { authorization: `Bearer ${authorization}` } : {}),
+      ...(init?.headers ?? {})
+    }
+  });
+
+  if (!response.ok) {
+    let message = `HTTP ${response.status}`;
+    try {
+      const errorPayload = (await response.json()) as ErrorEnvelope;
+      if (errorPayload.error?.message) {
+        message = errorPayload.error.message;
+      }
+    } catch {
+      // Keep the HTTP status message when no JSON payload exists.
+    }
+    throw new Error(message);
+  }
+
+  const payload = (await response.json()) as Envelope<T>;
+  return payload.data;
 }
 
-export function fetchOverview(siteId: string, range: DateRangePreset) {
-  return requestJson(`/v1/sites/${siteId}/overview?range=${encodeURIComponent(range)}`, () => getOverview(siteId, range));
+export function registerDashboardUser(input: { name: string; email: string; password: string }) {
+  return requestJson<{ user: DashboardUser; session: DashboardSession }>("/v1/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
 }
 
-export function fetchRealtime(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/realtime`, () => getRealtime(siteId));
+export function loginDashboardUser(input: { email: string; password: string }) {
+  return requestJson<{ user: DashboardUser; session: DashboardSession }>("/v1/auth/login", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
 }
 
-export function fetchEvents(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/events/recent`, () => listEvents(siteId));
+export function logoutDashboardUser() {
+  return requestJson<{ logged_out: boolean }>("/v1/auth/logout", {
+    method: "POST",
+    body: JSON.stringify({})
+  });
 }
 
-export function fetchSchemas(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/events/schemas`, () => listSchemas(siteId));
+export function fetchDashboardBootstrap() {
+  return requestJson<DashboardBootstrap>("/v1/bootstrap");
 }
 
-export function fetchRoutes(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/routes`, () => listRoutes(siteId)).then(async (routes) => {
+export function fetchOverview(siteId: string, range: DateRangePreset): Promise<OverviewData> {
+  return requestJson<OverviewData>(`/v1/sites/${siteId}/overview?range=${encodeURIComponent(range)}`);
+}
+
+export function fetchRealtime(siteId: string): Promise<RealtimeData> {
+  return requestJson<RealtimeData>(`/v1/sites/${siteId}/realtime`);
+}
+
+export function fetchEvents(siteId: string): Promise<EventListData> {
+  return requestJson<EventListData>(`/v1/sites/${siteId}/events/recent`);
+}
+
+export function fetchSchemas(siteId: string): Promise<SchemaListData> {
+  return requestJson<SchemaListData>(`/v1/sites/${siteId}/events/schemas`);
+}
+
+export function fetchRoutes(siteId: string): Promise<RoutesDashboardData> {
+  return requestJson<RoutesListData>(`/v1/sites/${siteId}/routes`).then(async (routes) => {
     const [versions, compiledConfig, events] = await Promise.all([
-      requestJson(`/v1/sites/${siteId}/routes/versions`, () => listRouteVersions(siteId)),
-      requestJson(`/v1/sites/${siteId}/compiled-routing`, () => getCompiledRouting(siteId)),
+      requestJson<RouteVersionsData>(`/v1/sites/${siteId}/routes/versions`),
+      requestJson<CompiledRoutingData>(`/v1/sites/${siteId}/compiled-routing`),
       fetchEvents(siteId)
     ]);
 
@@ -102,9 +258,8 @@ export function fetchRoutes(siteId: string) {
       })
     };
 
-    const routeSimulation = await requestJson(
+    const routeSimulation = await requestJson<RouteSimulationData>(
       `/v1/sites/${siteId}/routes/all/simulate`,
-      () => simulateRoute(siteId, "all", simulationBody as Partial<EventGatewayEvent> & Pick<EventGatewayEvent, "type" | "source" | "environment">),
       {
         method: "POST",
         body: JSON.stringify(simulationBody)
@@ -120,13 +275,13 @@ export function fetchRoutes(siteId: string) {
   });
 }
 
-export function fetchRouteDetail(siteId: string, routeId: string) {
-  return requestJson(`/v1/sites/${siteId}/routes/${routeId}`, () => getRoute(siteId, routeId));
+export function fetchRouteDetail(siteId: string, routeId: string): Promise<RouteDetailData> {
+  return requestJson<RouteDetailData>(`/v1/sites/${siteId}/routes/${routeId}`);
 }
 
-export function fetchDeliveries(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/deliveries`, () => listDeliveries(siteId)).then(async (deliveries) => {
-    const routes = await requestJson(`/v1/sites/${siteId}/routes`, () => listRoutes(siteId));
+export function fetchDeliveries(siteId: string): Promise<DeliveryRow[]> {
+  return requestJson<DeliveriesListData>(`/v1/sites/${siteId}/deliveries`).then(async (deliveries) => {
+    const routes = await requestJson<RoutesListData>(`/v1/sites/${siteId}/routes`);
     return deliveries.map((delivery) => {
       const destination = getDestination(siteId, delivery.destination_id);
       const route = routes.find((item) => item.id === delivery.route_id);
@@ -142,94 +297,110 @@ export function fetchDeliveries(siteId: string) {
   });
 }
 
-export function fetchEvent(siteId: string, eventId: string) {
-  return requestJson(`/v1/sites/${siteId}/events/${eventId}`, () => getEvent(siteId, eventId));
+export function fetchEvent(siteId: string, eventId: string): Promise<EventDetailData> {
+  return requestJson<EventDetailData>(`/v1/sites/${siteId}/events/${eventId}`);
 }
 
-export function fetchHealth(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/operations/health`, () => getHealth(siteId));
+export function fetchHealth(siteId: string): Promise<HealthData> {
+  return requestJson<HealthData>(`/v1/sites/${siteId}/operations/health`);
 }
 
-export function fetchDestinations(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/destinations`, () => listDestinations(siteId));
+export function fetchDestinations(siteId: string): Promise<DestinationsListData> {
+  return requestJson<DestinationsListData>(`/v1/sites/${siteId}/destinations`);
 }
 
-export function fetchTransformations(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/transformations`, () => listTransformations(siteId));
+export function fetchTransformations(siteId: string): Promise<TransformationsListData> {
+  return requestJson<TransformationsListData>(`/v1/sites/${siteId}/transformations`);
 }
 
-export function fetchTransformationDetail(siteId: string, transformationId: string) {
-  return requestJson(`/v1/sites/${siteId}/transformations/${transformationId}`, () => getTransformation(siteId, transformationId));
+export function fetchTransformationDetail(siteId: string, transformationId: string): Promise<TransformationDetailData> {
+  return requestJson<TransformationDetailData>(`/v1/sites/${siteId}/transformations/${transformationId}`);
 }
 
-export function fetchUsers(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/identity/users`, () => listUsers(siteId));
+export function fetchUsers(siteId: string): Promise<UsersListData> {
+  return requestJson<UsersListData>(`/v1/sites/${siteId}/identity/users`);
 }
 
-export function fetchJourneys(siteId: string, canonicalUserId: string) {
-  return requestJson(`/v1/sites/${siteId}/identity/journeys/${canonicalUserId}`, () => getJourneys(siteId, canonicalUserId));
+export function fetchJourneys(siteId: string, canonicalUserId: string): Promise<JourneysData> {
+  return requestJson<JourneysData>(`/v1/sites/${siteId}/identity/journeys/${canonicalUserId}`);
 }
 
-export function fetchConsent(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/identity/consent`, () => getConsent(siteId));
+export function fetchConsent(siteId: string): Promise<ConsentData> {
+  return requestJson<ConsentData>(`/v1/sites/${siteId}/identity/consent`);
 }
 
-export function fetchInstall(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/settings/install`, () => getInstallConfig(siteId));
+export function fetchInstall(siteId: string): Promise<InstallData> {
+  return requestJson<InstallData>(`/v1/sites/${siteId}/settings/install`);
 }
 
-export function fetchQueues(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/operations/queues`, () => getQueues(siteId));
+export function fetchDomains(siteId: string) {
+  return requestJson<SiteDomainRecord[]>(`/v1/sites/${siteId}/settings/domains`);
 }
 
-export function fetchJobs(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/operations/jobs`, () => listJobs(siteId));
+export function createDomain(siteId: string, input: { domain: string; kind?: string; description?: string }) {
+  return requestJson<SiteDomainRecord>(`/v1/sites/${siteId}/settings/domains`, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
 }
 
-export function fetchDestinationDetail(siteId: string, destinationId: string) {
-  return requestJson(`/v1/sites/${siteId}/destinations/${destinationId}`, () => getDestination(siteId, destinationId));
+export function deleteDomain(siteId: string, domainId: string) {
+  return requestJson<{ deleted: boolean }>(`/v1/sites/${siteId}/settings/domains/${domainId}`, {
+    method: "DELETE"
+  });
 }
 
-export function fetchDlq(siteId: string) {
-  return requestJson(`/v1/sites/${siteId}/operations/dlq`, () => getDlq(siteId));
+export function fetchApiKeys(siteId: string) {
+  return requestJson<SiteKeyRecord[]>(`/v1/sites/${siteId}/settings/api-keys`);
 }
 
-export function replayDlqAction(siteId: string) {
-  return requestJson(
+export function fetchQueues(siteId: string): Promise<QueuesData> {
+  return requestJson<QueuesData>(`/v1/sites/${siteId}/operations/queues`);
+}
+
+export function fetchJobs(siteId: string): Promise<JobsData> {
+  return requestJson<JobsData>(`/v1/sites/${siteId}/operations/jobs`);
+}
+
+export function fetchDestinationDetail(siteId: string, destinationId: string): Promise<DestinationDetailData> {
+  return requestJson<DestinationDetailData>(`/v1/sites/${siteId}/destinations/${destinationId}`);
+}
+
+export function fetchDlq(siteId: string): Promise<DlqData> {
+  return requestJson<DlqData>(`/v1/sites/${siteId}/operations/dlq`);
+}
+
+export function replayDlqAction(siteId: string): Promise<ReplayDlqData> {
+  return requestJson<ReplayDlqData>(
     `/v1/sites/${siteId}/operations/dlq/replay`,
-    () => replayDlq(siteId),
     { method: "POST", body: JSON.stringify({}) }
   );
 }
 
-export function replayEventAction(siteId: string, eventId: string) {
-  return requestJson(
+export function replayEventAction(siteId: string, eventId: string): Promise<ReplayEventData | null> {
+  return requestJson<ReplayEventData | null>(
     `/v1/sites/${siteId}/operations/replay`,
-    () => replayEvent(siteId, eventId),
     { method: "POST", body: JSON.stringify({ event_id: eventId }) }
   );
 }
 
-export function flushForwarderAction(siteId: string) {
-  return requestJson(
+export function flushForwarderAction(siteId: string): Promise<{ processed: number }> {
+  return requestJson<{ processed: number }>(
     `/v1/sites/${siteId}/operations/flush-forwarder`,
-    () => ({ processed: processPendingDeliveries(siteId) }),
     { method: "POST", body: JSON.stringify({}) }
   );
 }
 
-export function backfillAttributionAction(siteId: string) {
-  return requestJson(
+export function backfillAttributionAction(siteId: string): Promise<BackfillAttributionData> {
+  return requestJson<BackfillAttributionData>(
     `/v1/sites/${siteId}/operations/backfill-attribution`,
-    () => backfillAttribution(siteId),
     { method: "POST", body: JSON.stringify({}) }
   );
 }
 
-export function exportRawAction(siteId: string) {
-  return requestJson(
+export function exportRawAction(siteId: string): Promise<{ job_id: string; format: string }> {
+  return requestJson<{ job_id: string; format: string }>(
     `/v1/sites/${siteId}/operations/export`,
-    () => exportRaw(siteId),
     { method: "POST", body: JSON.stringify({}) }
   );
 }

@@ -1,34 +1,34 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "eventsgateway",
-  "main": "./worker/index.js",
-  "compatibility_date": "2026-05-28",
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS",
-    "not_found_handling": "404-page",
-    "html_handling": "auto-trailing-slash",
-    "run_worker_first": true
-  },
-  "observability": {
-    "enabled": true
-  },
-  "account_id": "63e37d6abff509f43d4d9a722361d03a",
-  "workers_dev": false,
-  "env": {
-    "production": {
-      "routes": [
-        {
-          "pattern": "eventsgateway.com",
-          "custom_domain": true,
-          "zone_id": "dc8513a03681904c320e4ab0517f312e"
-        },
-        {
-          "pattern": "www.eventsgateway.com",
-          "custom_domain": true,
-          "zone_id": "dc8513a03681904c320e4ab0517f312e"
-        }
-      ]
-    }
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "eventsgateway",
+	"main": "./worker/index.js",
+	"compatibility_date": "2026-05-28",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS",
+		"not_found_handling": "404-page",
+		"html_handling": "auto-trailing-slash",
+		"run_worker_first": true
+	},
+	"observability": {
+		"enabled": true
+	},
+	"account_id": "63e37d6abff509f43d4d9a722361d03a",
+	"workers_dev": false,
+	"env": {
+		"production": {
+			"routes": [
+				{
+					"pattern": "eventsgateway.com",
+					"custom_domain": true,
+					"zone_id": "dc8513a03681904c320e4ab0517f312e"
+				},
+				{
+					"pattern": "www.eventsgateway.com",
+					"custom_domain": true,
+					"zone_id": "dc8513a03681904c320e4ab0517f312e"
+				}
+			]
+		}
+	}
 }

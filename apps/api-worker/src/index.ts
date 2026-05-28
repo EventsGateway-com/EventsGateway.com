@@ -42,6 +42,19 @@ import {
   validateEvent
 } from "../../../packages/platform-data/src/index";
 import {
+  addSiteDomain,
+  createUserSession,
+  deleteSiteDomain,
+  ensureControlPlane,
+  getBootstrap,
+  getInstallConfigFromDb,
+  getSessionByToken,
+  listSiteDomains,
+  listSiteKeys,
+  loginUserSession,
+  revokeSession
+} from "../../../packages/runtime/src/control-plane";
+import {
   createRequestContext,
   ensureMethod,
   errorResponse,
@@ -50,7 +63,6 @@ import {
   ok,
   pathSegments,
   readJson,
-  withAuth,
   withOptions,
   type EnvironmentBindings
 } from "../../../packages/runtime/src/index";
@@ -63,13 +75,35 @@ function siteIdFromSegments(segments: string[]) {
   return segments[2];
 }
 
+function authTokenFromRequest(request: Request) {
+  return request.headers.get("x-api-token") || request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || "";
+}
+
+async function authorizeRequest(request: Request, env: EnvironmentBindings | undefined) {
+  const token = authTokenFromRequest(request);
+  if (!token) return null;
+  if (env?.API_TOKEN && token === env.API_TOKEN) {
+    return { kind: "api_token" as const };
+  }
+
+  if (!env?.DB) return null;
+  const session = await getSessionByToken(env.DB, token);
+  if (!session) return null;
+
+  return {
+    kind: "session" as const,
+    ...session
+  };
+}
+
 async function routeRequest(request: Request, env?: EnvironmentBindings) {
   const context = createRequestContext(request);
   const optionsResponse = withOptions(context);
   if (optionsResponse) return optionsResponse;
 
-  const authResponse = withAuth(request, env, context);
-  if (authResponse) return authResponse;
+  if (env?.DB) {
+    await ensureControlPlane(env.DB);
+  }
 
   const segments = pathSegments(context);
   const method = context.method;
@@ -78,6 +112,67 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
     const methodResponse = ensureMethod(context, ["GET"]);
     if (methodResponse) return methodResponse;
     return json(context, { service: "api-worker", status: "healthy" });
+  }
+
+  if (segments[0] === "v1" && segments[1] === "auth") {
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    if (segments[2] === "register" && method === "POST") {
+      try {
+        const body = await readJson<{ name: string; email: string; password: string }>(request);
+        const result = await createUserSession(env.DB, body);
+        return json(context, result, { status: 201 });
+      } catch (error) {
+        return errorResponse(context, "register_failed", error instanceof Error ? error.message : "Register failed.", 400);
+      }
+    }
+
+    if (segments[2] === "login" && method === "POST") {
+      try {
+        const body = await readJson<{ email: string; password: string }>(request);
+        const result = await loginUserSession(env.DB, body);
+        return json(context, result);
+      } catch (error) {
+        return errorResponse(context, "login_failed", error instanceof Error ? error.message : "Login failed.", 401);
+      }
+    }
+
+    if (segments[2] === "logout" && method === "POST") {
+      const token = authTokenFromRequest(request);
+      if (token) {
+        await revokeSession(env.DB, token);
+      }
+      return json(context, { logged_out: true });
+    }
+
+    if (segments[2] === "me" && method === "GET") {
+      const authorization = await authorizeRequest(request, env);
+      if (!authorization || authorization.kind !== "session") {
+        return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+      }
+
+      const bootstrap = await getBootstrap(env.DB, authorization.user.id);
+      return json(context, bootstrap);
+    }
+  }
+
+  if (segments[0] === "v1" && segments[1] === "bootstrap" && method === "GET") {
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+    const authorization = await authorizeRequest(request, env);
+    if (!authorization || authorization.kind !== "session") {
+      return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+    }
+
+    return json(context, await getBootstrap(env.DB, authorization.user.id));
+  }
+
+  const authorization = await authorizeRequest(request, env);
+  if (!authorization) {
+    return errorResponse(context, "unauthorized", "Missing or invalid API token.", 401);
   }
 
   if (segments[0] !== "v1" || segments[1] !== "sites" || !segments[2]) {
@@ -222,7 +317,54 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
   }
 
   if (segments[3] === "settings" && segments[4] === "install" && method === "GET") {
+    if (env?.DB) {
+      try {
+        return json(context, await getInstallConfigFromDb(env.DB, siteId));
+      } catch (error) {
+        return errorResponse(context, "install_config_failed", error instanceof Error ? error.message : "Install config unavailable.", 404);
+      }
+    }
     return json(context, getInstallConfig(siteId));
+  }
+
+  if (segments[3] === "settings" && segments[4] === "domains" && segments.length === 5) {
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    if (method === "GET") {
+      return json(context, await listSiteDomains(env.DB, siteId));
+    }
+
+    if (method === "POST") {
+      try {
+        const body = await readJson<{ domain: string; kind?: string; description?: string }>(request);
+        return json(context, await addSiteDomain(env.DB, siteId, body), { status: 201 });
+      } catch (error) {
+        return errorResponse(context, "domain_create_failed", error instanceof Error ? error.message : "Unable to add domain.", 400);
+      }
+    }
+  }
+
+  if (segments[3] === "settings" && segments[4] === "domains" && segments[5] && method === "DELETE") {
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    try {
+      const deleted = await deleteSiteDomain(env.DB, siteId, segments[5]);
+      return deleted ? json(context, { deleted: true }) : notFound(context, `Domain ${segments[5]} not found`);
+    } catch (error) {
+      return errorResponse(context, "domain_delete_failed", error instanceof Error ? error.message : "Unable to delete domain.", 400);
+    }
+  }
+
+  if (segments[3] === "settings" && segments[4] === "api-keys" && method === "GET") {
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    return json(context, await listSiteKeys(env.DB, siteId));
   }
 
   if (segments[3] === "operations" && segments[4] === "health" && method === "GET") {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Navigate, Outlet, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 import type { RouteTraceItem } from "../../../packages/schemas/src/index";
 import { formatRelativeWindow, statusColors } from "../../../packages/shared/src/index";
 import {
@@ -9,6 +9,7 @@ import {
   dashboardApi,
   qk
 } from "./mock-data";
+import { useAuth } from "./auth";
 
 type NavItem = {
   label: string;
@@ -72,6 +73,7 @@ const navGroups: NavGroup[] = [
 ];
 
 function AppShell() {
+  const { bootstrap, logout, user } = useAuth();
   const params = useParams();
   const location = useLocation();
   const breadcrumb = location.pathname.split("/").filter(Boolean).slice(-2).join(" / ");
@@ -145,6 +147,12 @@ function AppShell() {
           <div className="eg-sidebar__footer">
             <span>Compiled routing</span>
             <strong>v3 active</strong>
+            {user ? (
+              <>
+                <span>Signed in as</span>
+                <strong>{user.email}</strong>
+              </>
+            ) : null}
           </div>
         </div>
       </aside>
@@ -163,15 +171,19 @@ function AppShell() {
             </button>
             <div>
               <div className="eyebrow">Org / Project / Site</div>
-              <h1>{currentContext.siteName}</h1>
-              <p>{params.orgId}.{params.projectId}.{params.siteId}</p>
+              <h1>{bootstrap?.site.name ?? currentContext.siteName}</h1>
+              <p>{bootstrap?.site.org_name ?? params.orgId} · {bootstrap?.site.project_name ?? params.projectId} · {bootstrap?.site.environment ?? params.siteId}</p>
             </div>
           </div>
           <div className="eg-topbar__controls">
             <div className="eg-pill">{breadcrumb}</div>
             <div className="eg-pill">{currentContext.environment}</div>
             <div className="eg-pill">{formatRelativeWindow("24h")}</div>
-            <div className="eg-health-pill is-success">API-backed mock runtime</div>
+            {user ? <div className="eg-pill">{user.name}</div> : null}
+            <div className="eg-health-pill is-success">D1 auth active</div>
+            <button className="eg-button eg-button--compact" onClick={() => void logout()} type="button">
+              Logout
+            </button>
           </div>
         </header>
 
@@ -180,6 +192,234 @@ function AppShell() {
         </main>
       </div>
     </div>
+  );
+}
+
+function ProtectedAppShell() {
+  const { isReady, user } = useAuth();
+
+  if (!isReady) {
+    return (
+      <div className="eg-auth-shell">
+        <StateCard title="Preparing dashboard access" description="Restoring the last authenticated session from the API." />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate replace to="/login" />;
+  }
+
+  return <AppShell />;
+}
+
+function AuthShell({
+  title,
+  description,
+  children,
+  footer
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+  footer: ReactNode;
+}) {
+  return (
+    <div className="eg-auth-shell">
+      <section className="eg-auth-card">
+        <div className="eg-auth-card__copy">
+          <span className="eyebrow">Dashboard access</span>
+          <h1>{title}</h1>
+          <p>{description}</p>
+        </div>
+        {children}
+        <div className="eg-auth-card__footer">{footer}</div>
+      </section>
+    </div>
+  );
+}
+
+function LoginPage() {
+  const { login, user } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (user) {
+    return <Navigate replace to={sitePath("overview")} />;
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      await login({ email, password });
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Login failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <AuthShell
+      title="Login to the dashboard"
+      description="Use your real dashboard account to access the EventsGateway control plane."
+      footer={
+        <>
+          <span>Need a new account?</span>
+          <NavLink className="eg-inline-link" to="/register">
+            Register
+          </NavLink>
+        </>
+      }
+    >
+      <form className="eg-auth-form" onSubmit={handleSubmit}>
+        <label className="eg-field">
+          <span>Email</span>
+          <input
+            autoComplete="email"
+            className="eg-input"
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="admin@eventsgateway.com"
+            required
+            type="email"
+            value={email}
+          />
+        </label>
+
+        <label className="eg-field">
+          <span>Password</span>
+          <input
+            autoComplete="current-password"
+            className="eg-input"
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Enter your password"
+            required
+            type="password"
+            value={password}
+          />
+        </label>
+
+        {error ? <p className="eg-form-error">{error}</p> : null}
+
+        <button className="eg-button eg-button--primary" disabled={isSubmitting} type="submit">
+          {isSubmitting ? "Signing in..." : "Login"}
+        </button>
+      </form>
+    </AuthShell>
+  );
+}
+
+function RegisterPage() {
+  const { register, user } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (user) {
+    return <Navigate replace to={sitePath("overview")} />;
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords must match.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await register({ name, email, password });
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Register failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <AuthShell
+      title="Register a dashboard account"
+      description="Create a real dashboard account stored in the control plane database."
+      footer={
+        <>
+          <span>Already registered?</span>
+          <NavLink className="eg-inline-link" to="/login">
+            Login
+          </NavLink>
+        </>
+      }
+    >
+      <form className="eg-auth-form" onSubmit={handleSubmit}>
+        <label className="eg-field">
+          <span>Name</span>
+          <input
+            autoComplete="name"
+            className="eg-input"
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Operations admin"
+            required
+            type="text"
+            value={name}
+          />
+        </label>
+
+        <label className="eg-field">
+          <span>Email</span>
+          <input
+            autoComplete="email"
+            className="eg-input"
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="admin@eventsgateway.com"
+            required
+            type="email"
+            value={email}
+          />
+        </label>
+
+        <label className="eg-field">
+          <span>Password</span>
+          <input
+            autoComplete="new-password"
+            className="eg-input"
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="At least 8 characters"
+            required
+            type="password"
+            value={password}
+          />
+        </label>
+
+        <label className="eg-field">
+          <span>Confirm password</span>
+          <input
+            autoComplete="new-password"
+            className="eg-input"
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            placeholder="Repeat the password"
+            required
+            type="password"
+            value={confirmPassword}
+          />
+        </label>
+
+        {error ? <p className="eg-form-error">{error}</p> : null}
+
+        <button className="eg-button eg-button--primary" disabled={isSubmitting} type="submit">
+          {isSubmitting ? "Creating account..." : "Register"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
 
@@ -1206,7 +1446,10 @@ function InstallPage() {
         <section className="eg-grid eg-grid--two">
           <SurfaceCard title="Install surface" subtitle="Use either the script tag or the NPM package">
             <div className="eg-stack">
+              <ActionLine title="Site" text={installQuery.data.site_name} />
+              <ActionLine title="Site ID" text={installQuery.data.site_id} />
               <ActionLine title="Collector URL" text={installQuery.data.collector_url} />
+              <ActionLine title="Public key" text={installQuery.data.public_key} />
               <ActionLine title="NPM package" text={installQuery.data.npm_package} />
             </div>
           </SurfaceCard>
@@ -1284,38 +1527,113 @@ function AuditPage() {
 }
 
 function DomainsPage() {
+  const queryClient = useQueryClient();
+  const [domain, setDomain] = useState("");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const domainsQuery = useQuery({
+    queryKey: qk.domains(currentContext.siteId),
+    queryFn: dashboardApi.fetchDomains
+  });
+  const createDomainMutation = useMutation({
+    mutationFn: dashboardApi.createDomain,
+    onSuccess: async () => {
+      setDomain("");
+      setDescription("");
+      setError("");
+      await queryClient.invalidateQueries({ queryKey: qk.domains(currentContext.siteId) });
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to add domain.");
+    }
+  });
+  const deleteDomainMutation = useMutation({
+    mutationFn: dashboardApi.deleteDomain,
+    onSuccess: async () => {
+      setError("");
+      await queryClient.invalidateQueries({ queryKey: qk.domains(currentContext.siteId) });
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to delete domain.");
+    }
+  });
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    void createDomainMutation.mutate({
+      domain,
+      description
+    });
+  }
+
   return (
     <div className="eg-page">
       <PageIntro
         title="Domains"
-        description="Verified collection origins and deployment domains that define where tracking is allowed."
+        description="Verified collection origins and production domains that are allowed to send browser events."
       />
       <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Verified domains" subtitle="Current MVP surface prepared for origin verification">
-          <div className="eg-list">
-            <div className="eg-list__row">
-              <div>
-                <strong>alpha.store</strong>
-                <span>Primary production storefront</span>
-              </div>
-              <StatusBadge status="healthy">verified</StatusBadge>
+        <SurfaceCard title="Verified domains" subtitle="Live allowlist used by the collector for browser-origin validation">
+          {!domainsQuery.data ? (
+            <StateCard title="Loading domains" description="Fetching trusted site origins from the control plane." compact />
+          ) : (
+            <div className="eg-list">
+              {domainsQuery.data.map((item) => (
+                <div className="eg-list__row" key={item.id}>
+                  <div>
+                    <strong>{item.domain}</strong>
+                    <span>{item.description ?? `${item.kind} domain`}</span>
+                  </div>
+                  <div className="eg-inline-actions">
+                    <StatusBadge status={item.status === "verified" || item.status === "internal" ? "healthy" : "pending"}>
+                      {item.status}
+                    </StatusBadge>
+                    {item.domain !== "goldring.ro" && item.domain !== "www.goldring.ro" ? (
+                      <button
+                        className="eg-button eg-button--compact"
+                        disabled={deleteDomainMutation.isPending}
+                        onClick={() => deleteDomainMutation.mutate(item.id)}
+                        type="button"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="eg-list__row">
-              <div>
-                <strong>dash.eventsgateway.com</strong>
-                <span>Control plane interface</span>
-              </div>
-              <StatusBadge status="healthy">internal</StatusBadge>
-            </div>
-          </div>
+          )}
         </SurfaceCard>
 
-        <SurfaceCard title="Origin posture" subtitle="How domain trust should be managed in this installation">
-          <div className="eg-stack">
-            <ActionLine title="Collector allowlist" text="Restrict browser collection to verified production and staging domains." />
-            <ActionLine title="Site mapping" text="Bind each domain to a site id so event ownership stays explicit." />
-            <ActionLine title="Environment split" text="Use separate domains or subdomains for staging versus production traffic." />
-          </div>
+        <SurfaceCard title="Add domain" subtitle="Register another origin that should be accepted by the collector">
+          <form className="eg-auth-form" onSubmit={handleSubmit}>
+            <label className="eg-field">
+              <span>Domain</span>
+              <input
+                className="eg-input"
+                onChange={(event) => setDomain(event.target.value)}
+                placeholder="shop.goldring.ro"
+                required
+                type="text"
+                value={domain}
+              />
+            </label>
+            <label className="eg-field">
+              <span>Description</span>
+              <input
+                className="eg-input"
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Staging storefront"
+                type="text"
+                value={description}
+              />
+            </label>
+            {error ? <p className="eg-form-error">{error}</p> : null}
+            <button className="eg-button eg-button--primary" disabled={createDomainMutation.isPending} type="submit">
+              {createDomainMutation.isPending ? "Saving domain..." : "Add domain"}
+            </button>
+          </form>
         </SurfaceCard>
       </section>
     </div>
@@ -1323,71 +1641,59 @@ function DomainsPage() {
 }
 
 function ApiKeysPage() {
+  const apiKeysQuery = useQuery({
+    queryKey: qk.apiKeys(currentContext.siteId),
+    queryFn: dashboardApi.fetchApiKeys
+  });
+
   return (
     <div className="eg-page">
       <PageIntro
         title="API Keys"
-        description="Scoped access keys for collection, debug and operations workflows."
+        description="Active site keys used for browser collection and install snippets."
       />
-      <SurfaceCard title="Suggested key scopes" subtitle="Administrative model prepared for the next auth/RBAC layer">
-        <div className="eg-list">
-          <div className="eg-list__row">
-            <div>
-              <strong>Collect key</strong>
-              <span>Ingest events into collector endpoints for a specific site.</span>
-            </div>
-            <StatusBadge status="healthy">site scoped</StatusBadge>
+      <SurfaceCard title="Collector keys" subtitle="Use these keys only inside trusted site integrations">
+        {!apiKeysQuery.data ? (
+          <StateCard title="Loading keys" description="Fetching active site keys from the control plane." compact />
+        ) : (
+          <div className="eg-list">
+            {apiKeysQuery.data.map((item) => (
+              <div className="eg-list__row" key={item.id}>
+                <div>
+                  <strong>{item.label}</strong>
+                  <span>{item.public_key}</span>
+                </div>
+                <div className="eg-inline-actions">
+                  <StatusBadge status={item.status === "active" ? "healthy" : "pending"}>{item.status}</StatusBadge>
+                  <span className="eg-pill">{item.last_used_at ? "Used" : "Not used yet"}</span>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="eg-list__row">
-            <div>
-              <strong>Debug key</strong>
-              <span>Validate and inspect debug collect payloads without publish rights.</span>
-            </div>
-            <StatusBadge status="pending">planned</StatusBadge>
-          </div>
-          <div className="eg-list__row">
-            <div>
-              <strong>Operations key</strong>
-              <span>Replay DLQ, flush queues and export raw data from the control plane.</span>
-            </div>
-            <StatusBadge status="pending">planned</StatusBadge>
-          </div>
-        </div>
+        )}
       </SurfaceCard>
     </div>
   );
 }
 
 function MembersPage() {
+  const { user } = useAuth();
+
   return (
     <div className="eg-page">
       <PageIntro
         title="Members"
-        description="Team access model for operating routing, identity and delivery workflows."
+        description="Current dashboard account and the access posture attached to this control plane."
       />
       <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Suggested roles" subtitle="Control plane access patterns aligned to the current MVP">
+        <SurfaceCard title="Current operator" subtitle="Live account resolved from the D1-backed auth session">
           <div className="eg-list">
             <div className="eg-list__row">
               <div>
-                <strong>Admin</strong>
-                <span>Can publish routes, rotate secrets and access operations tools.</span>
+                <strong>{user?.name ?? "Unknown user"}</strong>
+                <span>{user?.email ?? "No active email"}</span>
               </div>
               <StatusBadge status="healthy">full access</StatusBadge>
-            </div>
-            <div className="eg-list__row">
-              <div>
-                <strong>Analyst</strong>
-                <span>Can inspect events, funnels, attribution and identity without destructive actions.</span>
-              </div>
-              <StatusBadge status="matched">read focused</StatusBadge>
-            </div>
-            <div className="eg-list__row">
-              <div>
-                <strong>Operator</strong>
-                <span>Can monitor health, queues and replay workflows.</span>
-              </div>
-              <StatusBadge status="pending">ops focused</StatusBadge>
             </div>
           </div>
         </SurfaceCard>
@@ -1860,10 +2166,22 @@ function NotFoundPage() {
 }
 
 export default function App() {
+  const { isReady, user } = useAuth();
+
+  if (!isReady) {
+    return (
+      <div className="eg-auth-shell">
+        <StateCard title="Loading dashboard" description="Checking authentication state before the interface is rendered." />
+      </div>
+    );
+  }
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate replace to={sitePath("overview")} />} />
-      <Route path="/app/orgs/:orgId/projects/:projectId/sites/:siteId" element={<AppShell />}>
+      <Route path="/" element={<Navigate replace to={user ? sitePath("overview") : "/login"} />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/app/orgs/:orgId/projects/:projectId/sites/:siteId" element={<ProtectedAppShell />}>
         <Route index element={<Navigate replace to="overview" />} />
         <Route path="overview" element={<OverviewPage />} />
         <Route path="realtime" element={<RealtimePage />} />
@@ -1897,7 +2215,7 @@ export default function App() {
         <Route path="settings/general" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-      <Route path="*" element={<Navigate replace to={sitePath("overview")} />} />
+      <Route path="*" element={<Navigate replace to={user ? sitePath("overview") : "/login"} />} />
     </Routes>
   );
 }

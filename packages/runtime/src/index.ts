@@ -32,9 +32,22 @@ export type WorkerRequestContext = {
   method: string;
 };
 
+export type DatabaseStatement = {
+  bind: (...params: unknown[]) => DatabaseStatement;
+  first: <T = Record<string, unknown>>() => Promise<T | null>;
+  all: <T = Record<string, unknown>>() => Promise<{ results?: T[] }>;
+  run: () => Promise<unknown>;
+};
+
+export type DatabaseBinding = {
+  prepare: (query: string) => DatabaseStatement;
+  batch: (statements: DatabaseStatement[]) => Promise<unknown[]>;
+};
+
 export type EnvironmentBindings = {
   API_TOKEN?: string;
   CORS_ORIGIN?: string;
+  DB?: DatabaseBinding;
 };
 
 export function createRequestContext(request: Request): WorkerRequestContext {

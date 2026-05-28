@@ -1,7 +1,11 @@
 import {
   backfillAttributionAction,
+  createDomain,
+  deleteDomain,
+  fetchApiKeys,
   exportRawAction,
   fetchConsent,
+  fetchDomains,
   fetchDestinationDetail,
   fetchDeliveries,
   fetchDestinations,
@@ -32,7 +36,7 @@ export const currentContext = {
   projectId: "project_gateway",
   projectName: "Events Core",
   siteId: "site_alpha",
-  siteName: "alpha.store",
+  siteName: "goldring.ro",
   environment: "production",
   dateRange: "24h"
 } as const;
@@ -55,6 +59,8 @@ export const qk = {
   journeys: (siteId: string, canonicalUserId: string) => ["sites", siteId, "identity", "journeys", canonicalUserId],
   consent: (siteId: string) => ["sites", siteId, "identity", "consent"],
   install: (siteId: string) => ["sites", siteId, "settings", "install"],
+  domains: (siteId: string) => ["sites", siteId, "settings", "domains"],
+  apiKeys: (siteId: string) => ["sites", siteId, "settings", "api-keys"],
   route: (siteId: string, routeId: string) => ["sites", siteId, "routes", routeId],
   transformation: (siteId: string, transformationId: string) => ["sites", siteId, "transformations", transformationId],
   destination: (siteId: string, destinationId: string) => ["sites", siteId, "destinations", destinationId]
@@ -78,6 +84,10 @@ export const dashboardApi = {
   fetchJourneys: (canonicalUserId: string) => fetchJourneys(currentContext.siteId, canonicalUserId),
   fetchConsent: () => fetchConsent(currentContext.siteId),
   fetchInstall: () => fetchInstall(currentContext.siteId),
+  fetchDomains: () => fetchDomains(currentContext.siteId),
+  createDomain: (input: { domain: string; kind?: string; description?: string }) => createDomain(currentContext.siteId, input),
+  deleteDomain: (domainId: string) => deleteDomain(currentContext.siteId, domainId),
+  fetchApiKeys: () => fetchApiKeys(currentContext.siteId),
   fetchQueues: () => fetchQueues(currentContext.siteId),
   fetchDlq: () => fetchDlq(currentContext.siteId),
   fetchJobs: () => fetchJobs(currentContext.siteId),
