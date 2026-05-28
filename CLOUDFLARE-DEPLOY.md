@@ -2,7 +2,8 @@
 
 This repository is now wired for Cloudflare deployment with these production targets:
 
-- `eventsgateway.com` and `www.eventsgateway.com` -> root Astro marketing site
+- `eventsgateway.com` -> root Astro marketing site
+- `www.eventsgateway.com` -> root Worker redirect to `eventsgateway.com`
 - `dash.eventsgateway.com` -> `apps/dashboard`
 - `api.eventsgateway.com` -> `apps/api-worker`
 - `e.eventsgateway.com` -> `apps/collector-worker`
@@ -119,18 +120,9 @@ Before first deploy, make sure these custom domains exist in Cloudflare:
 
 Then deploy the apps. The Wrangler configs already contain the production route bindings.
 
-## Manual Cloudflare Step
-
-The repository binds both `eventsgateway.com` and `www.eventsgateway.com` to the marketing deployment, but the redirect from `www` to apex is still a Cloudflare dashboard rule.
-
-Create a Redirect Rule in Cloudflare:
-
-- if hostname equals `www.eventsgateway.com`
-- redirect to `https://eventsgateway.com/$1`
-- use a `301` permanent redirect
-
 ## Notes
 
 - The dashboard uses SPA fallback in `apps/dashboard/wrangler.jsonc`, so deep links work on Cloudflare.
 - The API worker allows `https://dash.eventsgateway.com` as the production CORS origin.
 - The collector worker is bound to `e.eventsgateway.com`.
+- The root Worker handles the `www.eventsgateway.com` to `eventsgateway.com` `301` redirect inside project code.

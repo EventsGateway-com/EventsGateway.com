@@ -33,7 +33,7 @@ The public site explains the platform. The dashboard and Workers expose the oper
 The current Cloudflare production map is:
 
 - `eventsgateway.com` -> public marketing site
-- `www.eventsgateway.com` -> public marketing site
+- `www.eventsgateway.com` -> redirect to `eventsgateway.com` handled by the root Worker
 - `dash.eventsgateway.com` -> dashboard
 - `api.eventsgateway.com` -> API Worker
 - `e.eventsgateway.com` -> collector Worker
