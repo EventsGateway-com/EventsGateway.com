@@ -9,16 +9,12 @@ import SurfaceGlow from "../components/SurfaceGlow.astro";
 import { homeContent } from "../content/homepage";
 import { siteConfig } from "../config/site";
 
-const heroTelemetry = [
-  { label: "Event intake", value: "Normalized", detail: "One internal event model before routing and delivery" },
-  { label: "Destination reach", value: "Multi-channel", detail: "Built for Meta, GA4, Google Ads, and custom pipelines" },
-  { label: "Control plane", value: "Observable", detail: "Inspect route logic, attribution state, and delivery outcomes" }
-];
+const heroTelemetry = homeContent.stats;
 
 const heroSignals = [
-  "Open source tracking",
-  "Event routing control",
-  "Attribution-ready delivery"
+  "Cloudflare-native runtime",
+  "Free-tier-friendly for small sites",
+  "One collector, many destinations"
 ];
 
 const softwareJsonLd = {
@@ -31,7 +27,7 @@ const softwareJsonLd = {
 ---
 
 <BaseLayout
-  title={`${siteConfig.name} — Open Source Tracking And Event Routing`}
+  title={`${siteConfig.name} — Cloudflare-Native Event Tracking`}
   description={siteConfig.description}
   canonicalPath="/"
   jsonLd={softwareJsonLd}
@@ -85,17 +81,17 @@ const softwareJsonLd = {
           <SurfaceGlow class="hero-visual__glow hero-visual__glow--secondary" />
           <div class="hero-orbit hero-orbit--outer"></div>
           <div class="hero-orbit hero-orbit--inner"></div>
-          <div class="hero-visual__badge hero-visual__badge--top">Route control</div>
-          <div class="hero-visual__badge hero-visual__badge--bottom">Delivery trace</div>
+          <div class="hero-visual__badge hero-visual__badge--top">Cloudflare-native runtime</div>
+          <div class="hero-visual__badge hero-visual__badge--bottom">Free-tier-friendly start</div>
           <div class="hero-side-panel hero-side-panel--left">
-            <span class="hero-side-panel__label">Destination set</span>
-            <strong>4 active paths</strong>
-            <small>Meta, GA4, Google Ads, custom webhooks</small>
+            <span class="hero-side-panel__label">Tracking posture</span>
+            <strong>Collect once</strong>
+            <small>Send clean events to multiple destinations from one control layer</small>
           </div>
           <div class="hero-side-panel hero-side-panel--right">
-            <span class="hero-side-panel__label">Gateway posture</span>
-            <strong>Privacy-first</strong>
-            <small>Consent-aware routing with normalized event flow</small>
+            <span class="hero-side-panel__label">Cost posture</span>
+            <strong>Small-site friendly</strong>
+            <small>Many low-volume sites can stay inside Cloudflare free-tier limits</small>
           </div>
           <CommandCenterMockup instanceId="hero" />
         </div>
@@ -106,9 +102,9 @@ const softwareJsonLd = {
   <section class="section section--tight">
     <Container>
       <SectionHeader
-        eyebrow="Why It Exists"
-        title="Built for teams that need one gateway for tracked events."
-        description="EventsGateway brings collection, routing, attribution, and delivery visibility into a single control surface instead of scattering logic across pixels and scripts."
+        eyebrow="Positioning"
+        title="Built for teams that need control without tracking sprawl."
+        description="EventsGateway gives product and growth teams one edge-native control plane for collection, routing, retries, and visibility."
       />
       <div class="card-grid">
         {
@@ -123,9 +119,9 @@ const softwareJsonLd = {
   <section class="section">
     <Container>
       <SectionHeader
-        eyebrow="Capabilities"
-        title="A routing layer for modern tracking stacks."
-        description="The public site introduces the product around event collection, identity, attribution, destinations, and operational visibility."
+        eyebrow="Capability Grid"
+        title="One Cloudflare-native layer for collection, routing, and delivery."
+        description="Every capability is designed to reduce vendor sprawl, simplify installs, and keep event operations readable."
       />
       <div class="capability-grid">
         {
@@ -137,19 +133,43 @@ const softwareJsonLd = {
     </Container>
   </section>
 
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Pricing"
+        title="Small-site tracking can often stay free."
+        description="Cloudflare's free tiers are large enough that many low-volume sites can run EventsGateway without needing the $5/month Workers paid plan on day one."
+      />
+      <div class="stats-grid">
+        {
+          homeContent.pricingHighlights.map((item) => (
+            <div class="surface-panel">
+              <div class="surface-panel__inner stat-card">
+                <span class="kicker">{item.label}</span>
+                <strong>{item.value}</strong>
+                <p>{item.detail}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+      <p class="pricing-note">{homeContent.pricingFootnote}</p>
+    </Container>
+  </section>
+
   <section class="section">
     <Container>
       <div class="two-column">
         <div class="stack">
           <SectionHeader
             eyebrow="Workflow"
-            title="A clear path from collection to delivery."
-            description="The flow stays simple: install, collect, route, then inspect deliveries and attribution with more control."
+            title="A direct path from tracker install to live event routing."
+            description="Start with one lightweight integration, route through Cloudflare, and expand destinations only when your stack needs them."
           />
           <ul class="info-list">
-            <li>Built for technical teams that need stronger event governance than browser pixels alone can provide.</li>
-            <li>Designed for Meta, GA4, Google Ads, and custom event pipelines from the same event source.</li>
-            <li>Optimized for Cloudflare-native deployment and a static public presence.</li>
+            <li>Built for founders, growth teams, ecommerce operators, and product teams.</li>
+            <li>Designed to keep implementation readable across both marketing and engineering stakeholders.</li>
+            <li>Optimized for low-friction installation and a cost model that starts small.</li>
           </ul>
         </div>
         <div class="timeline">
@@ -167,8 +187,8 @@ const softwareJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Control Center"
-        title="A visual language that matches an event gateway product."
-        description="The mockup emphasizes event intake, routing control, destination delivery, and operational observability without pretending to be the live dashboard."
+        title="A product-looking interface for a real event pipeline."
+        description="The visual layer reinforces what matters: one collector, clear routing, operational visibility, and a deployment footprint that stays friendly to small sites."
       />
       <CommandCenterMockup instanceId="proof" />
     </Container>
@@ -177,9 +197,9 @@ const softwareJsonLd = {
   <section class="section section--tight">
     <Container>
       <SectionHeader
-        eyebrow="Privacy, Routing, Self-Hosting"
-        title="Tracking infrastructure with stronger operational boundaries."
-        description="The public site stays static and premium while the product story focuses on privacy-aware collection, explicit routing rules, and self-hosted deployment."
+        eyebrow="Cloudflare Stack"
+        title="Built for edge delivery without traditional backend overhead."
+        description="The platform story is simple: lightweight tracker, Cloudflare-native runtime, centralized routing, and a cost profile that scales with actual usage."
       />
       <div class="triple-grid">
         {
@@ -199,16 +219,16 @@ const softwareJsonLd = {
           <h2 class="section-title">{homeContent.finalCtaTitle}</h2>
           <p class="section-copy">{homeContent.finalCtaText}</p>
           <div class="button-row">
-            <Button href="/download/" variant="primary" icon="download">Download</Button>
-            <Button href={siteConfig.social.github} variant="secondary" icon="arrow-right">View GitHub</Button>
+            <Button href="/install/" variant="primary" icon="download">Install</Button>
             <Button href="/contact/" variant="secondary" icon="mail">Contact</Button>
           </div>
         </div>
       </div>
     </Container>
   </section>
-  <script is:inline src="/scripts/window-matrix.js" defer></script>
 </BaseLayout>
+
+<script is:inline src="/scripts/window-matrix.js" defer></script>
 
 <style>
   .stat-card {
@@ -229,6 +249,14 @@ const softwareJsonLd = {
     margin: 0;
     color: var(--color-muted);
     line-height: 1.55;
+  }
+
+  .pricing-note {
+    max-width: 62rem;
+    margin: 1.25rem auto 0;
+    color: var(--color-muted);
+    line-height: 1.7;
+    text-align: center;
   }
 
   .hero-signal-bar {

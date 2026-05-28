@@ -5,23 +5,26 @@ export const siteConfig = {
   description:
     "Open source tracking and event routing platform for Meta, GA4, Google Ads, and custom event pipelines.",
   email: "contact@eventsgateway.com",
-  tagline: "Open source tracking and event routing platform.",
-  footerStatus: "Open source event infrastructure for collection, routing, and attribution.",
+  tagline: "Open source tracking and event routing with a Cloudflare-native delivery path.",
+  footerStatus: "Open source event infrastructure for collection, routing, delivery, and observability.",
   nav: [
     { label: "Home", href: "/" },
-    { label: "Download", href: "/download/" },
+    { label: "Install", href: "/install/" },
+    { label: "Docs", href: "/docs/" },
+    { label: "Playbooks", href: "/docs/playbooks/" },
+    { label: "Comparisons", href: "/compare/" },
     { label: "Contact", href: "/contact/" }
   ],
   cta: {
-    primary: { label: "Download", href: "/download/" },
+    primary: { label: "Install", href: "/install/" },
     secondary: { label: "Contact", href: "/contact/" }
   },
   social: {
-    github: "https://github.com/eventsgateway",
+    github: "https://github.com/EventsGateway-com/EventsGateway.com",
     linkedin: "",
     x: ""
   },
-  ogImage: "/og/eventsgateway.svg"
+  ogImage: "/og/command-lattice.svg"
 } as const;
 
 export type SiteConfig = typeof siteConfig;

@@ -48,8 +48,7 @@ The forwarder Worker is currently deployed without a dedicated public custom dom
 │   ├── api-worker/
 │   ├── collector-worker/
 │   ├── dashboard/
-│   ├── forwarder-worker/
-│   └── marketing-site/
+│   └── forwarder-worker/
 ├── packages/
 │   ├── platform-data/
 │   ├── routing-engine/
@@ -62,21 +61,18 @@ The forwarder Worker is currently deployed without a dedicated public custom dom
 ├── astro.config.mjs
 ├── package.json
 ├── pnpm-workspace.yaml
-├── wrangler.jsonc
-└── CLOUDFLARE-DEPLOY.md
+└── wrangler.jsonc
 ```
 
 ## Canonical Deploy Targets
 
-The repository contains two marketing-site code paths, but the canonical production target is the repository root:
+The canonical production targets are:
 
 - root app `./` -> canonical marketing site
 - `apps/dashboard` -> canonical dashboard deploy target
 - `apps/api-worker` -> canonical API deploy target
 - `apps/collector-worker` -> canonical collector deploy target
 - `apps/forwarder-worker` -> canonical forwarder deploy target
-
-`apps/marketing-site` is not the active production marketing deployment target at this time.
 
 ## Core Stack
 
@@ -178,8 +174,6 @@ Or deploy the full public surface in sequence:
 ```bash
 npm run deploy:all
 ```
-
-Detailed Cloudflare setup, route binding, and secret placement are documented in `CLOUDFLARE-DEPLOY.md`.
 
 ## Environment And Secrets
 
