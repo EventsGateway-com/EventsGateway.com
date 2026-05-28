@@ -3,13 +3,15 @@ export const siteConfig = {
   shortName: "EG",
   domain: "https://example.com",
   description:
-    "A Cloudflare Workers-based event gateway that installs easily on any site and routes events to analytics, ads, and custom destinations.",
+    "A Cloudflare-native event gateway that installs easily on any site, routes events to analytics, ads, and custom destinations, and can stay free for many small sites within Cloudflare free-tier limits.",
   email: "contact@example.com",
-  tagline: "A Cloudflare Workers event gateway for easy site installation and controlled event routing.",
-  footerStatus: "Built on Cloudflare Workers and designed for fast site installation.",
+  tagline: "Cloudflare-native tracking and event routing with a free-tier-friendly path for small sites.",
+  footerStatus: "Built on Cloudflare services and designed so many small sites can start with free-tier-friendly tracking.",
   nav: [
     { label: "Home", href: "/" },
     { label: "Install", href: "/install/" },
+    { label: "Docs", href: "/docs/" },
+    { label: "Compare", href: "/compare/" },
     { label: "Contact", href: "/contact/" }
   ],
   cta: {

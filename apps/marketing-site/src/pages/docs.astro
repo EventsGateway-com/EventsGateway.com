@@ -1,0 +1,229 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { docsContent } from "../content/docs";
+
+const docsJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: docsContent.title,
+  description: docsContent.intro
+};
+---
+
+<BaseLayout
+  title={docsContent.title}
+  description={docsContent.intro}
+  canonicalPath="/docs/"
+  jsonLd={docsJsonLd}
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{docsContent.eyebrow}</span>
+        <h1 class="page-title">{docsContent.title}</h1>
+        <p class="page-copy">{docsContent.intro}</p>
+        <div class="button-row">
+          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="/compare/" variant="secondary" icon="arrow-right">Compare Trackers</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Quick Start"
+        title="Expose a simple e_g function."
+        description="The browser only needs one canonical event function. EventsGateway can transform and route per destination after collection."
+      />
+      <div class="command-grid">
+        <div class="surface-panel command-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Minimal wrapper</span>
+            <pre class="command-block"><code>{docsContent.quickStart}</code></pre>
+          </div>
+        </div>
+        <div class="surface-panel command-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Page view example</span>
+            <pre class="command-block"><code>{docsContent.pageviewExample}</code></pre>
+          </div>
+        </div>
+        <div class="surface-panel command-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Purchase example</span>
+            <pre class="command-block"><code>{docsContent.purchaseExample}</code></pre>
+          </div>
+        </div>
+        <div class="surface-panel command-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Identity example</span>
+            <pre class="command-block"><code>{docsContent.identifyExample}</code></pre>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="two-column">
+        <div>
+          <SectionHeader
+            eyebrow="Rules"
+            title="How to think about the event model."
+            description="The canonical name stays stable in your site code. Routing, payload expansion, and platform-specific formatting happen downstream."
+          />
+          <ul class="simple-list">
+            {docsContent.notes.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+        <div>
+          <SectionHeader
+            eyebrow="Common Fields"
+            title="Payload fields that matter most."
+            description="These fields make routing, deduplication, audience building, and conversion reporting more reliable."
+          />
+          <div class="card-grid">
+            {
+              docsContent.eventFields.map((item) => (
+                <PremiumCard icon="check" title={item.name} text={item.description} />
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <SectionHeader
+        eyebrow="Canonical Event Catalog"
+        title="Standard events for Meta, Google Ads, and TikTok."
+        description="Meta and TikTok have named standard events. Google Ads is modeled here as the recommended conversion or audience action that EventsGateway should map to."
+      />
+      <div class="surface-panel table-panel">
+        <div class="surface-panel__inner">
+          <div class="docs-table-wrap">
+            <table class="docs-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Canonical e_g Event</th>
+                  <th>When To Fire</th>
+                  <th>Recommended Payload</th>
+                  <th>Meta</th>
+                  <th>Google Ads</th>
+                  <th>TikTok</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  docsContent.eventCatalog.map((item) => (
+                    <tr>
+                      <td>{item.category}</td>
+                      <td><code>{item.event}</code></td>
+                      <td>{item.trigger}</td>
+                      <td>{item.payload}</td>
+                      <td>{item.meta}</td>
+                      <td>{item.google}</td>
+                      <td>{item.tiktok}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="eyebrow">Documentation Strategy</span>
+          <h2 class="section-title">Write one event layer once, then route everywhere.</h2>
+          <p class="section-copy">
+            That is the point of EventsGateway. Your site sends canonical events through <code>e_g</code>, while the
+            platform handles routing, platform naming, payload enrichment, and destination-specific delivery logic.
+          </p>
+          <div class="button-row">
+            <Button href="/install/" variant="primary" icon="download">Install Guide</Button>
+            <Button href="/compare/" variant="secondary" icon="arrow-right">Comparison Pages</Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .command-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .command-panel {
+    height: 100%;
+  }
+
+  .command-block {
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(5, 10, 24, 0.9);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .table-panel {
+    overflow: hidden;
+  }
+
+  .docs-table-wrap {
+    overflow-x: auto;
+  }
+
+  .docs-table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+  }
+
+  .docs-table th,
+  .docs-table td {
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  .docs-table th {
+    color: var(--color-subtle);
+    font-size: 0.74rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .docs-table td code,
+  .section-copy code {
+    font-family: var(--font-mono);
+    color: var(--color-text);
+  }
+</style>

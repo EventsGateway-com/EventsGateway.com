@@ -13,7 +13,7 @@ const pathname = Astro.url.pathname;
     <div class="site-header__inner">
       <BrandMark />
       <div class="desktop-nav-shell">
-        <span class="desktop-nav-shell__label">Command rail</span>
+        <span class="desktop-nav-shell__label">Navigation</span>
         <nav class="desktop-nav" aria-label="Primary">
           {
             primaryNav.map((item) => (
@@ -26,7 +26,7 @@ const pathname = Astro.url.pathname;
         </nav>
       </div>
       <div class="desktop-cta">
-        <span class="header-status">Edge sync active</span>
+        <span class="header-status">Free-tier friendly</span>
         <Button href={siteConfig.cta.primary.href} variant="secondary" icon="download">
           {siteConfig.cta.primary.label}
         </Button>

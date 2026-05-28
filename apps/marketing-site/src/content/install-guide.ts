@@ -2,7 +2,7 @@ export const installGuideContent = {
   title: "Install EventsGateway On Your Domain",
   eyebrow: "GitHub To Production",
   intro:
-    "This guide shows the fastest path from the GitHub repository page to a working EventsGateway setup on your own domain. The goal is simple: deploy the Workers runtime, connect a collector subdomain, and install the tracker on any site you already run.",
+    "This guide shows the fastest path from the GitHub repository page to a working EventsGateway setup on your own domain. The goal is simple: deploy the Cloudflare runtime, connect a collector subdomain, install the tracker on any site you already run, and keep the setup inside free-tier limits whenever your traffic profile allows it.",
   preflight: [
     {
       title: "GitHub repository access",
@@ -10,7 +10,7 @@ export const installGuideContent = {
     },
     {
       title: "Cloudflare account",
-      text: "You need a Cloudflare account with access to Workers and the domain where the collector subdomain will run."
+      text: "You need a Cloudflare account with access to Workers and the domain where the collector subdomain will run. Many small sites can start on Cloudflare free tiers before the paid plan is needed."
     },
     {
       title: "A target website",
@@ -26,7 +26,7 @@ export const installGuideContent = {
     {
       step: "02",
       title: "Deploy the Workers runtime",
-      text: "Install dependencies, configure Wrangler for the collector, API, and forwarder workers, then deploy them to Cloudflare Workers."
+      text: "Install dependencies, configure Wrangler for the collector, API, and forwarder workers, then deploy them to Cloudflare. For many small sites, this can stay inside the free-tier envelope."
     },
     {
       step: "03",

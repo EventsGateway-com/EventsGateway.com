@@ -1,0 +1,124 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Button from "../../components/Button.astro";
+import Container from "../../components/Container.astro";
+import PremiumCard from "../../components/PremiumCard.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { comparePages, type CompareSlug } from "../../content/compare-pages";
+
+export function getStaticPaths() {
+  return Object.keys(comparePages).map((slug) => ({
+    params: { slug },
+    props: { page: comparePages[slug as CompareSlug] }
+  }));
+}
+
+const { page } = Astro.props as {
+  page: (typeof comparePages)[CompareSlug];
+};
+---
+
+<BaseLayout
+  title={page.title}
+  description={page.description}
+  canonicalPath={`/compare/${Astro.params.slug}/`}
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">Comparison</span>
+        <h1 class="page-title">{page.title}</h1>
+        <p class="page-copy">{page.description}</p>
+        <div class="button-row">
+          <Button href="/compare/" variant="secondary" icon="arrow-right">Back to comparisons</Button>
+          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Quick Verdict"
+        title={page.winner}
+        description="This page is designed to make the buying and architecture trade-off obvious in plain language."
+      />
+      <div class="card-grid">
+        {
+          page.points.map((item) => (
+            <PremiumCard icon="check" title={item.title} text={item.text} />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <SectionHeader
+        eyebrow="Head-to-Head"
+        title="Side-by-side comparison."
+        description="The goal here is clarity, not generic feature grids."
+      />
+      <div class="surface-panel table-panel">
+        <div class="surface-panel__inner">
+          <div class="docs-table-wrap">
+            <table class="docs-table">
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Alternative</th>
+                  <th>EventsGateway</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  page.table.map((row) => (
+                    <tr>
+                      <td>{row[0]}</td>
+                      <td>{row[1]}</td>
+                      <td>{row[2]}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .table-panel {
+    overflow: hidden;
+  }
+
+  .docs-table-wrap {
+    overflow-x: auto;
+  }
+
+  .docs-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+  }
+
+  .docs-table th,
+  .docs-table td {
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  .docs-table th {
+    color: var(--color-subtle);
+    font-size: 0.74rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+</style>

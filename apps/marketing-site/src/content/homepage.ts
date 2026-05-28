@@ -1,14 +1,42 @@
 export const homeContent = {
-  eyebrow: "Cloudflare Workers Event Gateway",
-  title: "Collect events once, route them everywhere, and install in minutes on any site.",
+  eyebrow: "Cloudflare-Native Event Gateway",
+  title: "Tracking that looks premium, installs fast, and can stay free for many small sites.",
   description:
-    "EventsGateway is a Cloudflare Workers-based event gateway for Meta, GA4, Google Ads, and custom pipelines. Add one lightweight tracker to any website, send events to one endpoint, and control routing, delivery, and observability from a single dashboard.",
-  trustMarks: ["Built on Cloudflare Workers", "Easy install on any site", "One event stream, many destinations"],
-  stats: [
-    { label: "Install path", value: "Minutes", detail: "Script tag or SDK setup for any site" },
-    { label: "Runtime model", value: "Edge-first", detail: "Built on Cloudflare Workers for fast ingestion" },
-    { label: "Routing posture", value: "One to many", detail: "Collect once and forward to multiple destinations" }
+    "EventsGateway is a Cloudflare-native event gateway for Meta, GA4, Google Ads, and custom pipelines. Add one lightweight tracker to any website, send events to one endpoint, and control routing, delivery, retries, and observability from a single dashboard. For many small sites, the runtime can stay inside Cloudflare free-tier limits before the paid plan is even needed.",
+  trustMarks: [
+    "Built on Cloudflare Workers",
+    "Small-site free-tier friendly",
+    "One event stream, many destinations"
   ],
+  stats: [
+    { label: "Workers Free", value: "100K/day", detail: "Requests included before the paid plan becomes relevant" },
+    { label: "Queues Free", value: "10K/day", detail: "Daily operations included for lightweight delivery pipelines" },
+    { label: "R2 Free", value: "10 GB", detail: "Standard storage included with free operations every month" }
+  ],
+  pricingHighlights: [
+    {
+      label: "Workers Free",
+      value: "100,000/day",
+      detail: "Worker requests included on the free plan, which is often enough for a small tracking setup."
+    },
+    {
+      label: "Queues Free",
+      value: "10,000/day",
+      detail: "Queue operations included for retry-friendly event delivery on low-volume sites."
+    },
+    {
+      label: "R2 Free",
+      value: "10 GB",
+      detail: "Standard object storage included, plus 1M Class A and 10M Class B operations per month."
+    },
+    {
+      label: "Paid Plan",
+      value: "$5/mo",
+      detail: "The Workers paid plan usually matters only after your site grows beyond the free-tier envelope."
+    }
+  ],
+  pricingFootnote:
+    "Cloudflare pricing depends on real usage. Free-tier capacity, storage, and queue limits apply, so small sites can often run tracking at zero monthly runtime cost while larger workloads move naturally into paid usage.",
   problems: [
     {
       icon: "spark",
@@ -83,21 +111,21 @@ export const homeContent = {
   controlColumns: [
     {
       icon: "shield",
-      title: "Built on Cloudflare Workers",
-      text: "The core collector and runtime are designed for edge execution with a lightweight operational footprint."
+      title: "Built on Cloudflare services",
+      text: "Workers, Durable Objects, D1, Queues, and R2 give the platform an edge-native stack without traditional server overhead."
     },
     {
       icon: "terminal",
-      title: "Easy to install",
-      text: "The install path is intentionally simple so teams can connect any site without a long integration project."
+      title: "Small-site cost advantage",
+      text: "Many low-volume sites can keep event collection and routing inside Cloudflare free-tier limits instead of paying for a separate tracking backend."
     },
     {
       icon: "cloud",
       title: "One control center",
-      text: "Routes, deliveries, schemas, and operations stay visible in one place instead of being spread across vendors."
+      text: "Routes, deliveries, schemas, retry paths, and operations stay visible in one place instead of being spread across vendors."
     }
   ],
-  finalCtaTitle: "Ready to add a Cloudflare Workers event gateway to your site?",
+  finalCtaTitle: "Ready to launch Cloudflare-native tracking on your site?",
   finalCtaText:
-    "Install EventsGateway quickly, collect events once, and keep delivery to analytics, ads, and custom endpoints under one control layer."
+    "Install EventsGateway quickly, collect events once, and keep delivery to analytics, ads, and custom endpoints under one control layer with a cost model that stays friendly to small sites."
 } as const;

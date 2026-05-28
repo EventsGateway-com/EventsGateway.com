@@ -5,9 +5,9 @@ const { instanceId = "primary" } = Astro.props;
 
 const windows = [
   { id: "terminal", title: "Terminal", icon: "terminal", x: 6, y: 7, w: 40, h: 31 },
-  { id: "planner", title: "Reasoning Stack", icon: "spark", x: 49, y: 9, w: 34, h: 28 },
-  { id: "monitor", title: "Deploy Monitor", icon: "cloud", x: 18, y: 42, w: 31, h: 27 },
-  { id: "mesh", title: "Execution Mesh", icon: "layers", x: 54, y: 41, w: 29, h: 24 }
+  { id: "planner", title: "Routing Rules", icon: "spark", x: 49, y: 9, w: 34, h: 28 },
+  { id: "monitor", title: "Delivery Monitor", icon: "cloud", x: 18, y: 42, w: 31, h: 27 },
+  { id: "mesh", title: "Destination Graph", icon: "layers", x: 54, y: 41, w: 29, h: 24 }
 ] as const;
 ---
 
@@ -19,15 +19,15 @@ const windows = [
         <span></span>
         <span></span>
       </div>
-      <div class="mockup__path">execution.command-lattice.dev</div>
-      <div class="mockup__status">Ops graph online</div>
+      <div class="mockup__path">dash.eventsgateway.com</div>
+      <div class="mockup__status">Collector online</div>
     </div>
 
     <div class="mockup__telemetry">
-      <div class="telemetry-chip"><span class="telemetry-chip__label">Compute lane</span><strong>Scoped</strong></div>
-      <div class="telemetry-chip"><span class="telemetry-chip__label">Review state</span><strong>Visible</strong></div>
-      <div class="telemetry-chip"><span class="telemetry-chip__label">Deploy posture</span><strong>Edge static</strong></div>
-      <div class="telemetry-chip"><span class="telemetry-chip__label">Signal quality</span><strong>Low noise</strong></div>
+      <div class="telemetry-chip"><span class="telemetry-chip__label">Collector</span><strong>Workers</strong></div>
+      <div class="telemetry-chip"><span class="telemetry-chip__label">Queue state</span><strong>Healthy</strong></div>
+      <div class="telemetry-chip"><span class="telemetry-chip__label">Pricing posture</span><strong>Free-tier friendly</strong></div>
+      <div class="telemetry-chip"><span class="telemetry-chip__label">Routing mode</span><strong>One to many</strong></div>
     </div>
 
     <div class="mockup__stage">
@@ -64,10 +64,10 @@ const windows = [
                 window.id === "terminal" && (
                   <div class="widget-terminal">
                     <code>
-                      <span>$ define target --scope public-site</span>
-                      <span>$ allocate reasoning rails --mode scoped</span>
-                      <span>$ run delivery pass --stack build,review</span>
-                      <span class="widget-terminal__success">ready for controlled deploy</span>
+                      <span>$ tracker install --site www.example.com</span>
+                      <span>$ collector bind --domain events.example.com</span>
+                      <span>$ routes publish --destinations meta,ga4,google-ads</span>
+                      <span class="widget-terminal__success">ready for live event delivery</span>
                     </code>
                   </div>
                 )
@@ -75,18 +75,18 @@ const windows = [
               {
                 window.id === "planner" && (
                   <div class="widget-list">
-                    <div class="widget-list__row"><strong>Design system</strong><span>Shared surfaces and command states</span></div>
-                    <div class="widget-list__row"><strong>Implementation rail</strong><span>Scoped execution with visible checkpoints</span></div>
-                    <div class="widget-list__row"><strong>Verification pass</strong><span>Diagnostics and deploy audit before release</span></div>
+                    <div class="widget-list__row"><strong>Consent-aware routes</strong><span>Route only when privacy and event rules are satisfied</span></div>
+                    <div class="widget-list__row"><strong>Destination mapping</strong><span>Send the same event stream to multiple analytics and ad platforms</span></div>
+                    <div class="widget-list__row"><strong>Retry policy</strong><span>Keep delivery observable and resilient when vendors fail</span></div>
                   </div>
                 )
               }
               {
                 window.id === "monitor" && (
                   <div class="widget-metrics">
-                    <div class="widget-metrics__item"><span>Edge cache</span><strong>92%</strong></div>
-                    <div class="widget-metrics__item"><span>Latency</span><strong>34ms</strong></div>
-                    <div class="widget-metrics__item"><span>Build sync</span><strong>Green</strong></div>
+                    <div class="widget-metrics__item"><span>Collector latency</span><strong>34ms</strong></div>
+                    <div class="widget-metrics__item"><span>Queue backlog</span><strong>Low</strong></div>
+                    <div class="widget-metrics__item"><span>Destination health</span><strong>Green</strong></div>
                     <div class="widget-bar"><span style="width: 88%"></span></div>
                     <div class="widget-bar"><span style="width: 74%"></span></div>
                   </div>

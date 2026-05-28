@@ -1,0 +1,60 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Button from "../../components/Button.astro";
+import Container from "../../components/Container.astro";
+import PremiumCard from "../../components/PremiumCard.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { compareContent } from "../../content/compare";
+---
+
+<BaseLayout
+  title={compareContent.title}
+  description={compareContent.intro}
+  canonicalPath="/compare/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{compareContent.eyebrow}</span>
+        <h1 class="page-title">{compareContent.title}</h1>
+        <p class="page-copy">{compareContent.intro}</p>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Comparison Library"
+        title="Choose the right tracker architecture for your team."
+        description="Each comparison explains where EventsGateway fits best and where another product may still be the stronger choice."
+      />
+      <div class="card-grid">
+        {
+          compareContent.cards.map((item) => (
+            <PremiumCard title={item.title} text={item.text} eyebrow={item.eyebrow} icon="layers">
+              <Button href={`/compare/${item.slug}/`} variant="secondary" icon="arrow-right">Read comparison</Button>
+            </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="kicker">Summary</span>
+          <ul class="simple-list">
+            {compareContent.summary.map((item) => <li>{item}</li>)}
+          </ul>
+          <div class="button-row">
+            <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+            <Button href="/docs/" variant="secondary" icon="arrow-right">Read Documentation</Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

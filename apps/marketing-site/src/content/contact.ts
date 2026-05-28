@@ -44,6 +44,10 @@ export const contactContent = {
       answer: "Yes. The collector and routing runtime are designed around Cloudflare Workers for edge deployment."
     },
     {
+      question: "Can small sites run EventsGateway for free?",
+      answer: "Often, yes. Many small sites can stay within Cloudflare free-tier limits for Workers, Queues, and storage, so the runtime cost can remain at zero until traffic or storage grows."
+    },
+    {
       question: "Can you route events to multiple destinations from one integration?",
       answer: "Yes. EventsGateway is built to collect once and route to tools such as Meta, GA4, Google Ads, and custom webhooks."
     }
