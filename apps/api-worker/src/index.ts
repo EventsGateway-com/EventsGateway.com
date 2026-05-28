@@ -44,7 +44,10 @@ import {
 import {
   addSiteDomain,
   adminSetUserPassword,
+  createAdminSite,
+  createAdminSiteKey,
   createUserSession,
+  deleteAdminSite,
   deleteAdminUser,
   deleteSiteDomain,
   ensureControlPlane,
@@ -58,6 +61,7 @@ import {
   listSiteKeys,
   loginUserSession,
   revokeSession,
+  revokeAdminSiteKey,
   updateAdminUser
 } from "../../../packages/runtime/src/control-plane";
 import {
@@ -120,6 +124,10 @@ function requireGlobalAdmin(
   const unauthorized = requireSessionAuthorization(context, authorization);
   if (unauthorized) {
     return unauthorized;
+  }
+
+  if (!authorization || authorization.kind !== "session") {
+    return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
   }
 
   if (authorization.user.role !== "global_admin") {
@@ -213,6 +221,9 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
     if (forbidden) {
       return forbidden;
     }
+    if (!authorization || authorization.kind !== "session") {
+      return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+    }
 
     if (segments[2] === "overview" && method === "GET") {
       return json(context, await getAdminOverview(env.DB));
@@ -249,8 +260,50 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
       }
     }
 
-    if (segments[2] === "sites" && method === "GET") {
+    if (segments[2] === "sites" && segments.length === 3 && method === "GET") {
       return json(context, await listAdminSites(env.DB));
+    }
+
+    if (segments[2] === "sites" && segments.length === 3 && method === "POST") {
+      try {
+        const body = await readJson<{
+          name: string;
+          domain?: string;
+          org_name?: string;
+          project_name?: string;
+          environment?: string;
+        }>(request);
+        return json(context, await createAdminSite(env.DB, body), { status: 201 });
+      } catch (error) {
+        return errorResponse(context, "admin_site_create_failed", error instanceof Error ? error.message : "Unable to create site.", 400);
+      }
+    }
+
+    if (segments[2] === "sites" && segments.length === 4 && segments[3] && method === "DELETE") {
+      try {
+        const deleted = await deleteAdminSite(env.DB, segments[3]);
+        return deleted ? json(context, { deleted: true }) : notFound(context, `Site ${segments[3]} not found`);
+      } catch (error) {
+        return errorResponse(context, "admin_site_delete_failed", error instanceof Error ? error.message : "Unable to delete site.", 400);
+      }
+    }
+
+    if (segments[2] === "sites" && segments[3] && segments[4] === "keys" && method === "POST") {
+      try {
+        const body = await readJson<{ label: string }>(request);
+        return json(context, await createAdminSiteKey(env.DB, segments[3], body), { status: 201 });
+      } catch (error) {
+        return errorResponse(context, "admin_site_key_create_failed", error instanceof Error ? error.message : "Unable to create key.", 400);
+      }
+    }
+
+    if (segments[2] === "sites" && segments[3] && segments[4] === "keys" && segments[5] && method === "DELETE") {
+      try {
+        const key = await revokeAdminSiteKey(env.DB, segments[3], segments[5]);
+        return key ? json(context, key) : notFound(context, `Key ${segments[5]} not found`);
+      } catch (error) {
+        return errorResponse(context, "admin_site_key_revoke_failed", error instanceof Error ? error.message : "Unable to revoke key.", 400);
+      }
     }
 
     return notFound(context, `Unknown API route: ${context.url.pathname}`);

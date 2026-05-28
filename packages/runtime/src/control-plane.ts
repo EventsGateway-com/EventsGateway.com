@@ -193,6 +193,16 @@ export function normalizeDomain(domain: string) {
     .replace(/\.$/, "");
 }
 
+function toIdSegment(value: string, fallback: string) {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return normalized || fallback;
+}
+
 export async function sha256Hex(value: string) {
   const encoded = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", encoded);
@@ -765,6 +775,139 @@ export async function listAdminSites(dbInput: DatabaseBinding | undefined): Prom
   );
 }
 
+export async function createAdminSite(
+  dbInput: DatabaseBinding | undefined,
+  input: {
+    name: string;
+    domain?: string;
+    org_name?: string;
+    project_name?: string;
+    environment?: string;
+  }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const name = input.name.trim();
+  const domain = input.domain ? normalizeDomain(input.domain) : "";
+  const orgName = input.org_name?.trim() || DEFAULT_ORG_NAME;
+  const projectName = input.project_name?.trim() || DEFAULT_PROJECT_NAME;
+  const environment = (input.environment?.trim().toLowerCase() || DEFAULT_ENVIRONMENT) as string;
+
+  if (name.length < 2) {
+    throw new Error("Site name must contain at least 2 characters.");
+  }
+
+  if (domain) {
+    const existingDomain = await firstRecord(db, "SELECT id FROM site_domains WHERE domain = ? LIMIT 1", domain);
+    if (existingDomain) {
+      throw new Error("This domain already exists.");
+    }
+  }
+
+  const createdAt = nowIso();
+  const siteId = `site_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  const site = {
+    id: siteId,
+    org_id: `org_${toIdSegment(orgName, "open")}`,
+    org_name: orgName,
+    project_id: `project_${toIdSegment(projectName, "gateway")}`,
+    project_name: projectName,
+    name,
+    environment,
+    collector_url: "https://e.eventsgateway.com/v1/collect",
+    created_at: createdAt
+  } satisfies DashboardSite;
+
+  await db.prepare(
+    `
+      INSERT INTO sites (
+        id,
+        org_id,
+        org_name,
+        project_id,
+        project_name,
+        name,
+        environment,
+        collector_url,
+        created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      site.id,
+      site.org_id,
+      site.org_name,
+      site.project_id,
+      site.project_name,
+      site.name,
+      site.environment,
+      site.collector_url,
+      site.created_at
+    )
+    .run();
+
+  if (domain) {
+    await db.prepare(
+      `
+        INSERT INTO site_domains (id, site_id, domain, kind, status, description, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `
+    )
+      .bind(
+        crypto.randomUUID(),
+        site.id,
+        domain,
+        "production",
+        "verified",
+        "Primary production domain",
+        createdAt
+      )
+      .run();
+  }
+
+  const publicKey = createPublicKey();
+  await db.prepare(
+    `
+      INSERT INTO site_keys (id, site_id, label, public_key, key_hash, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      crypto.randomUUID(),
+      site.id,
+      "Primary collect key",
+      publicKey,
+      await sha256Hex(publicKey),
+      "active",
+      createdAt
+    )
+    .run();
+
+  return site;
+}
+
+export async function deleteAdminSite(dbInput: DatabaseBinding | undefined, siteId: string) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const site = await firstRecord(db, "SELECT id FROM sites WHERE id = ? LIMIT 1", siteId);
+  if (!site) {
+    return false;
+  }
+
+  if (siteId === DEFAULT_SITE_ID) {
+    throw new Error("The primary production site cannot be deleted.");
+  }
+
+  await db.prepare("DELETE FROM site_domains WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("DELETE FROM site_keys WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("DELETE FROM collected_events WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("DELETE FROM identity_profiles WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("DELETE FROM sites WHERE id = ?").bind(siteId).run();
+  return true;
+}
+
 export async function listSiteDomains(dbInput: DatabaseBinding | undefined, siteId: string) {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
@@ -852,9 +995,98 @@ export async function listSiteKeys(dbInput: DatabaseBinding | undefined, siteId:
   return records.map(toSiteKey);
 }
 
+export async function createAdminSiteKey(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  input: { label: string }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const site = await firstRecord(db, "SELECT id FROM sites WHERE id = ? LIMIT 1", siteId);
+  if (!site) {
+    throw new Error("Site not found.");
+  }
+
+  const label = input.label.trim();
+  if (label.length < 2) {
+    throw new Error("Key label must contain at least 2 characters.");
+  }
+
+  const createdAt = nowIso();
+  const publicKey = createPublicKey();
+  const record = {
+    id: crypto.randomUUID(),
+    site_id: siteId,
+    label,
+    public_key: publicKey,
+    status: "active",
+    created_at: createdAt,
+    last_used_at: null
+  } satisfies SiteKey;
+
+  await db.prepare(
+    `
+      INSERT INTO site_keys (id, site_id, label, public_key, key_hash, status, created_at, last_used_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      record.id,
+      record.site_id,
+      record.label,
+      record.public_key,
+      await sha256Hex(record.public_key),
+      record.status,
+      record.created_at,
+      record.last_used_at
+    )
+    .run();
+
+  return record;
+}
+
+export async function revokeAdminSiteKey(dbInput: DatabaseBinding | undefined, siteId: string, keyId: string) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const key = await firstRecord(
+    db,
+    `
+      SELECT id, site_id, label, public_key, status, created_at, last_used_at
+      FROM site_keys
+      WHERE site_id = ? AND id = ?
+      LIMIT 1
+    `,
+    siteId,
+    keyId
+  );
+  if (!key) {
+    return null;
+  }
+
+  if (asString(key.status) === "active") {
+    const activeKeyCount = await countRecords(
+      db,
+      "SELECT COUNT(*) AS count FROM site_keys WHERE site_id = ? AND status = 'active'",
+      siteId
+    );
+    if (activeKeyCount <= 1) {
+      throw new Error("At least one active collector key must remain.");
+    }
+
+    await db.prepare("UPDATE site_keys SET status = 'revoked' WHERE id = ?").bind(keyId).run();
+  }
+
+  return {
+    ...toSiteKey(key),
+    status: asString(key.status) === "active" ? "revoked" : asString(key.status)
+  } satisfies SiteKey;
+}
+
 export async function getPrimarySiteKey(dbInput: DatabaseBinding | undefined, siteId: string) {
   const keys = await listSiteKeys(dbInput, siteId);
-  const key = keys[0];
+  const key = keys.find((item) => item.status === "active");
   if (!key) {
     throw new Error("No active site key exists.");
   }

@@ -1,7 +1,10 @@
 import {
   backfillAttributionAction,
+  createAdminSiteKeyRecord,
+  createAdminSiteRecord,
   createDomain,
   deleteAdminUserRecord,
+  deleteAdminSiteRecord,
   deleteDomain,
   fetchAdminOverview,
   fetchAdminSites,
@@ -32,6 +35,7 @@ import {
   flushForwarderAction,
   replayDlqAction,
   replayEventAction,
+  revokeAdminSiteKeyRecord,
   updateAdminUserPassword,
   updateAdminUserRecord
 } from "./api-client";
@@ -106,6 +110,11 @@ export const dashboardApi = {
   updateAdminUserPassword: (userId: string, password: string) => updateAdminUserPassword(userId, password),
   deleteAdminUser: (userId: string) => deleteAdminUserRecord(userId),
   fetchAdminSites: () => fetchAdminSites(),
+  createAdminSite: (input: { name: string; domain?: string; org_name?: string; project_name?: string; environment?: string }) =>
+    createAdminSiteRecord(input),
+  deleteAdminSite: (siteId: string) => deleteAdminSiteRecord(siteId),
+  createAdminSiteKey: (siteId: string, input: { label: string }) => createAdminSiteKeyRecord(siteId, input),
+  revokeAdminSiteKey: (siteId: string, keyId: string) => revokeAdminSiteKeyRecord(siteId, keyId),
   fetchQueues: () => fetchQueues(currentContext.siteId),
   fetchDlq: () => fetchDlq(currentContext.siteId),
   fetchJobs: () => fetchJobs(currentContext.siteId),

@@ -1987,8 +1987,16 @@ function AdminUsersPage() {
 function AdminSitesPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
+  const [siteDraft, setSiteDraft] = useState({
+    name: "",
+    domain: "",
+    org_name: "",
+    project_name: "",
+    environment: "production"
+  });
   const [domainDrafts, setDomainDrafts] = useState<Record<string, string>>({});
   const [descriptionDrafts, setDescriptionDrafts] = useState<Record<string, string>>({});
+  const [keyLabelDrafts, setKeyLabelDrafts] = useState<Record<string, string>>({});
   const sitesQuery = useQuery({
     queryKey: qk.adminSites(),
     queryFn: dashboardApi.fetchAdminSites
@@ -2022,6 +2030,67 @@ function AdminSitesPage() {
       setError(mutationError instanceof Error ? mutationError.message : "Unable to delete domain.");
     }
   });
+  const createSiteMutation = useMutation({
+    mutationFn: (input: { name: string; domain?: string; org_name?: string; project_name?: string; environment?: string }) =>
+      dashboardApi.createAdminSite(input),
+    onSuccess: async () => {
+      setError("");
+      setSiteDraft({
+        name: "",
+        domain: "",
+        org_name: "",
+        project_name: "",
+        environment: "production"
+      });
+      await refreshAdminSites();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to create site.");
+    }
+  });
+  const deleteSiteMutation = useMutation({
+    mutationFn: dashboardApi.deleteAdminSite,
+    onSuccess: async () => {
+      setError("");
+      await refreshAdminSites();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to delete site.");
+    }
+  });
+  const createKeyMutation = useMutation({
+    mutationFn: ({ siteId, input }: { siteId: string; input: { label: string } }) => dashboardApi.createAdminSiteKey(siteId, input),
+    onSuccess: async (_, variables) => {
+      setError("");
+      setKeyLabelDrafts((current) => ({ ...current, [variables.siteId]: "" }));
+      await refreshAdminSites();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to create collector key.");
+    }
+  });
+  const revokeKeyMutation = useMutation({
+    mutationFn: ({ siteId, keyId }: { siteId: string; keyId: string }) => dashboardApi.revokeAdminSiteKey(siteId, keyId),
+    onSuccess: async () => {
+      setError("");
+      await refreshAdminSites();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to revoke collector key.");
+    }
+  });
+
+  function handleCreateSiteSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    createSiteMutation.mutate({
+      name: siteDraft.name.trim(),
+      domain: siteDraft.domain.trim() || undefined,
+      org_name: siteDraft.org_name.trim() || undefined,
+      project_name: siteDraft.project_name.trim() || undefined,
+      environment: siteDraft.environment.trim() || undefined
+    });
+  }
 
   function handleAdminDomainSubmit(event: FormEvent<HTMLFormElement>, siteId: string) {
     event.preventDefault();
@@ -2048,9 +2117,88 @@ function AdminSitesPage() {
         <StateCard title="Loading sites" description="Fetching the global platform site inventory." />
       ) : (
         <section className="eg-stack">
+          <SurfaceCard title="Create site" subtitle="Register a new tracked site with its first collector key and optional primary domain">
+            <form className="eg-auth-form" onSubmit={handleCreateSiteSubmit}>
+              <div className="eg-grid eg-grid--two">
+                <label className="eg-field">
+                  <span>Site name</span>
+                  <input
+                    className="eg-input"
+                    onChange={(event) => setSiteDraft((current) => ({ ...current, name: event.target.value }))}
+                    placeholder="Main storefront"
+                    required
+                    type="text"
+                    value={siteDraft.name}
+                  />
+                </label>
+                <label className="eg-field">
+                  <span>Primary domain</span>
+                  <input
+                    className="eg-input"
+                    onChange={(event) => setSiteDraft((current) => ({ ...current, domain: event.target.value }))}
+                    placeholder="store.example.com"
+                    type="text"
+                    value={siteDraft.domain}
+                  />
+                </label>
+                <label className="eg-field">
+                  <span>Organization</span>
+                  <input
+                    className="eg-input"
+                    onChange={(event) => setSiteDraft((current) => ({ ...current, org_name: event.target.value }))}
+                    placeholder="Open Commerce Lab"
+                    type="text"
+                    value={siteDraft.org_name}
+                  />
+                </label>
+                <label className="eg-field">
+                  <span>Project</span>
+                  <input
+                    className="eg-input"
+                    onChange={(event) => setSiteDraft((current) => ({ ...current, project_name: event.target.value }))}
+                    placeholder="Events Core"
+                    type="text"
+                    value={siteDraft.project_name}
+                  />
+                </label>
+              </div>
+              <label className="eg-field">
+                <span>Environment</span>
+                <input
+                  className="eg-input"
+                  onChange={(event) => setSiteDraft((current) => ({ ...current, environment: event.target.value }))}
+                  placeholder="production"
+                  type="text"
+                  value={siteDraft.environment}
+                />
+              </label>
+              <button
+                className="eg-button eg-button--primary"
+                disabled={createSiteMutation.isPending || siteDraft.name.trim().length < 2}
+                type="submit"
+              >
+                {createSiteMutation.isPending ? "Creating site..." : "Create site"}
+              </button>
+            </form>
+          </SurfaceCard>
           {sitesQuery.data.map((site) => (
             <SurfaceCard key={site.id} title={site.name} subtitle={`${site.org_name} · ${site.project_name} · ${site.id}`}>
               <div className="eg-admin-site">
+                <div className="eg-inline-actions">
+                  <span className="eg-pill is-mono">{site.collector_url}</span>
+                  {site.id === currentContext.siteId ? (
+                    <span className="eg-pill">Primary site</span>
+                  ) : (
+                    <button
+                      className="eg-button eg-button--compact"
+                      disabled={deleteSiteMutation.isPending}
+                      onClick={() => deleteSiteMutation.mutate(site.id)}
+                      type="button"
+                    >
+                      Delete site
+                    </button>
+                  )}
+                </div>
                 <div className="eg-admin-site__meta">
                   <MetricMini label="Environment" value={site.environment} />
                   <MetricMini label="Domains" value={site.domain_count} />
@@ -2130,19 +2278,66 @@ function AdminSitesPage() {
                   <div className="eg-admin-panel">
                     <strong>Collector keys</strong>
                     <div className="eg-list">
-                      {site.api_keys.map((item) => (
-                        <div className="eg-list__row" key={item.id}>
-                          <div>
-                            <strong>{item.label}</strong>
-                            <span>{item.public_key}</span>
+                      {site.api_keys.map((item) => {
+                        const activeKeyCount = site.api_keys.filter((key) => key.status === "active").length;
+                        return (
+                          <div className="eg-list__row" key={item.id}>
+                            <div>
+                              <strong>{item.label}</strong>
+                              <span>{item.public_key}</span>
+                            </div>
+                            <div className="eg-inline-actions">
+                              <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
+                              <span className="eg-pill">{item.last_used_at ? formatDateTime(item.last_used_at) : "Not used yet"}</span>
+                              {item.status === "active" ? (
+                                <button
+                                  className="eg-button eg-button--compact"
+                                  disabled={revokeKeyMutation.isPending || activeKeyCount <= 1}
+                                  onClick={() => revokeKeyMutation.mutate({ siteId: site.id, keyId: item.id })}
+                                  type="button"
+                                >
+                                  Revoke key
+                                </button>
+                              ) : null}
+                            </div>
                           </div>
-                          <div className="eg-inline-actions">
-                            <StatusBadge status={item.status === "active" ? "healthy" : "pending"}>{item.status}</StatusBadge>
-                            <span className="eg-pill">{item.last_used_at ? formatDateTime(item.last_used_at) : "Not used yet"}</span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
+                    <form
+                      className="eg-auth-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        setError("");
+                        createKeyMutation.mutate({
+                          siteId: site.id,
+                          input: { label: (keyLabelDrafts[site.id] ?? "").trim() }
+                        });
+                      }}
+                    >
+                      <label className="eg-field">
+                        <span>New key label</span>
+                        <input
+                          className="eg-input"
+                          onChange={(event) =>
+                            setKeyLabelDrafts((current) => ({
+                              ...current,
+                              [site.id]: event.target.value
+                            }))}
+                          placeholder="Regional browser key"
+                          required
+                          type="text"
+                          value={keyLabelDrafts[site.id] ?? ""}
+                        />
+                      </label>
+                      <button
+                        className="eg-button eg-button--primary"
+                        disabled={createKeyMutation.isPending || (keyLabelDrafts[site.id] ?? "").trim().length < 2}
+                        type="submit"
+                      >
+                        {createKeyMutation.isPending ? "Creating key..." : "Create collector key"}
+                      </button>
+                    </form>
                   </div>
                 </div>
               </div>

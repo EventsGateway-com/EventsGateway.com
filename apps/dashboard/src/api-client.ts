@@ -421,6 +421,38 @@ export function fetchAdminSites() {
   return requestJson<AdminSiteRecord[]>("/v1/admin/sites");
 }
 
+export function createAdminSiteRecord(input: {
+  name: string;
+  domain?: string;
+  org_name?: string;
+  project_name?: string;
+  environment?: string;
+}) {
+  return requestJson<DashboardBootstrap["site"]>("/v1/admin/sites", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export function deleteAdminSiteRecord(siteId: string) {
+  return requestJson<{ deleted: boolean }>(`/v1/admin/sites/${siteId}`, {
+    method: "DELETE"
+  });
+}
+
+export function createAdminSiteKeyRecord(siteId: string, input: { label: string }) {
+  return requestJson<SiteKeyRecord>(`/v1/admin/sites/${siteId}/keys`, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export function revokeAdminSiteKeyRecord(siteId: string, keyId: string) {
+  return requestJson<SiteKeyRecord>(`/v1/admin/sites/${siteId}/keys/${keyId}`, {
+    method: "DELETE"
+  });
+}
+
 export function fetchQueues(siteId: string): Promise<QueuesData> {
   return requestJson<QueuesData>(`/v1/sites/${siteId}/operations/queues`);
 }
