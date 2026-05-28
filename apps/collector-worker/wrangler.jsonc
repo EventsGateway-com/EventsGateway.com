@@ -15,7 +15,8 @@
       "routes": [
         {
           "pattern": "e.eventsgateway.com",
-          "custom_domain": true
+          "custom_domain": true,
+          "zone_id": "dc8513a03681904c320e4ab0517f312e"
         }
       ]
     }
