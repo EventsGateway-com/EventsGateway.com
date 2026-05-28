@@ -5,6 +5,11 @@ import Container from "../../components/Container.astro";
 import PremiumCard from "../../components/PremiumCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import { compareContent } from "../../content/compare";
+
+const categorySections = compareContent.categories.map((category) => ({
+  ...category,
+  cards: compareContent.cards.filter((item) => item.category === category.title)
+}));
 ---
 
 <BaseLayout
@@ -18,6 +23,13 @@ import { compareContent } from "../../content/compare";
         <span class="eyebrow">{compareContent.eyebrow}</span>
         <h1 class="page-title">{compareContent.title}</h1>
         <p class="page-copy">{compareContent.intro}</p>
+        <div class="button-row">
+          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="/docs/" variant="secondary" icon="arrow-right">Read Documentation</Button>
+        </div>
+        <div class="pill-row compare-pills">
+          {compareContent.categories.map((item) => <a class="status-pill status-pill--link" href={`#${item.title.toLowerCase().replace(/\s+/g, "-")}`}>{item.title}</a>)}
+        </div>
       </div>
     </Container>
   </section>
@@ -25,21 +37,44 @@ import { compareContent } from "../../content/compare";
   <section class="section section--tight">
     <Container>
       <SectionHeader
-        eyebrow="Comparison Library"
-        title="Choose the right tracker architecture for your team."
-        description="Each comparison explains where EventsGateway fits best and where another product may still be the stronger choice."
+        eyebrow="Quick Filters"
+        title="Browse comparisons by the stack you are replacing."
+        description="Start with the category that matches your current setup, then jump into the side-by-side page that matches your evaluation path."
       />
       <div class="card-grid">
         {
-          compareContent.cards.map((item) => (
-            <PremiumCard title={item.title} text={item.text} eyebrow={item.eyebrow} icon="layers">
-              <Button href={`/compare/${item.slug}/`} variant="secondary" icon="arrow-right">Read comparison</Button>
+          compareContent.categories.map((item) => (
+            <PremiumCard title={item.title} text={item.description} eyebrow="Category" icon="layers">
+              <Button href={`#${item.title.toLowerCase().replace(/\s+/g, "-")}`} variant="secondary" icon="arrow-right">Open category</Button>
             </PremiumCard>
           ))
         }
       </div>
     </Container>
   </section>
+
+  {
+    categorySections.map((section) => (
+      <section class="section section--tight" id={section.title.toLowerCase().replace(/\s+/g, "-")}>
+        <Container>
+          <SectionHeader eyebrow="Category" title={section.title} description={section.description} />
+          <div class="card-grid">
+            {
+              section.cards.map((item) => (
+                <PremiumCard title={item.title} text={item.text} eyebrow={item.eyebrow} icon="layers">
+                  <div class="button-row compare-card-actions">
+                    <Button href={`/compare/${item.slug}/`} variant="primary" icon="arrow-right">Read comparison</Button>
+                    <Button href="/install/" variant="secondary" icon="download">Install</Button>
+                    <Button href="/docs/" variant="secondary" icon="arrow-right">Docs</Button>
+                  </div>
+                </PremiumCard>
+              ))
+            }
+          </div>
+        </Container>
+      </section>
+    ))
+  }
 
   <section class="section section--tight">
     <Container>
@@ -58,3 +93,17 @@ import { compareContent } from "../../content/compare";
     </Container>
   </section>
 </BaseLayout>
+
+<style>
+  .compare-pills {
+    justify-content: center;
+  }
+
+  .status-pill--link {
+    text-decoration: none;
+  }
+
+  .compare-card-actions {
+    flex-wrap: wrap;
+  }
+</style>
