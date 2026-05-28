@@ -1985,17 +1985,65 @@ function AdminUsersPage() {
 }
 
 function AdminSitesPage() {
+  const queryClient = useQueryClient();
+  const [error, setError] = useState("");
+  const [domainDrafts, setDomainDrafts] = useState<Record<string, string>>({});
+  const [descriptionDrafts, setDescriptionDrafts] = useState<Record<string, string>>({});
   const sitesQuery = useQuery({
     queryKey: qk.adminSites(),
     queryFn: dashboardApi.fetchAdminSites
   });
+  const refreshAdminSites = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.adminSites() }),
+      queryClient.invalidateQueries({ queryKey: qk.adminOverview() })
+    ]);
+  };
+  const createDomainMutation = useMutation({
+    mutationFn: ({ siteId, input }: { siteId: string; input: { domain: string; description?: string } }) =>
+      dashboardApi.createDomainForSite(siteId, input),
+    onSuccess: async (_, variables) => {
+      setError("");
+      setDomainDrafts((current) => ({ ...current, [variables.siteId]: "" }));
+      setDescriptionDrafts((current) => ({ ...current, [variables.siteId]: "" }));
+      await refreshAdminSites();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to add domain.");
+    }
+  });
+  const deleteDomainMutation = useMutation({
+    mutationFn: ({ siteId, domainId }: { siteId: string; domainId: string }) => dashboardApi.deleteDomainForSite(siteId, domainId),
+    onSuccess: async () => {
+      setError("");
+      await refreshAdminSites();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to delete domain.");
+    }
+  });
+
+  function handleAdminDomainSubmit(event: FormEvent<HTMLFormElement>, siteId: string) {
+    event.preventDefault();
+    setError("");
+    const domain = (domainDrafts[siteId] ?? "").trim();
+    const description = (descriptionDrafts[siteId] ?? "").trim();
+    createDomainMutation.mutate({
+      siteId,
+      input: {
+        domain,
+        description: description || undefined
+      }
+    });
+  }
 
   return (
     <div className="eg-page">
       <PageIntro
         title="Sites Admin"
-        description="Inspect all tracked sites, their verified domains, collector keys, and total event activity."
+        description="Inspect all tracked sites, manage their domains, review collector keys, and monitor total event activity."
       />
+      {error ? <p className="eg-form-error">{error}</p> : null}
       {!sitesQuery.data ? (
         <StateCard title="Loading sites" description="Fetching the global platform site inventory." />
       ) : (
@@ -2020,12 +2068,64 @@ function AdminSitesPage() {
                             <strong>{domain.domain}</strong>
                             <span>{domain.description ?? domain.kind}</span>
                           </div>
-                          <StatusBadge status={domain.status === "verified" || domain.status === "internal" ? "healthy" : "pending"}>
-                            {domain.status}
-                          </StatusBadge>
+                          <div className="eg-inline-actions">
+                            <StatusBadge status={domain.status === "verified" || domain.status === "internal" ? "healthy" : "pending"}>
+                              {domain.status}
+                            </StatusBadge>
+                            {domain.domain !== "goldring.ro" && domain.domain !== "www.goldring.ro" ? (
+                              <button
+                                className="eg-button eg-button--compact"
+                                disabled={deleteDomainMutation.isPending}
+                                onClick={() => deleteDomainMutation.mutate({ siteId: site.id, domainId: domain.id })}
+                                type="button"
+                              >
+                                Remove
+                              </button>
+                            ) : (
+                              <span className="eg-pill">Protected</span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
+                    <form className="eg-auth-form" onSubmit={(event) => handleAdminDomainSubmit(event, site.id)}>
+                      <label className="eg-field">
+                        <span>Add domain</span>
+                        <input
+                          className="eg-input"
+                          onChange={(event) =>
+                            setDomainDrafts((current) => ({
+                              ...current,
+                              [site.id]: event.target.value
+                            }))}
+                          placeholder="shop.example.com"
+                          required
+                          type="text"
+                          value={domainDrafts[site.id] ?? ""}
+                        />
+                      </label>
+                      <label className="eg-field">
+                        <span>Description</span>
+                        <input
+                          className="eg-input"
+                          onChange={(event) =>
+                            setDescriptionDrafts((current) => ({
+                              ...current,
+                              [site.id]: event.target.value
+                            }))}
+                          placeholder="Regional storefront"
+                          type="text"
+                          value={descriptionDrafts[site.id] ?? ""}
+                        />
+                      </label>
+                      <button
+                        className="eg-button eg-button--primary"
+                        disabled={createDomainMutation.isPending || (domainDrafts[site.id] ?? "").trim().length === 0}
+                        type="submit"
+                      >
+                        {createDomainMutation.isPending ? "Saving domain..." : "Add domain"}
+                      </button>
+                    </form>
                   </div>
                   <div className="eg-admin-panel">
                     <strong>Collector keys</strong>
