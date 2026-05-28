@@ -3,7 +3,11 @@ CREATE TABLE IF NOT EXISTS dashboard_users (
   name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  role TEXT NOT NULL DEFAULT 'member',
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TEXT NOT NULL,
+  last_login_at TEXT,
+  password_changed_at TEXT
 );
 
 CREATE TABLE IF NOT EXISTS dashboard_sessions (

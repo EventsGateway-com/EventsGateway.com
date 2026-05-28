@@ -47,7 +47,11 @@ export type DashboardUser = {
   id: string;
   name: string;
   email: string;
+  role: "member" | "global_admin";
+  status: "active" | "blocked";
   created_at: string;
+  last_login_at: string | null;
+  password_changed_at: string | null;
 };
 
 export type DashboardSession = {
@@ -91,6 +95,34 @@ export type SiteKeyRecord = {
   status: string;
   created_at: string;
   last_used_at: string | null;
+};
+
+export type AdminOverview = {
+  totals: {
+    users: number;
+    admins: number;
+    blocked_users: number;
+    active_sessions: number;
+    sites: number;
+    domains: number;
+    api_keys: number;
+    collected_events: number;
+  };
+  recent_users: DashboardUser[];
+  recent_sites: Array<DashboardBootstrap["site"]>;
+};
+
+export type AdminUserRecord = DashboardUser & {
+  session_count: number;
+};
+
+export type AdminSiteRecord = DashboardBootstrap["site"] & {
+  domain_count: number;
+  api_key_count: number;
+  collected_event_count: number;
+  last_event_at: string | null;
+  domains: SiteDomainRecord[];
+  api_keys: SiteKeyRecord[];
 };
 
 type OverviewData = ReturnType<typeof getOverview>;
@@ -352,6 +384,41 @@ export function deleteDomain(siteId: string, domainId: string) {
 
 export function fetchApiKeys(siteId: string) {
   return requestJson<SiteKeyRecord[]>(`/v1/sites/${siteId}/settings/api-keys`);
+}
+
+export function fetchAdminOverview() {
+  return requestJson<AdminOverview>("/v1/admin/overview");
+}
+
+export function fetchAdminUsers() {
+  return requestJson<AdminUserRecord[]>("/v1/admin/users");
+}
+
+export function updateAdminUserRecord(
+  userId: string,
+  input: { role?: "member" | "global_admin"; status?: "active" | "blocked" }
+) {
+  return requestJson<DashboardUser>(`/v1/admin/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export function updateAdminUserPassword(userId: string, password: string) {
+  return requestJson<{ password_changed_at: string }>(`/v1/admin/users/${userId}/password`, {
+    method: "POST",
+    body: JSON.stringify({ password })
+  });
+}
+
+export function deleteAdminUserRecord(userId: string) {
+  return requestJson<{ deleted: boolean }>(`/v1/admin/users/${userId}`, {
+    method: "DELETE"
+  });
+}
+
+export function fetchAdminSites() {
+  return requestJson<AdminSiteRecord[]>("/v1/admin/sites");
 }
 
 export function fetchQueues(siteId: string): Promise<QueuesData> {

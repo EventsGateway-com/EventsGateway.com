@@ -2,11 +2,18 @@ import type { DatabaseBinding } from "./index";
 
 type DatabaseRecord = Record<string, unknown>;
 
+export type DashboardUserRole = "member" | "global_admin";
+export type DashboardUserStatus = "active" | "blocked";
+
 export type DashboardUser = {
   id: string;
   name: string;
   email: string;
+  role: DashboardUserRole;
+  status: DashboardUserStatus;
   created_at: string;
+  last_login_at: string | null;
+  password_changed_at: string | null;
 };
 
 export type DashboardSession = {
@@ -55,6 +62,34 @@ export type BootstrapPayload = {
   domains: SiteDomain[];
 };
 
+export type AdminOverview = {
+  totals: {
+    users: number;
+    admins: number;
+    blocked_users: number;
+    active_sessions: number;
+    sites: number;
+    domains: number;
+    api_keys: number;
+    collected_events: number;
+  };
+  recent_users: DashboardUser[];
+  recent_sites: DashboardSite[];
+};
+
+export type AdminUserRecord = DashboardUser & {
+  session_count: number;
+};
+
+export type AdminSiteRecord = DashboardSite & {
+  domain_count: number;
+  api_key_count: number;
+  collected_event_count: number;
+  last_event_at: string | null;
+  domains: SiteDomain[];
+  api_keys: SiteKey[];
+};
+
 const DEFAULT_SITE_ID = "site_alpha";
 const DEFAULT_SITE_NAME = "goldring.ro";
 const DEFAULT_ORG_ID = "org_open";
@@ -81,12 +116,28 @@ function asString(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
+function asNullableString(value: unknown) {
+  return typeof value === "string" && value ? value : null;
+}
+
+function toDashboardUserRole(value: unknown): DashboardUserRole {
+  return value === "global_admin" ? "global_admin" : "member";
+}
+
+function toDashboardUserStatus(value: unknown): DashboardUserStatus {
+  return value === "blocked" ? "blocked" : "active";
+}
+
 function toDashboardUser(record: DatabaseRecord): DashboardUser {
   return {
     id: asString(record.id),
     name: asString(record.name),
     email: asString(record.email),
-    created_at: asString(record.created_at)
+    role: toDashboardUserRole(record.role),
+    status: toDashboardUserStatus(record.status),
+    created_at: asString(record.created_at),
+    last_login_at: asNullableString(record.last_login_at),
+    password_changed_at: asNullableString(record.password_changed_at)
   };
 }
 
@@ -168,10 +219,65 @@ async function allRecords(db: DatabaseBinding, sql: string, ...params: unknown[]
   return result.results ?? [];
 }
 
+async function countRecords(db: DatabaseBinding, sql: string, ...params: unknown[]) {
+  const record = await firstRecord(db, sql, ...params);
+  return Number(record?.count ?? 0);
+}
+
+async function ensureDashboardUsersTableColumns(db: DatabaseBinding) {
+  const columns = await allRecords(db, "PRAGMA table_info(dashboard_users)");
+  const columnNames = new Set(columns.map((column) => asString(column.name)));
+  const migrations: string[] = [];
+
+  if (!columnNames.has("role")) {
+    migrations.push("ALTER TABLE dashboard_users ADD COLUMN role TEXT NOT NULL DEFAULT 'member'");
+  }
+  if (!columnNames.has("status")) {
+    migrations.push("ALTER TABLE dashboard_users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+  }
+  if (!columnNames.has("last_login_at")) {
+    migrations.push("ALTER TABLE dashboard_users ADD COLUMN last_login_at TEXT");
+  }
+  if (!columnNames.has("password_changed_at")) {
+    migrations.push("ALTER TABLE dashboard_users ADD COLUMN password_changed_at TEXT");
+  }
+
+  for (const sql of migrations) {
+    await db.prepare(sql).run();
+  }
+
+  await db.prepare(
+    `
+      UPDATE dashboard_users
+      SET
+        role = COALESCE(role, 'member'),
+        status = COALESCE(status, 'active'),
+        password_changed_at = COALESCE(password_changed_at, created_at)
+    `
+  ).run();
+
+  const adminCount = await countRecords(
+    db,
+    "SELECT COUNT(*) AS count FROM dashboard_users WHERE role = 'global_admin'"
+  );
+
+  if (adminCount === 0) {
+    const firstUser = await firstRecord(
+      db,
+      "SELECT id FROM dashboard_users ORDER BY created_at ASC, email ASC LIMIT 1"
+    );
+    if (firstUser) {
+      await db.prepare("UPDATE dashboard_users SET role = 'global_admin' WHERE id = ?")
+        .bind(asString(firstUser.id))
+        .run();
+    }
+  }
+}
+
 export async function ensureControlPlane(dbInput?: DatabaseBinding) {
-  ensureDb(dbInput);
+  const db = ensureDb(dbInput);
   if (!ensurePromise) {
-    ensurePromise = Promise.resolve();
+    ensurePromise = ensureDashboardUsersTableColumns(db);
   }
 
   await ensurePromise;
@@ -199,11 +305,24 @@ export async function createUserSession(
 
   const userId = crypto.randomUUID();
   const createdAt = nowIso();
+  const existingUsersCount = await countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users");
+  const role: DashboardUserRole = existingUsersCount === 0 ? "global_admin" : "member";
 
   await db.prepare(
-    "INSERT INTO dashboard_users (id, name, email, password_hash, created_at) VALUES (?, ?, ?, ?, ?)"
+    `
+      INSERT INTO dashboard_users (
+        id,
+        name,
+        email,
+        password_hash,
+        role,
+        status,
+        created_at,
+        password_changed_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `
   )
-    .bind(userId, name, email, await sha256Hex(password), createdAt)
+    .bind(userId, name, email, await sha256Hex(password), role, "active", createdAt, createdAt)
     .run();
 
   return createSession(db, userId);
@@ -219,7 +338,12 @@ export async function loginUserSession(
   const email = normalizeEmail(input.email);
   const record = await firstRecord(
     db,
-    "SELECT id, name, email, password_hash, created_at FROM dashboard_users WHERE email = ? LIMIT 1",
+    `
+      SELECT id, name, email, role, status, password_hash, created_at, last_login_at, password_changed_at
+      FROM dashboard_users
+      WHERE email = ?
+      LIMIT 1
+    `,
     email
   );
 
@@ -230,6 +354,10 @@ export async function loginUserSession(
   const passwordHash = await sha256Hex(input.password);
   if (passwordHash !== asString(record.password_hash)) {
     throw new Error("The email or password is incorrect.");
+  }
+
+  if (toDashboardUserStatus(record.status) === "blocked") {
+    throw new Error("This account is blocked.");
   }
 
   return createSession(db, asString(record.id), record);
@@ -247,9 +375,20 @@ async function createSession(db: DatabaseBinding, userId: string, existingUser?:
     .bind(sessionId, token, userId, expiresAt, createdAt)
     .run();
 
+  await db.prepare("UPDATE dashboard_users SET last_login_at = ? WHERE id = ?").bind(createdAt, userId).run();
+
   const userRecord =
     existingUser ??
-    (await firstRecord(db, "SELECT id, name, email, created_at FROM dashboard_users WHERE id = ? LIMIT 1", userId));
+    (await firstRecord(
+      db,
+      `
+        SELECT id, name, email, role, status, created_at, last_login_at, password_changed_at
+        FROM dashboard_users
+        WHERE id = ?
+        LIMIT 1
+      `,
+      userId
+    ));
 
   if (!userRecord) {
     throw new Error("User not found.");
@@ -274,6 +413,7 @@ export async function getSessionByToken(dbInput: DatabaseBinding | undefined, to
     db,
     `
       SELECT s.id, s.token, s.user_id, s.expires_at, s.created_at, u.name, u.email, u.created_at AS user_created_at
+      , u.role, u.status, u.last_login_at, u.password_changed_at
       FROM dashboard_sessions s
       JOIN dashboard_users u ON u.id = s.user_id
       WHERE s.token = ?
@@ -284,6 +424,10 @@ export async function getSessionByToken(dbInput: DatabaseBinding | undefined, to
 
   if (!session) return null;
   if (Date.parse(asString(session.expires_at)) <= Date.now()) {
+    await revokeSession(db, token);
+    return null;
+  }
+  if (toDashboardUserStatus(session.status) === "blocked") {
     await revokeSession(db, token);
     return null;
   }
@@ -300,7 +444,11 @@ export async function getSessionByToken(dbInput: DatabaseBinding | undefined, to
       id: asString(session.user_id),
       name: asString(session.name),
       email: asString(session.email),
-      created_at: asString(session.user_created_at)
+      role: toDashboardUserRole(session.role),
+      status: toDashboardUserStatus(session.status),
+      created_at: asString(session.user_created_at),
+      last_login_at: asNullableString(session.last_login_at),
+      password_changed_at: asNullableString(session.password_changed_at)
     } satisfies DashboardUser
   };
 }
@@ -335,7 +483,16 @@ export async function getDefaultSite(dbInput: DatabaseBinding | undefined) {
 export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId: string): Promise<BootstrapPayload> {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
-  const user = await firstRecord(db, "SELECT id, name, email, created_at FROM dashboard_users WHERE id = ? LIMIT 1", userId);
+  const user = await firstRecord(
+    db,
+    `
+      SELECT id, name, email, role, status, created_at, last_login_at, password_changed_at
+      FROM dashboard_users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    userId
+  );
   if (!user) {
     throw new Error("User not found.");
   }
@@ -347,6 +504,265 @@ export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId:
     site,
     domains
   };
+}
+
+async function countGlobalAdmins(db: DatabaseBinding) {
+  return countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE role = 'global_admin'");
+}
+
+export async function getAdminOverview(dbInput: DatabaseBinding | undefined): Promise<AdminOverview> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const [
+    users,
+    admins,
+    blockedUsers,
+    activeSessions,
+    sites,
+    domains,
+    apiKeys,
+    collectedEvents,
+    recentUsersRecords,
+    recentSiteRecords
+  ] = await Promise.all([
+    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE role = 'global_admin'"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE status = 'blocked'"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_sessions"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM sites"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM site_domains"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM site_keys"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM collected_events"),
+    allRecords(
+      db,
+      `
+        SELECT id, name, email, role, status, created_at, last_login_at, password_changed_at
+        FROM dashboard_users
+        ORDER BY created_at DESC, email DESC
+        LIMIT 6
+      `
+    ),
+    allRecords(
+      db,
+      `
+        SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at
+        FROM sites
+        ORDER BY created_at DESC, name ASC
+        LIMIT 6
+      `
+    )
+  ]);
+
+  return {
+    totals: {
+      users,
+      admins,
+      blocked_users: blockedUsers,
+      active_sessions: activeSessions,
+      sites,
+      domains,
+      api_keys: apiKeys,
+      collected_events: collectedEvents
+    },
+    recent_users: recentUsersRecords.map(toDashboardUser),
+    recent_sites: recentSiteRecords.map(toDashboardSite)
+  };
+}
+
+export async function listAdminUsers(dbInput: DatabaseBinding | undefined): Promise<AdminUserRecord[]> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const records = await allRecords(
+    db,
+    `
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.role,
+        u.status,
+        u.created_at,
+        u.last_login_at,
+        u.password_changed_at,
+        COUNT(s.id) AS session_count
+      FROM dashboard_users u
+      LEFT JOIN dashboard_sessions s ON s.user_id = u.id
+      GROUP BY u.id, u.name, u.email, u.role, u.status, u.created_at, u.last_login_at, u.password_changed_at
+      ORDER BY
+        CASE WHEN u.role = 'global_admin' THEN 0 ELSE 1 END,
+        u.created_at ASC,
+        u.email ASC
+    `
+  );
+
+  return records.map((record) => ({
+    ...toDashboardUser(record),
+    session_count: Number(record.session_count ?? 0)
+  }));
+}
+
+export async function updateAdminUser(
+  dbInput: DatabaseBinding | undefined,
+  actorUserId: string,
+  targetUserId: string,
+  input: { role?: DashboardUserRole; status?: DashboardUserStatus }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const target = await firstRecord(
+    db,
+    "SELECT id, role, status FROM dashboard_users WHERE id = ? LIMIT 1",
+    targetUserId
+  );
+  if (!target) {
+    throw new Error("User not found.");
+  }
+
+  const nextRole = input.role ?? toDashboardUserRole(target.role);
+  const nextStatus = input.status ?? toDashboardUserStatus(target.status);
+
+  if (actorUserId === targetUserId && nextRole !== "global_admin") {
+    throw new Error("You cannot remove your own admin role.");
+  }
+
+  if (actorUserId === targetUserId && nextStatus === "blocked") {
+    throw new Error("You cannot block your own account.");
+  }
+
+  if (toDashboardUserRole(target.role) === "global_admin" && nextRole !== "global_admin") {
+    const adminCount = await countGlobalAdmins(db);
+    if (adminCount <= 1) {
+      throw new Error("At least one global admin must remain.");
+    }
+  }
+
+  await db.prepare("UPDATE dashboard_users SET role = ?, status = ? WHERE id = ?")
+    .bind(nextRole, nextStatus, targetUserId)
+    .run();
+
+  if (nextStatus === "blocked") {
+    await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(targetUserId).run();
+  }
+
+  const updated = await firstRecord(
+    db,
+    `
+      SELECT id, name, email, role, status, created_at, last_login_at, password_changed_at
+      FROM dashboard_users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    targetUserId
+  );
+
+  if (!updated) {
+    throw new Error("User not found after update.");
+  }
+
+  return toDashboardUser(updated);
+}
+
+export async function adminSetUserPassword(
+  dbInput: DatabaseBinding | undefined,
+  targetUserId: string,
+  nextPassword: string
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  if (nextPassword.trim().length < 8) {
+    throw new Error("Password must contain at least 8 characters.");
+  }
+
+  const target = await firstRecord(db, "SELECT id FROM dashboard_users WHERE id = ? LIMIT 1", targetUserId);
+  if (!target) {
+    throw new Error("User not found.");
+  }
+
+  const passwordChangedAt = nowIso();
+  await db.prepare(
+    "UPDATE dashboard_users SET password_hash = ?, password_changed_at = ? WHERE id = ?"
+  )
+    .bind(await sha256Hex(nextPassword), passwordChangedAt, targetUserId)
+    .run();
+
+  await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(targetUserId).run();
+
+  return { password_changed_at: passwordChangedAt };
+}
+
+export async function deleteAdminUser(
+  dbInput: DatabaseBinding | undefined,
+  actorUserId: string,
+  targetUserId: string
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  if (actorUserId === targetUserId) {
+    throw new Error("You cannot delete your own account.");
+  }
+
+  const target = await firstRecord(db, "SELECT id, role FROM dashboard_users WHERE id = ? LIMIT 1", targetUserId);
+  if (!target) {
+    return false;
+  }
+
+  if (toDashboardUserRole(target.role) === "global_admin") {
+    const adminCount = await countGlobalAdmins(db);
+    if (adminCount <= 1) {
+      throw new Error("At least one global admin must remain.");
+    }
+  }
+
+  await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(targetUserId).run();
+  await db.prepare("DELETE FROM dashboard_users WHERE id = ?").bind(targetUserId).run();
+  return true;
+}
+
+export async function listAdminSites(dbInput: DatabaseBinding | undefined): Promise<AdminSiteRecord[]> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const siteRecords = await allRecords(
+    db,
+    `
+      SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at
+      FROM sites
+      ORDER BY created_at ASC, name ASC
+    `
+  );
+
+  return Promise.all(
+    siteRecords.map(async (siteRecord) => {
+      const site = toDashboardSite(siteRecord);
+      const [domains, apiKeys, metrics] = await Promise.all([
+        listSiteDomains(db, site.id),
+        listSiteKeys(db, site.id),
+        firstRecord(
+          db,
+          `
+            SELECT COUNT(*) AS collected_event_count, MAX(received_at) AS last_event_at
+            FROM collected_events
+            WHERE site_id = ?
+          `,
+          site.id
+        )
+      ]);
+
+      return {
+        ...site,
+        domain_count: domains.length,
+        api_key_count: apiKeys.length,
+        collected_event_count: Number(metrics?.collected_event_count ?? 0),
+        last_event_at: asNullableString(metrics?.last_event_at),
+        domains,
+        api_keys: apiKeys
+      } satisfies AdminSiteRecord;
+    })
+  );
 }
 
 export async function listSiteDomains(dbInput: DatabaseBinding | undefined, siteId: string) {

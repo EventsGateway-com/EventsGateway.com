@@ -1,7 +1,11 @@
 import {
   backfillAttributionAction,
   createDomain,
+  deleteAdminUserRecord,
   deleteDomain,
+  fetchAdminOverview,
+  fetchAdminSites,
+  fetchAdminUsers,
   fetchApiKeys,
   exportRawAction,
   fetchConsent,
@@ -27,7 +31,9 @@ import {
   fetchUsers,
   flushForwarderAction,
   replayDlqAction,
-  replayEventAction
+  replayEventAction,
+  updateAdminUserPassword,
+  updateAdminUserRecord
 } from "./api-client";
 
 export const currentContext = {
@@ -61,6 +67,9 @@ export const qk = {
   install: (siteId: string) => ["sites", siteId, "settings", "install"],
   domains: (siteId: string) => ["sites", siteId, "settings", "domains"],
   apiKeys: (siteId: string) => ["sites", siteId, "settings", "api-keys"],
+  adminOverview: () => ["admin", "overview"],
+  adminUsers: () => ["admin", "users"],
+  adminSites: () => ["admin", "sites"],
   route: (siteId: string, routeId: string) => ["sites", siteId, "routes", routeId],
   transformation: (siteId: string, transformationId: string) => ["sites", siteId, "transformations", transformationId],
   destination: (siteId: string, destinationId: string) => ["sites", siteId, "destinations", destinationId]
@@ -88,6 +97,13 @@ export const dashboardApi = {
   createDomain: (input: { domain: string; kind?: string; description?: string }) => createDomain(currentContext.siteId, input),
   deleteDomain: (domainId: string) => deleteDomain(currentContext.siteId, domainId),
   fetchApiKeys: () => fetchApiKeys(currentContext.siteId),
+  fetchAdminOverview: () => fetchAdminOverview(),
+  fetchAdminUsers: () => fetchAdminUsers(),
+  updateAdminUser: (userId: string, input: { role?: "member" | "global_admin"; status?: "active" | "blocked" }) =>
+    updateAdminUserRecord(userId, input),
+  updateAdminUserPassword: (userId: string, password: string) => updateAdminUserPassword(userId, password),
+  deleteAdminUser: (userId: string) => deleteAdminUserRecord(userId),
+  fetchAdminSites: () => fetchAdminSites(),
   fetchQueues: () => fetchQueues(currentContext.siteId),
   fetchDlq: () => fetchDlq(currentContext.siteId),
   fetchJobs: () => fetchJobs(currentContext.siteId),

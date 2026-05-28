@@ -25,52 +25,67 @@ function sitePath(segment: string): string {
   return `/app/orgs/${currentContext.orgId}/projects/${currentContext.projectId}/sites/${currentContext.siteId}/${segment}`;
 }
 
-const navGroups: NavGroup[] = [
-  {
-    label: "Insights",
-    items: [
-      { label: "Overview", href: sitePath("overview") },
-      { label: "Realtime", href: sitePath("realtime") },
-      { label: "Acquisition", href: sitePath("acquisition") },
-      { label: "Attribution", href: sitePath("attribution") },
-      { label: "Funnels", href: sitePath("funnels") },
-      { label: "Event Explorer", href: sitePath("events/explorer") },
-      { label: "Event Schemas", href: sitePath("events/schemas") }
-    ]
-  },
-  {
-    label: "Events Gateway",
-    items: [
-      { label: "Routing Rules", href: sitePath("routing/routes") },
-      { label: "Transformations", href: sitePath("routing/transformations") },
-      { label: "Destinations", href: sitePath("destinations") },
-      { label: "Delivery Logs", href: sitePath("deliveries") },
-      { label: "Replay", href: sitePath("operations/replay") }
-    ]
-  },
-  {
-    label: "Identity",
-    items: [
-      { label: "Users", href: sitePath("identity/users") },
-      { label: "Journeys", href: sitePath("identity/journeys") },
-      { label: "Merge Rules", href: sitePath("identity/merge-rules") },
-      { label: "Consent", href: sitePath("identity/consent") }
-    ]
-  },
-  {
-    label: "Operations",
-    items: [
-      { label: "Health", href: sitePath("operations/health") },
-      { label: "Queues", href: sitePath("operations/queues") },
-      { label: "Audit", href: sitePath("operations/audit") },
-      { label: "Install", href: sitePath("settings/install") },
-      { label: "Domains", href: sitePath("settings/domains") },
-      { label: "API Keys", href: sitePath("settings/api-keys") },
-      { label: "Members", href: sitePath("settings/members") },
-      { label: "Settings", href: sitePath("settings/general") }
-    ]
+function getNavGroups(isAdmin: boolean): NavGroup[] {
+  const groups: NavGroup[] = [
+    {
+      label: "Insights",
+      items: [
+        { label: "Overview", href: sitePath("overview") },
+        { label: "Realtime", href: sitePath("realtime") },
+        { label: "Acquisition", href: sitePath("acquisition") },
+        { label: "Attribution", href: sitePath("attribution") },
+        { label: "Funnels", href: sitePath("funnels") },
+        { label: "Event Explorer", href: sitePath("events/explorer") },
+        { label: "Event Schemas", href: sitePath("events/schemas") }
+      ]
+    },
+    {
+      label: "Events Gateway",
+      items: [
+        { label: "Routing Rules", href: sitePath("routing/routes") },
+        { label: "Transformations", href: sitePath("routing/transformations") },
+        { label: "Destinations", href: sitePath("destinations") },
+        { label: "Delivery Logs", href: sitePath("deliveries") },
+        { label: "Replay", href: sitePath("operations/replay") }
+      ]
+    },
+    {
+      label: "Identity",
+      items: [
+        { label: "Users", href: sitePath("identity/users") },
+        { label: "Journeys", href: sitePath("identity/journeys") },
+        { label: "Merge Rules", href: sitePath("identity/merge-rules") },
+        { label: "Consent", href: sitePath("identity/consent") }
+      ]
+    },
+    {
+      label: "Operations",
+      items: [
+        { label: "Health", href: sitePath("operations/health") },
+        { label: "Queues", href: sitePath("operations/queues") },
+        { label: "Audit", href: sitePath("operations/audit") },
+        { label: "Install", href: sitePath("settings/install") },
+        { label: "Domains", href: sitePath("settings/domains") },
+        { label: "API Keys", href: sitePath("settings/api-keys") },
+        { label: "Members", href: sitePath("settings/members") },
+        { label: "Settings", href: sitePath("settings/general") }
+      ]
+    }
+  ];
+
+  if (isAdmin) {
+    groups.push({
+      label: "Admin",
+      items: [
+        { label: "Platform Overview", href: sitePath("admin/overview") },
+        { label: "Users Admin", href: sitePath("admin/users") },
+        { label: "Sites Admin", href: sitePath("admin/sites") }
+      ]
+    });
   }
-];
+
+  return groups;
+}
 
 function AppShell() {
   const { bootstrap, logout, user } = useAuth();
@@ -98,6 +113,8 @@ function AppShell() {
       documentElement.style.overflow = previousHtmlOverflow;
     };
   }, [isSidebarOpen]);
+
+  const navGroups = useMemo(() => getNavGroups(user?.role === "global_admin"), [user?.role]);
 
   return (
     <div className="eg-shell">
@@ -180,6 +197,7 @@ function AppShell() {
             <div className="eg-pill">{currentContext.environment}</div>
             <div className="eg-pill">{formatRelativeWindow("24h")}</div>
             {user ? <div className="eg-pill">{user.name}</div> : null}
+            {user?.role === "global_admin" ? <div className="eg-pill eg-pill--accent">Global admin</div> : null}
             <div className="eg-health-pill is-success">D1 auth active</div>
             <button className="eg-button eg-button--compact" onClick={() => void logout()} type="button">
               Logout
@@ -211,6 +229,32 @@ function ProtectedAppShell() {
   }
 
   return <AppShell />;
+}
+
+function ProtectedAdminOutlet() {
+  const { isReady, user } = useAuth();
+
+  if (!isReady) {
+    return (
+      <div className="eg-page">
+        <StateCard title="Loading admin access" description="Checking the platform admin capability for this account." />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate replace to="/login" />;
+  }
+
+  if (user.role !== "global_admin") {
+    return (
+      <div className="eg-page">
+        <StateCard title="Admin access required" description="This area is restricted to the global platform admin." />
+      </div>
+    );
+  }
+
+  return <Outlet />;
 }
 
 function AuthShell({
@@ -1693,7 +1737,10 @@ function MembersPage() {
                 <strong>{user?.name ?? "Unknown user"}</strong>
                 <span>{user?.email ?? "No active email"}</span>
               </div>
-              <StatusBadge status="healthy">full access</StatusBadge>
+              <div className="eg-inline-actions">
+                <StatusBadge status={user?.role === "global_admin" ? "healthy" : "pending"}>{user?.role ?? "member"}</StatusBadge>
+                <StatusBadge status={user?.status === "active" ? "healthy" : "warning"}>{user?.status ?? "active"}</StatusBadge>
+              </div>
             </div>
           </div>
         </SurfaceCard>
@@ -1725,6 +1772,284 @@ function SettingsPage() {
           <ActionLine title="Members" text="Document team roles until RBAC is fully wired." />
         </div>
       </SurfaceCard>
+    </div>
+  );
+}
+
+function AdminOverviewPage() {
+  const overviewQuery = useQuery({
+    queryKey: qk.adminOverview(),
+    queryFn: dashboardApi.fetchAdminOverview
+  });
+
+  if (!overviewQuery.data) {
+    return <StateCard title="Loading admin overview" description="Preparing platform-wide totals and recent activity." />;
+  }
+
+  return (
+    <div className="eg-page">
+      <PageIntro
+        title="Platform Admin"
+        description="Global control surface for all users, all sites, platform totals, and privileged operations."
+      />
+      <section className="eg-metric-grid">
+        <MetricCard label="Users" value={overviewQuery.data.totals.users} detail="All dashboard accounts on the platform" />
+        <MetricCard label="Admins" value={overviewQuery.data.totals.admins} detail="Global admins with full platform access" />
+        <MetricCard label="Blocked users" value={overviewQuery.data.totals.blocked_users} detail="Accounts prevented from signing in" />
+        <MetricCard label="Active sessions" value={overviewQuery.data.totals.active_sessions} detail="Currently valid dashboard sessions" />
+        <MetricCard label="Sites" value={overviewQuery.data.totals.sites} detail="Tracked sites across the platform" />
+        <MetricCard label="Domains" value={overviewQuery.data.totals.domains} detail="Verified origins across all sites" />
+        <MetricCard label="API keys" value={overviewQuery.data.totals.api_keys} detail="Collector keys across all sites" />
+        <MetricCard label="Collected events" value={overviewQuery.data.totals.collected_events} detail="Accepted browser events stored in D1" />
+      </section>
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Recent users" subtitle="Latest platform accounts and their access posture">
+          <div className="eg-list">
+            {overviewQuery.data.recent_users.map((item) => (
+              <div className="eg-list__row" key={item.id}>
+                <div>
+                  <strong>{item.name}</strong>
+                  <span>{item.email}</span>
+                </div>
+                <div className="eg-inline-actions">
+                  <StatusBadge status={item.role === "global_admin" ? "healthy" : "pending"}>{item.role}</StatusBadge>
+                  <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+        <SurfaceCard title="Recent sites" subtitle="Newest tracked sites visible to the global admin">
+          <div className="eg-list">
+            {overviewQuery.data.recent_sites.map((item) => (
+              <div className="eg-list__row" key={item.id}>
+                <div>
+                  <strong>{item.name}</strong>
+                  <span>{item.org_name} · {item.project_name}</span>
+                </div>
+                <div className="eg-inline-actions">
+                  <span className="eg-pill">{item.environment}</span>
+                  <span className="eg-pill">{item.id}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </section>
+    </div>
+  );
+}
+
+function AdminUsersPage() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [error, setError] = useState("");
+  const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
+  const usersQuery = useQuery({
+    queryKey: qk.adminUsers(),
+    queryFn: dashboardApi.fetchAdminUsers
+  });
+  const refreshAdminQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.adminUsers() }),
+      queryClient.invalidateQueries({ queryKey: qk.adminOverview() })
+    ]);
+  };
+  const updateUserMutation = useMutation({
+    mutationFn: ({ userId, input }: { userId: string; input: { role?: "member" | "global_admin"; status?: "active" | "blocked" } }) =>
+      dashboardApi.updateAdminUser(userId, input),
+    onSuccess: async () => {
+      setError("");
+      await refreshAdminQueries();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to update user.");
+    }
+  });
+  const updatePasswordMutation = useMutation({
+    mutationFn: ({ userId, password }: { userId: string; password: string }) => dashboardApi.updateAdminUserPassword(userId, password),
+    onSuccess: async (_, variables) => {
+      setPasswordDrafts((current) => ({ ...current, [variables.userId]: "" }));
+      setError("");
+      await refreshAdminQueries();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to reset password.");
+    }
+  });
+  const deleteUserMutation = useMutation({
+    mutationFn: dashboardApi.deleteAdminUser,
+    onSuccess: async () => {
+      setError("");
+      await refreshAdminQueries();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to delete user.");
+    }
+  });
+
+  return (
+    <div className="eg-page">
+      <PageIntro
+        title="Users Admin"
+        description="Manage all platform users, change passwords, block access, promote admins, and delete accounts."
+      />
+      {error ? <p className="eg-form-error">{error}</p> : null}
+      {!usersQuery.data ? (
+        <StateCard title="Loading users" description="Preparing the global user administration list." />
+      ) : (
+        <section className="eg-stack">
+          {usersQuery.data.map((item) => {
+            const isCurrentUser = item.id === user?.id;
+            const passwordDraft = passwordDrafts[item.id] ?? "";
+            return (
+              <SurfaceCard key={item.id} title={item.name} subtitle={`${item.email} · ${item.id}`}>
+                <div className="eg-admin-user">
+                  <div className="eg-admin-user__meta">
+                    <ActionLine title="Role" text={item.role} />
+                    <ActionLine title="Status" text={item.status} />
+                    <ActionLine title="Created" text={formatDateTime(item.created_at)} />
+                    <ActionLine title="Last login" text={formatDateTime(item.last_login_at)} />
+                    <ActionLine title="Password changed" text={formatDateTime(item.password_changed_at)} />
+                    <ActionLine title="Active sessions" text={String(item.session_count)} />
+                  </div>
+                  <div className="eg-admin-user__actions">
+                    <div className="eg-inline-actions">
+                      <StatusBadge status={item.role === "global_admin" ? "healthy" : "pending"}>{item.role}</StatusBadge>
+                      <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
+                    </div>
+                    <div className="eg-inline-actions">
+                      <button
+                        className="eg-button eg-button--compact"
+                        disabled={updateUserMutation.isPending || isCurrentUser}
+                        onClick={() =>
+                          updateUserMutation.mutate({
+                            userId: item.id,
+                            input: { role: item.role === "global_admin" ? "member" : "global_admin" }
+                          })}
+                        type="button"
+                      >
+                        {item.role === "global_admin" ? "Demote to member" : "Promote to admin"}
+                      </button>
+                      <button
+                        className="eg-button eg-button--compact"
+                        disabled={updateUserMutation.isPending || isCurrentUser}
+                        onClick={() =>
+                          updateUserMutation.mutate({
+                            userId: item.id,
+                            input: { status: item.status === "active" ? "blocked" : "active" }
+                          })}
+                        type="button"
+                      >
+                        {item.status === "active" ? "Block user" : "Unblock user"}
+                      </button>
+                      <button
+                        className="eg-button eg-button--compact"
+                        disabled={deleteUserMutation.isPending || isCurrentUser}
+                        onClick={() => deleteUserMutation.mutate(item.id)}
+                        type="button"
+                      >
+                        Delete user
+                      </button>
+                    </div>
+                    <div className="eg-admin-password">
+                      <input
+                        className="eg-input"
+                        onChange={(event) =>
+                          setPasswordDrafts((current) => ({
+                            ...current,
+                            [item.id]: event.target.value
+                          }))}
+                        placeholder={isCurrentUser ? "Use a separate profile screen later" : "Set a new password"}
+                        type="text"
+                        value={passwordDraft}
+                      />
+                      <button
+                        className="eg-button eg-button--primary"
+                        disabled={updatePasswordMutation.isPending || isCurrentUser || passwordDraft.trim().length < 8}
+                        onClick={() => updatePasswordMutation.mutate({ userId: item.id, password: passwordDraft })}
+                        type="button"
+                      >
+                        Reset password
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </SurfaceCard>
+            );
+          })}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function AdminSitesPage() {
+  const sitesQuery = useQuery({
+    queryKey: qk.adminSites(),
+    queryFn: dashboardApi.fetchAdminSites
+  });
+
+  return (
+    <div className="eg-page">
+      <PageIntro
+        title="Sites Admin"
+        description="Inspect all tracked sites, their verified domains, collector keys, and total event activity."
+      />
+      {!sitesQuery.data ? (
+        <StateCard title="Loading sites" description="Fetching the global platform site inventory." />
+      ) : (
+        <section className="eg-stack">
+          {sitesQuery.data.map((site) => (
+            <SurfaceCard key={site.id} title={site.name} subtitle={`${site.org_name} · ${site.project_name} · ${site.id}`}>
+              <div className="eg-admin-site">
+                <div className="eg-admin-site__meta">
+                  <MetricMini label="Environment" value={site.environment} />
+                  <MetricMini label="Domains" value={site.domain_count} />
+                  <MetricMini label="API keys" value={site.api_key_count} />
+                  <MetricMini label="Events" value={site.collected_event_count} />
+                  <MetricMini label="Last event" value={formatDateTime(site.last_event_at)} />
+                </div>
+                <div className="eg-grid eg-grid--two">
+                  <div className="eg-admin-panel">
+                    <strong>Verified domains</strong>
+                    <div className="eg-list">
+                      {site.domains.map((domain) => (
+                        <div className="eg-list__row" key={domain.id}>
+                          <div>
+                            <strong>{domain.domain}</strong>
+                            <span>{domain.description ?? domain.kind}</span>
+                          </div>
+                          <StatusBadge status={domain.status === "verified" || domain.status === "internal" ? "healthy" : "pending"}>
+                            {domain.status}
+                          </StatusBadge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="eg-admin-panel">
+                    <strong>Collector keys</strong>
+                    <div className="eg-list">
+                      {site.api_keys.map((item) => (
+                        <div className="eg-list__row" key={item.id}>
+                          <div>
+                            <strong>{item.label}</strong>
+                            <span>{item.public_key}</span>
+                          </div>
+                          <div className="eg-inline-actions">
+                            <StatusBadge status={item.status === "active" ? "healthy" : "pending"}>{item.status}</StatusBadge>
+                            <span className="eg-pill">{item.last_used_at ? formatDateTime(item.last_used_at) : "Not used yet"}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </SurfaceCard>
+          ))}
+        </section>
+      )}
     </div>
   );
 }
@@ -2111,6 +2436,20 @@ function MetricCard({ label, value, detail }: { label: string; value: string | n
   );
 }
 
+function formatDateTime(value?: string | null) {
+  if (!value) return "Never";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+}
+
 function MetricMini({ label, value, mono }: { label: string; value: string | number; mono?: boolean }) {
   return (
     <div className="eg-metric-mini">
@@ -2213,6 +2552,11 @@ export default function App() {
         <Route path="settings/api-keys" element={<ApiKeysPage />} />
         <Route path="settings/members" element={<MembersPage />} />
         <Route path="settings/general" element={<SettingsPage />} />
+        <Route element={<ProtectedAdminOutlet />}>
+          <Route path="admin/overview" element={<AdminOverviewPage />} />
+          <Route path="admin/users" element={<AdminUsersPage />} />
+          <Route path="admin/sites" element={<AdminSitesPage />} />
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
       <Route path="*" element={<Navigate replace to={user ? sitePath("overview") : "/login"} />} />

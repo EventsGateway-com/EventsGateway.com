@@ -43,16 +43,22 @@ import {
 } from "../../../packages/platform-data/src/index";
 import {
   addSiteDomain,
+  adminSetUserPassword,
   createUserSession,
+  deleteAdminUser,
   deleteSiteDomain,
   ensureControlPlane,
+  getAdminOverview,
   getBootstrap,
   getInstallConfigFromDb,
   getSessionByToken,
+  listAdminSites,
+  listAdminUsers,
   listSiteDomains,
   listSiteKeys,
   loginUserSession,
-  revokeSession
+  revokeSession,
+  updateAdminUser
 } from "../../../packages/runtime/src/control-plane";
 import {
   createRequestContext,
@@ -94,6 +100,33 @@ async function authorizeRequest(request: Request, env: EnvironmentBindings | und
     kind: "session" as const,
     ...session
   };
+}
+
+function requireSessionAuthorization(
+  context: ReturnType<typeof createRequestContext>,
+  authorization: Awaited<ReturnType<typeof authorizeRequest>>
+) {
+  if (!authorization || authorization.kind !== "session") {
+    return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+  }
+
+  return null;
+}
+
+function requireGlobalAdmin(
+  context: ReturnType<typeof createRequestContext>,
+  authorization: Awaited<ReturnType<typeof authorizeRequest>>
+) {
+  const unauthorized = requireSessionAuthorization(context, authorization);
+  if (unauthorized) {
+    return unauthorized;
+  }
+
+  if (authorization.user.role !== "global_admin") {
+    return errorResponse(context, "forbidden", "Global admin access is required.", 403);
+  }
+
+  return null;
 }
 
 async function routeRequest(request: Request, env?: EnvironmentBindings) {
@@ -168,6 +201,59 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
     }
 
     return json(context, await getBootstrap(env.DB, authorization.user.id));
+  }
+
+  if (segments[0] === "v1" && segments[1] === "admin") {
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    const authorization = await authorizeRequest(request, env);
+    const forbidden = requireGlobalAdmin(context, authorization);
+    if (forbidden) {
+      return forbidden;
+    }
+
+    if (segments[2] === "overview" && method === "GET") {
+      return json(context, await getAdminOverview(env.DB));
+    }
+
+    if (segments[2] === "users" && segments.length === 3 && method === "GET") {
+      return json(context, await listAdminUsers(env.DB));
+    }
+
+    if (segments[2] === "users" && segments[3] && method === "PATCH") {
+      try {
+        const body = await readJson<{ role?: "member" | "global_admin"; status?: "active" | "blocked" }>(request);
+        return json(context, await updateAdminUser(env.DB, authorization.user.id, segments[3], body));
+      } catch (error) {
+        return errorResponse(context, "admin_user_update_failed", error instanceof Error ? error.message : "Unable to update user.", 400);
+      }
+    }
+
+    if (segments[2] === "users" && segments[3] && segments[4] === "password" && method === "POST") {
+      try {
+        const body = await readJson<{ password: string }>(request);
+        return json(context, await adminSetUserPassword(env.DB, segments[3], body.password));
+      } catch (error) {
+        return errorResponse(context, "admin_password_reset_failed", error instanceof Error ? error.message : "Unable to update password.", 400);
+      }
+    }
+
+    if (segments[2] === "users" && segments[3] && method === "DELETE") {
+      try {
+        const deleted = await deleteAdminUser(env.DB, authorization.user.id, segments[3]);
+        return deleted ? json(context, { deleted: true }) : notFound(context, `User ${segments[3]} not found`);
+      } catch (error) {
+        return errorResponse(context, "admin_user_delete_failed", error instanceof Error ? error.message : "Unable to delete user.", 400);
+      }
+    }
+
+    if (segments[2] === "sites" && method === "GET") {
+      return json(context, await listAdminSites(env.DB));
+    }
+
+    return notFound(context, `Unknown API route: ${context.url.pathname}`);
   }
 
   const authorization = await authorizeRequest(request, env);
