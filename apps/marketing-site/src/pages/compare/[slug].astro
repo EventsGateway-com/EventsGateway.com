@@ -4,6 +4,7 @@ import Button from "../../components/Button.astro";
 import Container from "../../components/Container.astro";
 import PremiumCard from "../../components/PremiumCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
+import { compareMeta } from "../../content/compare-meta";
 import { comparePages, type CompareSlug } from "../../content/compare-pages";
 
 export function getStaticPaths() {
@@ -16,6 +17,10 @@ export function getStaticPaths() {
 const { page } = Astro.props as {
   page: (typeof comparePages)[CompareSlug];
 };
+
+const meta = compareMeta[Astro.params.slug as CompareSlug];
+
+const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - value);
 ---
 
 <BaseLayout
@@ -29,10 +34,43 @@ const { page } = Astro.props as {
         <span class="eyebrow">Comparison</span>
         <h1 class="page-title">{page.title}</h1>
         <p class="page-copy">{page.description}</p>
+        <div class="pill-row">
+          <span class="status-pill">{meta.category}</span>
+          <span class="status-pill">{meta.bestFor}</span>
+        </div>
         <div class="button-row">
           <Button href="/compare/" variant="secondary" icon="arrow-right">Back to comparisons</Button>
           <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="/why-not-direct-pixels/" variant="secondary" icon="arrow-right">Why not direct pixels?</Button>
         </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Scorecard"
+        title="A fast read on where each option wins."
+        description="This scorecard is intentionally directional. It helps the reader understand fit, not pretend that every buyer has the same priorities."
+      />
+      <div class="card-grid">
+        {
+          meta.scorecard.map((item) => (
+            <PremiumCard icon="layers" title={item.label} text={item.note} eyebrow="Scorecard">
+              <div class="score-rail">
+                <div class="score-rail__row">
+                  <span>Alternative</span>
+                  <code>{renderScore(item.alternative)}</code>
+                </div>
+                <div class="score-rail__row">
+                  <span>EventsGateway</span>
+                  <code>{renderScore(item.eventsgateway)}</code>
+                </div>
+              </div>
+            </PremiumCard>
+          ))
+        }
       </div>
     </Container>
   </section>
@@ -120,5 +158,25 @@ const { page } = Astro.props as {
     font-size: 0.74rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
+  }
+
+  .score-rail {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .score-rail__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--color-muted);
+  }
+
+  .score-rail__row code {
+    font-family: var(--font-mono);
+    color: var(--color-text);
+    letter-spacing: 0.2em;
+    white-space: nowrap;
   }
 </style>

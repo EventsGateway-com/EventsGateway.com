@@ -12,7 +12,7 @@ export const siteConfig = {
     { label: "Install", href: "/install/" },
     { label: "Docs", href: "/docs/" },
     { label: "Playbooks", href: "/docs/playbooks/" },
-    { label: "Compare", href: "/compare/" },
+    { label: "Comparisons", href: "/compare/" },
     { label: "Contact", href: "/contact/" }
   ],
   cta: {

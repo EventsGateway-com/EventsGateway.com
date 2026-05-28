@@ -1,0 +1,180 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { whyNotDirectPixelsContent } from "../content/why-not-direct-pixels";
+
+const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - value);
+---
+
+<BaseLayout
+  title={whyNotDirectPixelsContent.title}
+  description={whyNotDirectPixelsContent.intro}
+  canonicalPath="/why-not-direct-pixels/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{whyNotDirectPixelsContent.eyebrow}</span>
+        <h1 class="page-title">{whyNotDirectPixelsContent.title}</h1>
+        <p class="page-copy">{whyNotDirectPixelsContent.intro}</p>
+        <div class="button-row">
+          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="/compare/" variant="secondary" icon="arrow-right">Browse comparisons</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Why Switch"
+        title="The problem with direct pixels is not day one. It is month six."
+        description="That is usually when the site needs more platforms, better control, cleaner naming, or fewer tracking regressions."
+      />
+      <div class="card-grid">
+        {
+          whyNotDirectPixelsContent.reasons.map((item) => (
+            <PremiumCard icon="check" title={item.title} text={item.text} />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Scorecard"
+        title="Direct pixels versus a real event gateway."
+        description="This is the commercial and technical trade-off in one glance."
+      />
+      <div class="card-grid">
+        {
+          whyNotDirectPixelsContent.scorecard.map((item) => (
+            <PremiumCard icon="layers" title={item.label} text={item.note} eyebrow="Scorecard">
+              <div class="score-rail">
+                <div class="score-rail__row">
+                  <span>Direct pixels</span>
+                  <code>{renderScore(item.pixels)}</code>
+                </div>
+                <div class="score-rail__row">
+                  <span>EventsGateway</span>
+                  <code>{renderScore(item.gateway)}</code>
+                </div>
+              </div>
+            </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <SectionHeader
+        eyebrow="Head-to-Head"
+        title="What actually changes in the stack."
+        description="This is why EventsGateway becomes attractive the moment tracking needs to be durable, not just fast."
+      />
+      <div class="surface-panel table-panel">
+        <div class="surface-panel__inner">
+          <div class="docs-table-wrap">
+            <table class="docs-table">
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Direct Pixels</th>
+                  <th>EventsGateway</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  whyNotDirectPixelsContent.comparisonRows.map((row) => (
+                    <tr>
+                      <td>{row[0]}</td>
+                      <td>{row[1]}</td>
+                      <td>{row[2]}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="kicker">Why EventsGateway</span>
+          <h2 class="section-title">{whyNotDirectPixelsContent.ctaTitle}</h2>
+          <p class="section-copy">{whyNotDirectPixelsContent.ctaText}</p>
+          <div class="button-row">
+            <Button href="/install/" variant="primary" icon="download">Install guide</Button>
+            <Button href="/docs/" variant="secondary" icon="arrow-right">Read docs</Button>
+            <Button href="/compare/meta-pixel-direct/" variant="secondary" icon="arrow-right">Read Meta comparison</Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .table-panel {
+    overflow: hidden;
+  }
+
+  .docs-table-wrap {
+    overflow-x: auto;
+  }
+
+  .docs-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+  }
+
+  .docs-table th,
+  .docs-table td {
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  .docs-table th {
+    color: var(--color-subtle);
+    font-size: 0.74rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .score-rail {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .score-rail__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--color-muted);
+  }
+
+  .score-rail__row code {
+    font-family: var(--font-mono);
+    color: var(--color-text);
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+  }
+</style>
