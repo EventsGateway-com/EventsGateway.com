@@ -54,6 +54,38 @@ export const installGuideContent = {
     collectorDomain: "events.example.com",
     apiDomain: "api.example.com"
   },
+  commandBlocks: [
+    {
+      title: "Clone from GitHub",
+      code: `git clone https://github.com/EventsGateway-com/EventsGateway.com.git
+cd eventsgateway`
+    },
+    {
+      title: "Install dependencies",
+      code: `npm install
+cd apps/api-worker && npm install
+cd ../collector-worker && npm install
+cd ../forwarder-worker && npm install`
+    },
+    {
+      title: "Deploy the Workers runtime",
+      code: `cd apps/api-worker
+npx wrangler deploy
+
+cd ../collector-worker
+npx wrangler deploy
+
+cd ../forwarder-worker
+npx wrangler deploy`
+    },
+    {
+      title: "Add the tracker to your site",
+      code: `<script>
+  window.eventsGatewayEndpoint = "https://events.example.com/v1/collect";
+</script>
+<script src="https://cdn.example.com/eventsgateway/tracker.js"></script>`
+    }
+  ],
   checklist: [
     "GitHub repository cloned or forked into your own account",
     "Cloudflare Workers deployed for collector, API, and forwarding runtime",

@@ -9,15 +9,15 @@ export const siteConfig = {
   footerStatus: "Built on Cloudflare Workers and designed for fast site installation.",
   nav: [
     { label: "Home", href: "/" },
-    { label: "Install", href: "/download/" },
+    { label: "Install", href: "/install/" },
     { label: "Contact", href: "/contact/" }
   ],
   cta: {
-    primary: { label: "Install", href: "/download/" },
+    primary: { label: "Install", href: "/install/" },
     secondary: { label: "Contact", href: "/contact/" }
   },
   social: {
-    github: "",
+    github: "https://github.com/EventsGateway-com/EventsGateway.com.git",
     linkedin: "",
     x: ""
   },

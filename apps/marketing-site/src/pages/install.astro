@@ -27,7 +27,7 @@ const installJsonLd = {
 <BaseLayout
   title={`Install ${siteConfig.name} On Your Domain`}
   description="Step by step guide for installing EventsGateway from the GitHub repository to Cloudflare Workers on a real domain."
-  canonicalPath="/install-guide/"
+  canonicalPath="/install/"
   jsonLd={installJsonLd}
 >
   <section class="section page-hero">
@@ -89,6 +89,28 @@ const installJsonLd = {
             ))
           }
         </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Command Path"
+        title="Run the core installation commands."
+        description="These command blocks mirror the shortest path from the repository to a working Cloudflare Workers deployment and tracker install."
+      />
+      <div class="command-grid">
+        {
+          installGuideContent.commandBlocks.map((item) => (
+            <div class="surface-panel command-panel">
+              <div class="surface-panel__inner stack">
+                <span class="kicker">{item.title}</span>
+                <pre class="command-block"><code>{item.code}</code></pre>
+              </div>
+            </div>
+          ))
+        }
       </div>
     </Container>
   </section>
@@ -159,6 +181,31 @@ const installJsonLd = {
 </BaseLayout>
 
 <style>
+  .command-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .command-panel {
+    height: 100%;
+  }
+
+  .command-block {
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(5, 10, 24, 0.9);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   .repository-link,
   .repository-note {
     display: inline-flex;

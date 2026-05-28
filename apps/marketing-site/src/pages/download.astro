@@ -20,7 +20,7 @@ import { siteConfig } from "../config/site";
         <h1 class="page-title">{downloadContent.title}</h1>
         <p class="page-copy">{downloadContent.intro}</p>
         <div class="button-row">
-          <Button href="/install-guide/" variant="primary" icon="arrow-right">Open domain install guide</Button>
+          <Button href="/install/" variant="primary" icon="arrow-right">Open domain install guide</Button>
           <Button href="/contact/" variant="secondary" icon="mail">Contact</Button>
           <Button href="/" variant="ghost" icon="arrow-right">View platform overview</Button>
         </div>
@@ -37,7 +37,7 @@ import { siteConfig } from "../config/site";
             {
               downloadContent.platforms.map((platform) => (
                 <PremiumCard icon="download" title={platform.name} text={platform.detail} eyebrow={platform.status}>
-                  <Button href="/install-guide/" variant="secondary" icon="arrow-right">Read install guide</Button>
+                  <Button href="/install/" variant="secondary" icon="arrow-right">Read install guide</Button>
                 </PremiumCard>
               ))
             }
@@ -84,7 +84,7 @@ import { siteConfig } from "../config/site";
             Reach out if you want help with Cloudflare Workers deployment, collector subdomain mapping, or tracker installation on the live site.
           </p>
           <div class="button-row">
-            <Button href="/install-guide/" variant="secondary" icon="arrow-right">Read install guide</Button>
+            <Button href="/install/" variant="secondary" icon="arrow-right">Read install guide</Button>
             <Button href="/contact/" variant="primary" icon="mail">Contact</Button>
           </div>
         </div>
