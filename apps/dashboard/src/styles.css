@@ -268,13 +268,19 @@ p {
   line-height: 1.5;
   border: 1px solid var(--eg-border);
   border-radius: 0.9rem;
-  background: rgba(4, 8, 17, 0.88);
+  background: var(--eg-surface);
   color: var(--eg-text);
   outline: none;
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
     background-color 0.18s ease;
+}
+
+select.eg-input,
+select.eg-input option {
+  background: var(--eg-surface);
+  color: var(--eg-text);
 }
 
 .eg-field--floating > .eg-input {
@@ -480,7 +486,7 @@ p {
   top: 0;
   z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.65rem;
   padding: 0.1rem 0.1rem 0.55rem;
   background: var(--eg-bg);

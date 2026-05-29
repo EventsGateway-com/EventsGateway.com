@@ -347,7 +347,6 @@ function AppShell() {
           <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="64" height="64" />
           <div>
             <strong>EVENTS<br />Gateway</strong>
-            <span>Control center</span>
           </div>
           <button
             aria-label="Close navigation"
