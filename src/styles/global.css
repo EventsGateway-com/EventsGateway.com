@@ -302,6 +302,8 @@ main {
 }
 
 .floating-field.is-filled > .floating-label,
+.floating-field:has(> input:not(:placeholder-shown)) > .floating-label,
+.floating-field:has(> textarea:not(:placeholder-shown)) > .floating-label,
 .floating-field.is-active > .floating-label,
 .floating-field:focus-within > .floating-label {
   top: 0.22rem;

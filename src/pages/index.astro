@@ -35,7 +35,7 @@ const softwareJsonLd = {
     <Container>
       <div class="stack hero-stack">
         <span class="eyebrow">{homeContent.eyebrow}</span>
-        <h1 class="hero-title">{homeContent.title}</h1>
+        <h1 class="hero-title" set:html={homeContent.title} />
         <p class="hero-copy">{homeContent.description}</p>
         <ul class="hero-proof-list">
           {
