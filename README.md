@@ -184,6 +184,8 @@ Both commands currently map to the full deploy sequence:
 npm run deploy:all
 ```
 
+When a deployment platform runs `npx wrangler deploy` from the repository root, the repository installs a local Wrangler wrapper during `postinstall`. That wrapper expands the root deploy into the hosted full-stack deploy sequence so the root app, dashboard, API, collector, and forwarder are all deployed without changing the external Cloudflare command.
+
 ## Environment And Secrets
 
 ### Dashboard

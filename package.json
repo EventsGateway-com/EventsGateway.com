@@ -11,6 +11,7 @@
     "dev": "astro dev",
     "check": "astro check",
     "build": "astro check && astro build",
+    "postinstall": "node scripts/install-wrangler-wrapper.mjs",
     "postbuild": "node scripts/minify-html.mjs",
     "preview": "astro preview",
     "deploy": "npm run build && wrangler deploy --env production",
