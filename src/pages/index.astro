@@ -33,64 +33,62 @@ const softwareJsonLd = {
 >
   <section class="section section--hero">
     <Container>
-      <div class="hero-grid">
-        <div class="stack hero-stack">
-          <span class="eyebrow">{homeContent.eyebrow}</span>
-          <h1 class="hero-title">{homeContent.title}</h1>
-          <p class="hero-copy">{homeContent.description}</p>
-          <ul class="hero-proof-list">
-            {
-              heroOutcomes.map((item) => (
-                <li>{item}</li>
-              ))
-            }
-          </ul>
-          <div class="hero-actions">
-            <Button href={siteConfig.auth.register.href} variant="primary" icon="arrow-right">
-              Start Free
-            </Button>
-            <Button href="/contact/" variant="secondary" icon="mail">
-              Contact
-            </Button>
+      <div class="stack hero-stack">
+        <span class="eyebrow">{homeContent.eyebrow}</span>
+        <h1 class="hero-title">{homeContent.title}</h1>
+        <p class="hero-copy">{homeContent.description}</p>
+        <ul class="hero-proof-list">
+          {
+            heroOutcomes.map((item) => (
+              <li>{item}</li>
+            ))
+          }
+        </ul>
+        <div class="hero-actions">
+          <Button href={siteConfig.auth.register.href} variant="primary" icon="arrow-right">
+            Start Free
+          </Button>
+          <Button href="/contact/" variant="secondary" icon="mail">
+            Contact
+          </Button>
+        </div>
+        <div class="pill-row">
+          {
+            homeContent.trustMarks.map((mark) => (
+              <span class="status-pill">{mark}</span>
+            ))
+          }
+        </div>
+        <div class="hero-proof-grid">
+          <div class="hero-proof-stat">
+            <span>Meta</span>
+            <strong>Higher EMQ</strong>
+            <p>Stronger matching inputs for better optimization and audience quality.</p>
           </div>
-          <div class="pill-row">
-            {
-              homeContent.trustMarks.map((mark) => (
-                <span class="status-pill">{mark}</span>
-              ))
-            }
+          <div class="hero-proof-stat">
+            <span>Mobile</span>
+            <strong>Cleaner tracking</strong>
+            <p>More stable measurement across mobile sessions and iOS-heavy traffic.</p>
           </div>
-          <div class="hero-proof-grid">
-            <div class="hero-proof-stat">
-              <span>Meta</span>
-              <strong>Higher EMQ</strong>
-              <p>Stronger matching inputs for better optimization and audience quality.</p>
-            </div>
-            <div class="hero-proof-stat">
-              <span>Mobile</span>
-              <strong>Cleaner tracking</strong>
-              <p>More stable measurement across mobile sessions and iOS-heavy traffic.</p>
-            </div>
-            <div class="hero-proof-stat">
-              <span>Spend</span>
-              <strong>Lower waste</strong>
-              <p>Reduce bad data, duplicate logic, and tracking gaps that weaken campaign performance.</p>
-            </div>
+          <div class="hero-proof-stat">
+            <span>Spend</span>
+            <strong>Lower waste</strong>
+            <p>Reduce bad data, duplicate logic, and tracking gaps that weaken campaign performance.</p>
           </div>
-          <RealtimeHeroStats />
-          <div class="stats-grid hero-stats-grid">
-            {
-              heroTelemetry.map((stat) => (
-                <div class="surface-panel">
-                  <div class="surface-panel__inner stat-card">
-                    <span class="kicker">{stat.label}</span>
-                    <strong>{stat.value}</strong>
-                    <p>{stat.detail}</p>
-                  </div>
+        </div>
+        <RealtimeHeroStats />
+        <div class="stats-grid hero-stats-grid">
+          {
+            heroTelemetry.map((stat) => (
+              <div class="surface-panel">
+                <div class="surface-panel__inner stat-card">
+                  <span class="kicker">{stat.label}</span>
+                  <strong>{stat.value}</strong>
+                  <p>{stat.detail}</p>
                 </div>
-              ))
-            }
-          </div>
+              </div>
+            ))
+          }
         </div>
       </div>
     </Container>
@@ -253,10 +251,6 @@ const softwareJsonLd = {
   .button-row--center {
     justify-content: center;
     margin-top: 1.25rem;
-  }
-
-  .hero-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .hero-stack {
