@@ -2,10 +2,30 @@
 import BrandMark from "./BrandMark.astro";
 import Button from "./Button.astro";
 import Container from "./Container.astro";
-import { primaryNav } from "../config/nav";
 import { siteConfig } from "../config/site";
+import { docsContent } from "../content/docs";
+import { comparePages } from "../content/compare-pages";
 
 const pathname = Astro.url.pathname;
+const coreLinks = [
+  { label: "Home", href: "/" },
+  { label: "Pricing", href: "/pricing/" }
+];
+const docsLinks = [
+  { label: "Docs Home", href: "/docs/" },
+  ...docsContent.sections.map((section) => ({
+    label: section.title,
+    href: section.href
+  }))
+];
+const compareLinks = [
+  { label: "Compare Home", href: "/compare/" },
+  { label: "Why Not Direct Pixels", href: "/why-not-direct-pixels/" },
+  ...Object.entries(comparePages).map(([slug, page]) => ({
+    label: page.title.replace("EventsGateway vs ", ""),
+    href: `/compare/${slug}/`
+  }))
+] as Array<{ label: string; href: string }>;
 const communityLinks = [
   { label: "Open Source", href: "/open-source/" },
   { label: "Install", href: "/install/" },
@@ -29,6 +49,8 @@ function isActivePath(href: string) {
   return pathname === href || pathname.startsWith(href);
 }
 
+const docsActive = pathname.startsWith("/docs/") || pathname.startsWith("/install/") || pathname.startsWith("/status/");
+const compareActive = pathname.startsWith("/compare/") || pathname === "/why-not-direct-pixels/";
 const communityActive = pathname.startsWith("/open-source/") || pathname.startsWith("/install/");
 const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/founder/");
 ---
@@ -40,13 +62,43 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
       <div class="desktop-nav-shell">
         <nav class="desktop-nav" aria-label="Primary">
           {
-            primaryNav.map((item) => (
+            coreLinks.map((item) => (
               <a class:list={["nav-link", isActivePath(item.href) && "is-active"]} href={item.href}>
                 <span class="nav-link__dot"></span>
                 {item.label}
               </a>
             ))
           }
+          <details class:list={["nav-dropdown", docsActive && "is-active"]}>
+            <summary class="nav-link">
+              <span class="nav-link__dot"></span>
+              Docs
+            </summary>
+            <div class="nav-dropdown__panel nav-dropdown__panel--wide">
+              {
+                docsLinks.map((item) => (
+                  <a class:list={[isActivePath(item.href) && "is-active"]} href={item.href}>
+                    {item.label}
+                  </a>
+                ))
+              }
+            </div>
+          </details>
+          <details class:list={["nav-dropdown", compareActive && "is-active"]}>
+            <summary class="nav-link">
+              <span class="nav-link__dot"></span>
+              Compare
+            </summary>
+            <div class="nav-dropdown__panel nav-dropdown__panel--wide nav-dropdown__panel--scroll">
+              {
+                compareLinks.map((item) => (
+                  <a class:list={[isActivePath(item.href) && "is-active"]} href={item.href}>
+                    {item.label}
+                  </a>
+                ))
+              }
+            </div>
+          </details>
           <details class:list={["nav-dropdown", communityActive && "is-active"]}>
             <summary class="nav-link">
               <span class="nav-link__dot"></span>
@@ -55,7 +107,7 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
             <div class="nav-dropdown__panel">
               {
                 communityLinks.map((item) => (
-                  <a href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noreferrer" : undefined}>
+                  <a class:list={[isActivePath(item.href) && "is-active"]} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noreferrer" : undefined}>
                     {item.label}
                   </a>
                 ))
@@ -91,7 +143,7 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
       <div class="mobile-nav__panel">
         <nav aria-label="Mobile">
           {
-            primaryNav.map((item) => (
+            coreLinks.map((item) => (
               <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
                 <span class="nav-link__dot"></span>
                 {item.label}
@@ -99,10 +151,32 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
             ))
           }
           <div class="mobile-nav__group">
+            <span class="mobile-nav__label">Docs</span>
+            {
+              docsLinks.map((item) => (
+                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
+                  <span class="nav-link__dot"></span>
+                  {item.label}
+                </a>
+              ))
+            }
+          </div>
+          <div class="mobile-nav__group">
+            <span class="mobile-nav__label">Compare</span>
+            {
+              compareLinks.map((item) => (
+                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
+                  <span class="nav-link__dot"></span>
+                  {item.label}
+                </a>
+              ))
+            }
+          </div>
+          <div class="mobile-nav__group">
             <span class="mobile-nav__label">Community</span>
             {
               communityLinks.map((item) => (
-                <a class="mobile-link" href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noreferrer" : undefined}>
+                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noreferrer" : undefined}>
                   <span class="nav-link__dot"></span>
                   {item.label}
                 </a>
@@ -312,6 +386,15 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     box-shadow: var(--shadow-card);
   }
 
+  .nav-dropdown__panel--wide {
+    min-width: 15rem;
+  }
+
+  .nav-dropdown__panel--scroll {
+    max-height: min(70vh, 28rem);
+    overflow-y: auto;
+  }
+
   .nav-dropdown__panel a,
   .mobile-nav__label {
     color: var(--color-muted);
@@ -328,6 +411,16 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
   .nav-dropdown__panel a:hover {
     background: rgba(255, 255, 255, 0.05);
     color: var(--color-text);
+  }
+
+  .nav-dropdown__panel a.is-active {
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.12), rgba(255, 255, 255, 0.03)),
+      rgba(255, 255, 255, 0.03);
+    color: var(--color-text);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 0 0 1px rgba(125, 211, 252, 0.14);
   }
 
   .nav-dropdown.is-active > summary {
