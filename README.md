@@ -184,7 +184,7 @@ Both commands currently map to the full deploy sequence:
 npm run deploy:all
 ```
 
-When a deployment platform runs `npx wrangler deploy` from the repository root, the repository installs a local Wrangler wrapper during `postinstall`. That wrapper expands the root deploy into the hosted full-stack deploy sequence so the root app, dashboard, API, collector, and forwarder are all deployed without changing the external Cloudflare command.
+When a deployment platform runs `npx wrangler deploy` from the repository root, the repository installs a local Wrangler wrapper during `postinstall`. The default root deploy now publishes only the root Worker connected to that build. Use `npm run deploy:hosted` when you explicitly want the full hosted deploy sequence for root, dashboard, API, collector, and forwarder.
 
 ## Environment And Secrets
 

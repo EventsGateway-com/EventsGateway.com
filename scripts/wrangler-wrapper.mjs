@@ -31,6 +31,9 @@ function shouldRunHostedDeploy() {
   if (process.env.EVENTSGATEWAY_WRANGLER_WRAPPER_BYPASS === "1") {
     return false;
   }
+  if (process.env.EVENTSGATEWAY_FULL_STACK_DEPLOY !== "1") {
+    return false;
+  }
   if (process.cwd() !== rootDir) {
     return false;
   }
