@@ -747,8 +747,15 @@ select.eg-input option {
 }
 
 .eg-page-intro {
-  display: grid;
-  gap: 0.55rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.eg-page-intro > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .eg-page-intro h2 {
@@ -764,8 +771,12 @@ select.eg-input option {
   line-height: 1.45;
 }
 
-.eg-page-intro > *:last-child {
-  width: 100%;
+.eg-page-intro__actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
 }
 
 .eg-actions {
@@ -1288,7 +1299,7 @@ select.eg-input option {
     width: auto;
   }
 
-  .eg-page-intro > *:last-child,
+  .eg-page-intro__actions,
   .eg-button {
     width: auto;
   }
@@ -1467,13 +1478,6 @@ select.eg-input option {
 
   .eg-content {
     padding: 1rem;
-  }
-
-  .eg-page-intro {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.8rem;
   }
 
   .eg-page-intro h2 {

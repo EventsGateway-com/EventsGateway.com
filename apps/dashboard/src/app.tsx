@@ -1520,6 +1520,18 @@ function useWindowPageState(pageKey: string, panels: WindowPanelDefinition[]) {
     });
   };
 
+  const resetPageState = () => {
+    setLayouts(defaultLayouts);
+    setMinimizedPanels({});
+    setClosedPanels({});
+    setOriginalHeights(defaultHeights);
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      return;
+    }
+  };
+
   return {
     layouts,
     minimizedPanels,
@@ -1527,7 +1539,8 @@ function useWindowPageState(pageKey: string, panels: WindowPanelDefinition[]) {
     handleLayoutChange,
     toggleMinimize,
     closePanel,
-    restorePanel
+    restorePanel,
+    resetPageState
   };
 }
 
@@ -1573,12 +1586,20 @@ function WindowedPage({
   notices?: ReactNode;
   panels: WindowPanelDefinition[];
 }) {
-  const { layouts, minimizedPanels, closedPanels, handleLayoutChange, toggleMinimize, closePanel, restorePanel } = useWindowPageState(pageKey, panels);
+  const { layouts, minimizedPanels, closedPanels, handleLayoutChange, toggleMinimize, closePanel, restorePanel, resetPageState } = useWindowPageState(pageKey, panels);
   const hiddenPanels = panels.filter((panel) => closedPanels[panel.id]);
+  const pageAction = (
+    <div className="eg-page-intro__actions">
+      {introAction}
+      <button className="eg-button eg-button--compact" onClick={resetPageState} type="button">
+        Reset
+      </button>
+    </div>
+  );
 
   return (
     <div className="eg-page eg-window-page" style={{ paddingBottom: hiddenPanels.length > 0 ? "4rem" : "1rem" }}>
-      <PageIntro title={introTitle} description={introDescription} action={introAction} />
+      <PageIntro title={introTitle} description={introDescription} action={pageAction} />
       {notices}
       <div className="eg-window-layout">
         <ResponsiveGridLayout
@@ -1758,6 +1779,18 @@ function OverviewPage() {
     });
   };
 
+  const resetOverviewState = () => {
+    setLayouts(defaultLayouts);
+    setMinimizedPanels({});
+    setClosedPanels({});
+    setOriginalHeights({});
+    try {
+      localStorage.removeItem(`${STORAGE_KEY}_${currentContext.siteId}`);
+    } catch {
+      return;
+    }
+  };
+
   if (!overviewQuery.data) return <StateCard title="Loading overview" description="Building the latest metrics snapshot." />;
 
   const allPanels = [
@@ -1776,6 +1809,13 @@ function OverviewPage() {
       <PageIntro
         title="Overview"
         description="Central view for ingestion, matching, delivery success and active routing state."
+        action={(
+          <div className="eg-page-intro__actions">
+            <button className="eg-button eg-button--compact" onClick={resetOverviewState} type="button">
+              Reset
+            </button>
+          </div>
+        )}
       />
       <div style={{ margin: '0 -10px' }}>
         <ResponsiveGridLayout
@@ -6224,323 +6264,409 @@ function AdminBillingPage() {
     downloadDataFile("finance-snapshot.json", JSON.stringify(financeSnapshot, null, 2), "application/json;charset=utf-8;");
   };
 
-  return (
-    <div className="eg-page">
-      <PageIntro
-        title="Billing Admin"
-        description="Global finance operations for subscriptions, transactions, manual invoices, and suspension control."
-        action={
-          <div className="eg-inline-actions">
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "admin-billing-cockpit",
+      title: "Finance cockpit",
+      content: (
+        <div className="eg-billing-hero">
+          <div className="eg-billing-hero__lead">
+            <div>
+              <span className="eyebrow">Visible recovered revenue</span>
+              <strong className="eg-billing-hero__value">{formatCurrencyDetailed(visibleRevenueUsd)}</strong>
+              <p className="eg-billing-hero__copy">
+                {atRiskSubscriptions.length > 0
+                  ? `${atRiskSubscriptions.length} subscription${atRiskSubscriptions.length === 1 ? "" : "s"} in the current scope are in recovery or suspended status.`
+                  : "No recovery pressure is visible in the current billing filter scope."}
+              </p>
+            </div>
+            <div className="eg-inline-actions">
+              <span className={`eg-pill ${atRiskSubscriptions.length ? "eg-pill--warning" : "eg-pill--success"}`}>
+                {atRiskSubscriptions.length ? "Risk detected" : "Low risk"}
+              </span>
+            </div>
+          </div>
+          <div className="eg-billing-kpi-grid">
+            <MetricMini label="At-risk subscriptions" value={atRiskSubscriptions.length} />
+            <MetricMini label="Failed attempt value" value={formatCurrencyDetailed(visibleFailedAmountUsd)} />
+            <MetricMini label="Average successful payment" value={formatCurrencyDetailed(averageSuccessfulPaymentUsd)} />
+            <MetricMini label="Collection success rate" value={`${Math.round((successfulTransactions.length / Math.max(filteredTransactions.length, 1)) * 100)}%`} />
+          </div>
+        </div>
+      ),
+      w: 6,
+      h: 11
+    },
+    {
+      id: "admin-billing-revenue-timing",
+      title: "Revenue timing",
+      content: (
+        <div className="eg-report-list">
+          {overviewQuery.data.monthly_revenue.map((item) => (
+            <div className="eg-report-row" key={item.month}>
+              <div className="eg-report-row__content">
+                <strong>{item.month}</strong>
+                <span>{formatCurrencyDetailed(item.total_usd)} collected in this monthly bucket.</span>
+              </div>
+              <div className="eg-report-bar">
+                <span className="eg-report-bar__fill" style={{ width: `${Math.max(12, Math.round((item.total_usd / maxMonthlyRevenueUsd) * 100))}%` }}></span>
+              </div>
+            </div>
+          ))}
+          {overviewQuery.data.quarterly_revenue.map((item) => (
+            <div className="eg-report-row" key={item.quarter}>
+              <div className="eg-report-row__content">
+                <strong>{item.quarter}</strong>
+                <span>{formatCurrencyDetailed(item.total_usd)} collected in this quarterly bucket.</span>
+              </div>
+              <div className="eg-report-bar eg-report-bar--accent">
+                <span className="eg-report-bar__fill" style={{ width: `${Math.max(12, Math.round((item.total_usd / maxQuarterlyRevenueUsd) * 100))}%` }}></span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ),
+      w: 6,
+      h: 11
+    },
+    {
+      id: "admin-billing-search",
+      title: "Search and filters",
+      content: (
+        <div className="eg-filter-grid">
+          <label className="eg-field">
+            <span>Search</span>
+            <input
+              className="eg-input"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Company, email, site ID, or invoice"
+              type="text"
+              value={searchTerm}
+            />
+          </label>
+          <label className="eg-field">
+            <span>Status filter</span>
+            <select className="eg-input" onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} value={statusFilter}>
+              <option value="all">All</option>
+              <option value="active">Active</option>
+              <option value="past_due">Past due</option>
+              <option value="suspended">Suspended</option>
+              <option value="canceled">Canceled</option>
+            </select>
+          </label>
+        </div>
+      )
+    },
+    {
+      id: "admin-billing-filter-posture",
+      title: "Filter result posture",
+      content: (
+        <div className="eg-list">
+          <div className="eg-list__row">
+            <div>
+              <strong>{filteredSubscriptions.length} subscriptions</strong>
+              <span>Visible after applying the current search and status filter.</span>
+            </div>
+          </div>
+          <div className="eg-list__row">
+            <div>
+              <strong>{filteredTransactions.length} transactions</strong>
+              <span>Payment attempts or settlements matching the same search context.</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    ...[
+      {
+        id: "admin-billing-metric-subscriptions",
+        title: "Subscriptions",
+        value: overviewQuery.data.totals.subscriptions,
+        detail: "All commercial subscriptions across the platform"
+      },
+      {
+        id: "admin-billing-metric-active",
+        title: "Active",
+        value: overviewQuery.data.totals.active_subscriptions,
+        detail: "Subscriptions currently allowed to route events"
+      },
+      {
+        id: "admin-billing-metric-past-due",
+        title: "Past due",
+        value: overviewQuery.data.totals.past_due_subscriptions,
+        detail: "Subscriptions in payment recovery before suspension"
+      },
+      {
+        id: "admin-billing-metric-suspended",
+        title: "Suspended",
+        value: overviewQuery.data.totals.suspended_subscriptions,
+        detail: "Subscriptions currently blocked from routing"
+      },
+      {
+        id: "admin-billing-metric-monthly",
+        title: "Monthly revenue",
+        value: `$${overviewQuery.data.totals.monthly_revenue_usd.toFixed(2)}`,
+        detail: "Latest monthly recognized paid invoice total"
+      },
+      {
+        id: "admin-billing-metric-quarterly",
+        title: "Quarterly revenue",
+        value: `$${overviewQuery.data.totals.quarterly_revenue_usd.toFixed(2)}`,
+        detail: "Latest quarterly recognized paid invoice total"
+      },
+      {
+        id: "admin-billing-metric-overdue",
+        title: "Overdue amount",
+        value: `$${overviewQuery.data.totals.overdue_amount_usd.toFixed(2)}`,
+        detail: "Open and past-due invoice value currently at risk"
+      },
+      {
+        id: "admin-billing-metric-successful",
+        title: "Successful payments",
+        value: overviewQuery.data.totals.successful_transactions,
+        detail: "Successful transactions captured in the billing ledger"
+      }
+    ].map((panel) => ({
+      id: panel.id,
+      title: panel.title,
+      variant: "metric" as const,
+      content: <WindowMetricContent value={panel.value} detail={panel.detail} />
+    })),
+    {
+      id: "admin-billing-manual-invoice",
+      title: "Manual invoice",
+      content: (
+        <form className="eg-auth-form" onSubmit={(event) => {
+          event.preventDefault();
+          issueInvoiceMutation.mutate({
+            site_id: invoiceDraft.site_id.trim(),
+            amount_usd: Number(invoiceDraft.amount_usd),
+            due_in_days: Number(invoiceDraft.due_in_days)
+          });
+        }}>
+          <label className="eg-field">
+            <span>Site ID</span>
+            <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, site_id: event.target.value }))} type="text" value={invoiceDraft.site_id} />
+          </label>
+          <label className="eg-field">
+            <span>Amount USD</span>
+            <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, amount_usd: event.target.value }))} type="number" value={invoiceDraft.amount_usd} />
+          </label>
+          <label className="eg-field">
+            <span>Due in days</span>
+            <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, due_in_days: event.target.value }))} type="number" value={invoiceDraft.due_in_days} />
+          </label>
+          <button className="eg-button eg-button--primary" type="submit">Issue invoice</button>
+        </form>
+      ),
+      h: 12
+    },
+    {
+      id: "admin-billing-exports",
+      title: "Reports and exports",
+      content: (
+        <div className="eg-report-list">
+          <div className="eg-report-row">
+            <div className="eg-report-row__content">
+              <strong>Subscription ledger export</strong>
+              <span>Download company, billing contact, plan, status, usage, grace period, and suspension context.</span>
+            </div>
             <button className="eg-button eg-button--compact" onClick={exportSubscriptionsCsv} type="button">
-              Subscriptions CSV
+              Export CSV
             </button>
+          </div>
+          <div className="eg-report-row">
+            <div className="eg-report-row__content">
+              <strong>Transaction ledger export</strong>
+              <span>Download finance-ready payment rows with invoice references and Stripe payment method details.</span>
+            </div>
             <button className="eg-button eg-button--compact" onClick={exportTransactionsCsv} type="button">
-              Transactions CSV
+              Export CSV
             </button>
+          </div>
+          <div className="eg-report-row">
+            <div className="eg-report-row__content">
+              <strong>Revenue timeline export</strong>
+              <span>Download monthly and quarterly recognized revenue series for spreadsheet or BI tooling.</span>
+            </div>
             <button className="eg-button eg-button--compact" onClick={exportRevenueCsv} type="button">
-              Revenue CSV
+              Export CSV
             </button>
+          </div>
+          <div className="eg-report-row">
+            <div className="eg-report-row__content">
+              <strong>Finance snapshot export</strong>
+              <span>Download filters, KPI summary, and revenue series as JSON for automation and archival.</span>
+            </div>
             <button className="eg-button eg-button--compact" onClick={exportFinanceJson} type="button">
-              Finance JSON
+              Export JSON
             </button>
           </div>
-        }
-      />
-      {error ? <p className="eg-form-error">{error}</p> : null}
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Finance cockpit" subtitle="Executive read on collections quality inside the current filtered scope">
-          <div className="eg-billing-hero">
-            <div className="eg-billing-hero__lead">
-              <div>
-                <span className="eyebrow">Visible recovered revenue</span>
-                <strong className="eg-billing-hero__value">{formatCurrencyDetailed(visibleRevenueUsd)}</strong>
-                <p className="eg-billing-hero__copy">
-                  {atRiskSubscriptions.length > 0
-                    ? `${atRiskSubscriptions.length} subscription${atRiskSubscriptions.length === 1 ? "" : "s"} in the current scope are in recovery or suspended status.`
-                    : "No recovery pressure is visible in the current billing filter scope."}
-                </p>
-              </div>
-              <div className="eg-inline-actions">
-                <span className={`eg-pill ${atRiskSubscriptions.length ? "eg-pill--warning" : "eg-pill--success"}`}>
-                  {atRiskSubscriptions.length ? "Risk detected" : "Low risk"}
-                </span>
-              </div>
-            </div>
-            <div className="eg-billing-kpi-grid">
-              <MetricMini label="At-risk subscriptions" value={atRiskSubscriptions.length} />
-              <MetricMini label="Failed attempt value" value={formatCurrencyDetailed(visibleFailedAmountUsd)} />
-              <MetricMini label="Average successful payment" value={formatCurrencyDetailed(averageSuccessfulPaymentUsd)} />
-              <MetricMini label="Collection success rate" value={`${Math.round((successfulTransactions.length / Math.max(filteredTransactions.length, 1)) * 100)}%`} />
+        </div>
+      ),
+      h: 12
+    },
+    {
+      id: "admin-billing-policy",
+      title: "Commercial policy",
+      content: (
+        <div className="eg-list">
+          <div className="eg-list__row">
+            <div>
+              <strong>Free entry point</strong>
+              <span>Every site starts with a 1,000,000 routed event allowance per monthly cycle.</span>
             </div>
           </div>
-        </SurfaceCard>
-        <SurfaceCard title="Revenue timing" subtitle="Monthly and quarterly curves generated from the billing ledger">
-          <div className="eg-report-list">
-            {overviewQuery.data.monthly_revenue.map((item) => (
-              <div className="eg-report-row" key={item.month}>
-                <div className="eg-report-row__content">
-                  <strong>{item.month}</strong>
-                  <span>{formatCurrencyDetailed(item.total_usd)} collected in this monthly bucket.</span>
+          <div className="eg-list__row">
+            <div>
+              <strong>Linear overage</strong>
+              <span>Each extra started 1,000,000-event block adds $5 without forcing a hard plan cliff.</span>
+            </div>
+          </div>
+          <div className="eg-list__row">
+            <div>
+              <strong>Recovery window</strong>
+              <span>Payment reminders are scheduled automatically and routing suspends after 15 overdue days if payment is not resolved.</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: "admin-billing-operations-posture",
+      title: "Finance operations posture",
+      content: (
+        <div className="eg-list">
+          <div className="eg-list__row">
+            <div>
+              <strong>Past due accounts</strong>
+              <span>Use the subscriptions table below to reactivate, suspend, or move sites between commercial plans.</span>
+            </div>
+          </div>
+          <div className="eg-list__row">
+            <div>
+              <strong>Invoice pressure</strong>
+              <span>Watch overdue amount and successful payment trends together to understand recovery effectiveness.</span>
+            </div>
+          </div>
+          <div className="eg-list__row">
+            <div>
+              <strong>Manual intervention</strong>
+              <span>Issue manual invoices when the commercial flow needs custom amounts, custom due windows, or offline sales handling.</span>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: "admin-billing-subscriptions",
+      title: "Subscriptions",
+      content: !filteredSubscriptions.length ? (
+        <StateCard compact title="No subscriptions in scope" description="Adjust the search term or status filter to inspect another finance slice." />
+      ) : (
+        <div className="eg-stack">
+          {filteredSubscriptions.map((subscription) => (
+            <div className="eg-admin-user" key={subscription.id}>
+              <div className="eg-admin-user__meta">
+                <ActionLine title="Company" text={subscription.company_name} />
+                <ActionLine title="Billing email" text={subscription.billing_email} />
+                <ActionLine title="Site ID" text={subscription.site_id} />
+                <ActionLine title="Plan" text={subscription.plan_code} />
+                <ActionLine title="Status" text={subscription.status} />
+                <ActionLine title="Usage" text={`${subscription.monthly_events_used.toLocaleString("en-US")} / ${subscription.included_events.toLocaleString("en-US")}`} />
+              </div>
+              <div className="eg-admin-user__actions">
+                <div className="eg-inline-actions">
+                  <StatusBadge status={subscription.status === "active" ? "healthy" : subscription.status === "suspended" ? "warning" : "pending"}>
+                    {subscription.status}
+                  </StatusBadge>
+                  <StatusBadge status={subscription.plan_code === "enterprise" ? "healthy" : subscription.plan_code === "growth" ? "pending" : "info"}>
+                    {subscription.plan_code}
+                  </StatusBadge>
                 </div>
-                <div className="eg-report-bar">
-                  <span className="eg-report-bar__fill" style={{ width: `${Math.max(12, Math.round((item.total_usd / maxMonthlyRevenueUsd) * 100))}%` }}></span>
+                <div className="eg-inline-actions">
+                  <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: subscription.plan_code === "free" ? "growth" : "free" } })} type="button">
+                    Toggle plan
+                  </button>
+                  <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: "enterprise" } })} type="button">
+                    Enterprise
+                  </button>
+                  <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { status: subscription.status === "suspended" ? "active" : "suspended" } })} type="button">
+                    {subscription.status === "suspended" ? "Reactivate" : "Suspend"}
+                  </button>
                 </div>
               </div>
-            ))}
-            {overviewQuery.data.quarterly_revenue.map((item) => (
-              <div className="eg-report-row" key={item.quarter}>
-                <div className="eg-report-row__content">
-                  <strong>{item.quarter}</strong>
-                  <span>{formatCurrencyDetailed(item.total_usd)} collected in this quarterly bucket.</span>
-                </div>
-                <div className="eg-report-bar eg-report-bar--accent">
-                  <span className="eg-report-bar__fill" style={{ width: `${Math.max(12, Math.round((item.total_usd / maxQuarterlyRevenueUsd) * 100))}%` }}></span>
-                </div>
-              </div>
-            ))}
+            </div>
+          ))}
+        </div>
+      ),
+      variant: "full",
+      h: 18,
+      minH: 12
+    },
+    {
+      id: "admin-billing-transactions",
+      title: "Transactions",
+      content: !filteredTransactions.length ? (
+        <StateCard compact title="No transactions in scope" description="No payment rows match the current filter context." />
+      ) : (
+        <div className="eg-table">
+          <div className="eg-table__head eg-table__row">
+            <span className="eg-table__cell">Company</span>
+            <span className="eg-table__cell">Invoice</span>
+            <span className="eg-table__cell">Amount</span>
+            <span className="eg-table__cell">Status</span>
           </div>
-        </SurfaceCard>
-      </section>
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Search and filters" subtitle="Narrow down subscriptions and transactions by company, email, site, invoice, or risk state">
-          <div className="eg-filter-grid">
-            <label className="eg-field">
-              <span>Search</span>
-              <input
-                className="eg-input"
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Company, email, site ID, or invoice"
-                type="text"
-                value={searchTerm}
-              />
-            </label>
-            <label className="eg-field">
-              <span>Status filter</span>
-              <select className="eg-input" onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} value={statusFilter}>
-                <option value="all">All</option>
-                <option value="active">Active</option>
-                <option value="past_due">Past due</option>
-                <option value="suspended">Suspended</option>
-                <option value="canceled">Canceled</option>
-              </select>
-            </label>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard title="Filter result posture" subtitle="Quick read on what the current filter is showing you">
-          <div className="eg-list">
-            <div className="eg-list__row">
-              <div>
-                <strong>{filteredSubscriptions.length} subscriptions</strong>
-                <span>Visible after applying the current search and status filter.</span>
+          {filteredTransactions.map((transaction) => (
+            <div className="eg-table__row" key={transaction.id}>
+              <span className="eg-table__cell" data-label="Company">
+                <strong>{transaction.company_name}</strong>
+                <small>{transaction.billing_email}</small>
+              </span>
+              <span className="eg-table__cell" data-label="Invoice">{transaction.invoice_number || "n/a"}</span>
+              <span className="eg-table__cell" data-label="Amount">${transaction.amount_usd.toFixed(2)}</span>
+              <span className="eg-table__cell" data-label="Method">
+                {transaction.payment_method_brand ? `${transaction.payment_method_brand.toUpperCase()} •••• ${transaction.payment_method_last4 || "----"}` : "Stripe-managed"}
+              </span>
+              <div className="eg-table__cell" data-label="Status">
+                <StatusBadge status={transaction.status === "succeeded" ? "healthy" : transaction.status === "failed" ? "warning" : "pending"}>
+                  {transaction.status}
+                </StatusBadge>
               </div>
             </div>
-            <div className="eg-list__row">
-              <div>
-                <strong>{filteredTransactions.length} transactions</strong>
-                <span>Payment attempts or settlements matching the same search context.</span>
-              </div>
-            </div>
-          </div>
-        </SurfaceCard>
-      </section>
-      <section className="eg-metric-grid">
-        <MetricCard label="Subscriptions" value={overviewQuery.data.totals.subscriptions} detail="All commercial subscriptions across the platform" />
-        <MetricCard label="Active" value={overviewQuery.data.totals.active_subscriptions} detail="Subscriptions currently allowed to route events" />
-        <MetricCard label="Past due" value={overviewQuery.data.totals.past_due_subscriptions} detail="Subscriptions in payment recovery before suspension" />
-        <MetricCard label="Suspended" value={overviewQuery.data.totals.suspended_subscriptions} detail="Subscriptions currently blocked from routing" />
-        <MetricCard label="Monthly revenue" value={`$${overviewQuery.data.totals.monthly_revenue_usd.toFixed(2)}`} detail="Latest monthly recognized paid invoice total" />
-        <MetricCard label="Quarterly revenue" value={`$${overviewQuery.data.totals.quarterly_revenue_usd.toFixed(2)}`} detail="Latest quarterly recognized paid invoice total" />
-        <MetricCard label="Overdue amount" value={`$${overviewQuery.data.totals.overdue_amount_usd.toFixed(2)}`} detail="Open and past-due invoice value currently at risk" />
-        <MetricCard label="Successful payments" value={overviewQuery.data.totals.successful_transactions} detail="Successful transactions captured in the billing ledger" />
-      </section>
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Manual invoice" subtitle="Issue a manual invoice from the control plane">
-          <form className="eg-auth-form" onSubmit={(event) => {
-            event.preventDefault();
-            issueInvoiceMutation.mutate({
-              site_id: invoiceDraft.site_id.trim(),
-              amount_usd: Number(invoiceDraft.amount_usd),
-              due_in_days: Number(invoiceDraft.due_in_days)
-            });
-          }}>
-            <label className="eg-field">
-              <span>Site ID</span>
-              <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, site_id: event.target.value }))} type="text" value={invoiceDraft.site_id} />
-            </label>
-            <label className="eg-field">
-              <span>Amount USD</span>
-              <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, amount_usd: event.target.value }))} type="number" value={invoiceDraft.amount_usd} />
-            </label>
-            <label className="eg-field">
-              <span>Due in days</span>
-              <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, due_in_days: event.target.value }))} type="number" value={invoiceDraft.due_in_days} />
-            </label>
-            <button className="eg-button eg-button--primary" type="submit">Issue invoice</button>
-          </form>
-        </SurfaceCard>
-        <SurfaceCard title="Reports and exports" subtitle="Operational downloads and quick finance snapshots for external analysis">
-          <div className="eg-report-list">
-            <div className="eg-report-row">
-              <div className="eg-report-row__content">
-                <strong>Subscription ledger export</strong>
-                <span>Download company, billing contact, plan, status, usage, grace period, and suspension context.</span>
-              </div>
-              <button className="eg-button eg-button--compact" onClick={exportSubscriptionsCsv} type="button">
-                Export CSV
-              </button>
-            </div>
-            <div className="eg-report-row">
-              <div className="eg-report-row__content">
-                <strong>Transaction ledger export</strong>
-                <span>Download finance-ready payment rows with invoice references and Stripe payment method details.</span>
-              </div>
-              <button className="eg-button eg-button--compact" onClick={exportTransactionsCsv} type="button">
-                Export CSV
-              </button>
-            </div>
-            <div className="eg-report-row">
-              <div className="eg-report-row__content">
-                <strong>Revenue timeline export</strong>
-                <span>Download monthly and quarterly recognized revenue series for spreadsheet or BI tooling.</span>
-              </div>
-              <button className="eg-button eg-button--compact" onClick={exportRevenueCsv} type="button">
-                Export CSV
-              </button>
-            </div>
-            <div className="eg-report-row">
-              <div className="eg-report-row__content">
-                <strong>Finance snapshot export</strong>
-                <span>Download filters, KPI summary, and revenue series as JSON for automation and archival.</span>
-              </div>
-              <button className="eg-button eg-button--compact" onClick={exportFinanceJson} type="button">
-                Export JSON
-              </button>
-            </div>
-          </div>
-        </SurfaceCard>
-      </section>
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Commercial policy" subtitle="The platform-wide billing guardrails currently enforced">
-          <div className="eg-list">
-            <div className="eg-list__row">
-              <div>
-                <strong>Free entry point</strong>
-                <span>Every site starts with a 1,000,000 routed event allowance per monthly cycle.</span>
-              </div>
-            </div>
-            <div className="eg-list__row">
-              <div>
-                <strong>Linear overage</strong>
-                <span>Each extra started 1,000,000-event block adds $5 without forcing a hard plan cliff.</span>
-              </div>
-            </div>
-            <div className="eg-list__row">
-              <div>
-                <strong>Recovery window</strong>
-                <span>Payment reminders are scheduled automatically and routing suspends after 15 overdue days if payment is not resolved.</span>
-              </div>
-            </div>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard title="Finance operations posture" subtitle="Where to act first when revenue risk grows">
-          <div className="eg-list">
-            <div className="eg-list__row">
-              <div>
-                <strong>Past due accounts</strong>
-                <span>Use the subscriptions table below to reactivate, suspend, or move sites between commercial plans.</span>
-              </div>
-            </div>
-            <div className="eg-list__row">
-              <div>
-                <strong>Invoice pressure</strong>
-                <span>Watch overdue amount and successful payment trends together to understand recovery effectiveness.</span>
-              </div>
-            </div>
-            <div className="eg-list__row">
-              <div>
-                <strong>Manual intervention</strong>
-                <span>Issue manual invoices when the commercial flow needs custom amounts, custom due windows, or offline sales handling.</span>
-              </div>
-            </div>
-          </div>
-        </SurfaceCard>
-      </section>
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Subscriptions" subtitle="Plan codes, usage posture, and suspension controls">
-          {!filteredSubscriptions.length ? (
-            <StateCard compact title="No subscriptions in scope" description="Adjust the search term or status filter to inspect another finance slice." />
-          ) : (
-            <div className="eg-stack">
-              {filteredSubscriptions.map((subscription) => (
-                <div className="eg-admin-user" key={subscription.id}>
-                  <div className="eg-admin-user__meta">
-                    <ActionLine title="Company" text={subscription.company_name} />
-                    <ActionLine title="Billing email" text={subscription.billing_email} />
-                    <ActionLine title="Site ID" text={subscription.site_id} />
-                    <ActionLine title="Plan" text={subscription.plan_code} />
-                    <ActionLine title="Status" text={subscription.status} />
-                    <ActionLine title="Usage" text={`${subscription.monthly_events_used.toLocaleString("en-US")} / ${subscription.included_events.toLocaleString("en-US")}`} />
-                  </div>
-                  <div className="eg-admin-user__actions">
-                    <div className="eg-inline-actions">
-                      <StatusBadge status={subscription.status === "active" ? "healthy" : subscription.status === "suspended" ? "warning" : "pending"}>
-                        {subscription.status}
-                      </StatusBadge>
-                      <StatusBadge status={subscription.plan_code === "enterprise" ? "healthy" : subscription.plan_code === "growth" ? "pending" : "info"}>
-                        {subscription.plan_code}
-                      </StatusBadge>
-                    </div>
-                    <div className="eg-inline-actions">
-                      <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: subscription.plan_code === "free" ? "growth" : "free" } })} type="button">
-                        Toggle plan
-                      </button>
-                      <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: "enterprise" } })} type="button">
-                        Enterprise
-                      </button>
-                      <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { status: subscription.status === "suspended" ? "active" : "suspended" } })} type="button">
-                        {subscription.status === "suspended" ? "Reactivate" : "Suspend"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SurfaceCard>
-        <SurfaceCard title="Transactions" subtitle="All recorded payment attempts and payment-method outcomes">
-          {!filteredTransactions.length ? (
-            <StateCard compact title="No transactions in scope" description="No payment rows match the current filter context." />
-          ) : (
-            <div className="eg-table">
-              <div className="eg-table__head eg-table__row">
-                <span className="eg-table__cell">Company</span>
-                <span className="eg-table__cell">Invoice</span>
-                <span className="eg-table__cell">Amount</span>
-                <span className="eg-table__cell">Status</span>
-              </div>
-              {filteredTransactions.map((transaction) => (
-                <div className="eg-table__row" key={transaction.id}>
-                  <span className="eg-table__cell" data-label="Company">
-                    <strong>{transaction.company_name}</strong>
-                    <small>{transaction.billing_email}</small>
-                  </span>
-                  <span className="eg-table__cell" data-label="Invoice">{transaction.invoice_number || "n/a"}</span>
-                  <span className="eg-table__cell" data-label="Amount">${transaction.amount_usd.toFixed(2)}</span>
-                  <span className="eg-table__cell" data-label="Method">
-                    {transaction.payment_method_brand ? `${transaction.payment_method_brand.toUpperCase()} •••• ${transaction.payment_method_last4 || "----"}` : "Stripe-managed"}
-                  </span>
-                  <div className="eg-table__cell" data-label="Status">
-                    <StatusBadge status={transaction.status === "succeeded" ? "healthy" : transaction.status === "failed" ? "warning" : "pending"}>
-                      {transaction.status}
-                    </StatusBadge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </SurfaceCard>
-      </section>
-    </div>
+          ))}
+        </div>
+      ),
+      variant: "full",
+      h: 18,
+      minH: 12
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey="admin-billing"
+      introTitle="Billing Admin"
+      introDescription="Global finance operations for subscriptions, transactions, manual invoices, and suspension control."
+      introAction={(
+        <div className="eg-inline-actions">
+          <button className="eg-button eg-button--compact" onClick={exportSubscriptionsCsv} type="button">
+            Subscriptions CSV
+          </button>
+          <button className="eg-button eg-button--compact" onClick={exportTransactionsCsv} type="button">
+            Transactions CSV
+          </button>
+          <button className="eg-button eg-button--compact" onClick={exportRevenueCsv} type="button">
+            Revenue CSV
+          </button>
+          <button className="eg-button eg-button--compact" onClick={exportFinanceJson} type="button">
+            Finance JSON
+          </button>
+        </div>
+      )}
+      notices={error ? <p className="eg-form-error">{error}</p> : null}
+      panels={panels}
+    />
   );
 }
 
@@ -6558,58 +6684,107 @@ function AdminOverviewPage() {
     );
   }
 
-  return (
-    <div className="eg-page eg-page--admin">
-      <PageIntro
-        title="Platform Admin"
-        description="Global control surface for all users, all sites, platform totals, and privileged operations."
-      />
-      <section className="eg-metric-grid">
-        <MetricCard label="Users" value={overviewQuery.data.totals.users} detail="All dashboard accounts on the platform" />
-        <MetricCard label="Admins" value={overviewQuery.data.totals.admins} detail="Global admins with full platform access" />
-        <MetricCard label="Blocked users" value={overviewQuery.data.totals.blocked_users} detail="Accounts prevented from signing in" />
-        <MetricCard label="Active sessions" value={overviewQuery.data.totals.active_sessions} detail="Currently valid dashboard sessions" />
-        <MetricCard label="Sites" value={overviewQuery.data.totals.sites} detail="Tracked sites across the platform" />
-        <MetricCard label="Domains" value={overviewQuery.data.totals.domains} detail="Verified origins across all sites" />
-        <MetricCard label="API keys" value={overviewQuery.data.totals.api_keys} detail="Collector keys across all sites" />
-        <MetricCard label="Collected events" value={overviewQuery.data.totals.collected_events} detail="Accepted browser events stored in D1" />
-      </section>
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Recent users" subtitle="Latest platform accounts and their access posture">
-          <div className="eg-list">
-            {overviewQuery.data.recent_users.map((item) => (
-              <div className="eg-list__row" key={item.id}>
-                <div>
-                  <strong>{item.name}</strong>
-                  <span>{item.email}</span>
-                </div>
-                <div className="eg-inline-actions">
-                  <StatusBadge status={item.role === "global_admin" ? "healthy" : "pending"}>{item.role}</StatusBadge>
-                  <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
-                </div>
+  const panels: WindowPanelDefinition[] = [
+    ...[
+      {
+        id: "admin-overview-users",
+        title: "Users",
+        value: overviewQuery.data.totals.users,
+        detail: "All dashboard accounts on the platform"
+      },
+      {
+        id: "admin-overview-admins",
+        title: "Admins",
+        value: overviewQuery.data.totals.admins,
+        detail: "Global admins with full platform access"
+      },
+      {
+        id: "admin-overview-blocked-users",
+        title: "Blocked users",
+        value: overviewQuery.data.totals.blocked_users,
+        detail: "Accounts prevented from signing in"
+      },
+      {
+        id: "admin-overview-active-sessions",
+        title: "Active sessions",
+        value: overviewQuery.data.totals.active_sessions,
+        detail: "Currently valid dashboard sessions"
+      },
+      {
+        id: "admin-overview-sites",
+        title: "Sites",
+        value: overviewQuery.data.totals.sites,
+        detail: "Tracked sites across the platform"
+      },
+      {
+        id: "admin-overview-domains",
+        title: "Domains",
+        value: overviewQuery.data.totals.domains,
+        detail: "Verified origins across all sites"
+      },
+      {
+        id: "admin-overview-api-keys",
+        title: "API keys",
+        value: overviewQuery.data.totals.api_keys,
+        detail: "Collector keys across all sites"
+      },
+      {
+        id: "admin-overview-collected-events",
+        title: "Collected events",
+        value: overviewQuery.data.totals.collected_events,
+        detail: "Accepted browser events stored in D1"
+      }
+    ].map((panel) => ({
+      id: panel.id,
+      title: panel.title,
+      variant: "metric" as const,
+      content: <WindowMetricContent value={panel.value} detail={panel.detail} />
+    })),
+    {
+      id: "admin-overview-recent-users",
+      title: "Recent users",
+      content: (
+        <div className="eg-list">
+          {overviewQuery.data.recent_users.map((item) => (
+            <div className="eg-list__row" key={item.id}>
+              <div>
+                <strong>{item.name}</strong>
+                <span>{item.email}</span>
               </div>
-            ))}
-          </div>
-        </SurfaceCard>
-        <SurfaceCard title="Recent sites" subtitle="Newest tracked sites visible to the global admin">
-          <div className="eg-list">
-            {overviewQuery.data.recent_sites.map((item) => (
-              <div className="eg-list__row" key={item.id}>
-                <div>
-                  <strong>{item.name}</strong>
-                  <span>{item.org_name} · {item.project_name}</span>
-                </div>
-                <div className="eg-inline-actions">
-                  <span className="eg-pill">{item.environment}</span>
-                  <span className="eg-pill">{item.id}</span>
-                </div>
+              <div className="eg-inline-actions">
+                <StatusBadge status={item.role === "global_admin" ? "healthy" : "pending"}>{item.role}</StatusBadge>
+                <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
               </div>
-            ))}
-          </div>
-        </SurfaceCard>
-      </section>
-    </div>
-  );
+            </div>
+          ))}
+        </div>
+      ),
+      h: 12
+    },
+    {
+      id: "admin-overview-recent-sites",
+      title: "Recent sites",
+      content: (
+        <div className="eg-list">
+          {overviewQuery.data.recent_sites.map((item) => (
+            <div className="eg-list__row" key={item.id}>
+              <div>
+                <strong>{item.name}</strong>
+                <span>{item.org_name} · {item.project_name}</span>
+              </div>
+              <div className="eg-inline-actions">
+                <span className="eg-pill">{item.environment}</span>
+                <span className="eg-pill">{item.id}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ),
+      h: 12
+    }
+  ];
+
+  return <WindowedPage pageKey="admin-overview" introTitle="Platform Admin" introDescription="Global control surface for all users, all sites, platform totals, and privileged operations." panels={panels} />;
 }
 
 function AdminUsersPage() {
@@ -6660,99 +6835,140 @@ function AdminUsersPage() {
     }
   });
 
-  return (
-    <div className="eg-page">
-      <PageIntro
-        title="Users Admin"
-        description="Manage all platform users, change passwords, block access, promote admins, and delete accounts."
-      />
-      {error ? <p className="eg-form-error">{error}</p> : null}
-      {!usersQuery.data ? (
-        <StateCard title="Loading users" description="Preparing the global user administration list." />
+  const adminUsers = usersQuery.data ?? [];
+  const totalActiveSessions = adminUsers.reduce((sum, item) => sum + item.session_count, 0);
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "admin-users-total",
+      title: "Users",
+      variant: "metric",
+      content: <WindowMetricContent value={adminUsers.length} detail="Total platform accounts currently visible in admin." />
+    },
+    {
+      id: "admin-users-admins",
+      title: "Admins",
+      variant: "metric",
+      content: <WindowMetricContent value={adminUsers.filter((item) => item.role === "global_admin").length} detail="Global admin accounts with platform-wide access." />
+    },
+    {
+      id: "admin-users-blocked",
+      title: "Blocked users",
+      variant: "metric",
+      content: <WindowMetricContent value={adminUsers.filter((item) => item.status === "blocked").length} detail="Accounts currently prevented from signing in." />
+    },
+    {
+      id: "admin-users-sessions",
+      title: "Active sessions",
+      variant: "metric",
+      content: <WindowMetricContent value={totalActiveSessions} detail="Total valid sessions across all users in scope." />
+    },
+    {
+      id: "admin-users-directory",
+      title: "User directory",
+      content: !usersQuery.data ? (
+        <StateCard title="Loading users" description="Preparing the global user administration list." compact />
       ) : (
-        <section className="eg-stack">
+        <div className="eg-stack">
           {usersQuery.data.map((item) => {
             const isCurrentUser = item.id === user?.id;
             const passwordDraft = passwordDrafts[item.id] ?? "";
             return (
-              <SurfaceCard key={item.id} title={item.name} subtitle={`${item.email} · ${item.id}`}>
-                <div className="eg-admin-user">
-                  <div className="eg-admin-user__meta">
-                    <ActionLine title="Role" text={item.role} />
-                    <ActionLine title="Status" text={item.status} />
-                    <ActionLine title="Created" text={formatDateTime(item.created_at)} />
-                    <ActionLine title="Last login" text={formatDateTime(item.last_login_at)} />
-                    <ActionLine title="Password changed" text={formatDateTime(item.password_changed_at)} />
-                    <ActionLine title="Active sessions" text={String(item.session_count)} />
-                  </div>
-                  <div className="eg-admin-user__actions">
-                    <div className="eg-inline-actions">
-                      <StatusBadge status={item.role === "global_admin" ? "healthy" : "pending"}>{item.role}</StatusBadge>
-                      <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
+              <div className="eg-card" key={item.id}>
+                <div className="eg-card__body">
+                  <div className="eg-admin-user">
+                    <div className="eg-admin-user__meta">
+                      <ActionLine title="Name" text={item.name} />
+                      <ActionLine title="Email" text={item.email} />
+                      <ActionLine title="User ID" text={item.id} />
+                      <ActionLine title="Role" text={item.role} />
+                      <ActionLine title="Status" text={item.status} />
+                      <ActionLine title="Created" text={formatDateTime(item.created_at)} />
+                      <ActionLine title="Last login" text={formatDateTime(item.last_login_at)} />
+                      <ActionLine title="Password changed" text={formatDateTime(item.password_changed_at)} />
+                      <ActionLine title="Active sessions" text={String(item.session_count)} />
                     </div>
-                    <div className="eg-inline-actions">
-                      <button
-                        className="eg-button eg-button--compact"
-                        disabled={updateUserMutation.isPending || isCurrentUser}
-                        onClick={() =>
-                          updateUserMutation.mutate({
-                            userId: item.id,
-                            input: { role: item.role === "global_admin" ? "member" : "global_admin" }
-                          })}
-                        type="button"
-                      >
-                        {item.role === "global_admin" ? "Demote to member" : "Promote to admin"}
-                      </button>
-                      <button
-                        className="eg-button eg-button--compact"
-                        disabled={updateUserMutation.isPending || isCurrentUser}
-                        onClick={() =>
-                          updateUserMutation.mutate({
-                            userId: item.id,
-                            input: { status: item.status === "active" ? "blocked" : "active" }
-                          })}
-                        type="button"
-                      >
-                        {item.status === "active" ? "Block user" : "Unblock user"}
-                      </button>
-                      <button
-                        className="eg-button eg-button--compact"
-                        disabled={deleteUserMutation.isPending || isCurrentUser}
-                        onClick={() => deleteUserMutation.mutate(item.id)}
-                        type="button"
-                      >
-                        Delete user
-                      </button>
-                    </div>
-                    <div className="eg-admin-password">
-                      <input
-                        className="eg-input"
-                        onChange={(event) =>
-                          setPasswordDrafts((current) => ({
-                            ...current,
-                            [item.id]: event.target.value
-                          }))}
-                        placeholder={isCurrentUser ? "Use a separate profile screen later" : "Set a new password"}
-                        type="text"
-                        value={passwordDraft}
-                      />
-                      <button
-                        className="eg-button eg-button--primary"
-                        disabled={updatePasswordMutation.isPending || isCurrentUser || passwordDraft.trim().length < 8}
-                        onClick={() => updatePasswordMutation.mutate({ userId: item.id, password: passwordDraft })}
-                        type="button"
-                      >
-                        Reset password
-                      </button>
+                    <div className="eg-admin-user__actions">
+                      <div className="eg-inline-actions">
+                        <StatusBadge status={item.role === "global_admin" ? "healthy" : "pending"}>{item.role}</StatusBadge>
+                        <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
+                      </div>
+                      <div className="eg-inline-actions">
+                        <button
+                          className="eg-button eg-button--compact"
+                          disabled={updateUserMutation.isPending || isCurrentUser}
+                          onClick={() =>
+                            updateUserMutation.mutate({
+                              userId: item.id,
+                              input: { role: item.role === "global_admin" ? "member" : "global_admin" }
+                            })}
+                          type="button"
+                        >
+                          {item.role === "global_admin" ? "Demote to member" : "Promote to admin"}
+                        </button>
+                        <button
+                          className="eg-button eg-button--compact"
+                          disabled={updateUserMutation.isPending || isCurrentUser}
+                          onClick={() =>
+                            updateUserMutation.mutate({
+                              userId: item.id,
+                              input: { status: item.status === "active" ? "blocked" : "active" }
+                            })}
+                          type="button"
+                        >
+                          {item.status === "active" ? "Block user" : "Unblock user"}
+                        </button>
+                        <button
+                          className="eg-button eg-button--compact"
+                          disabled={deleteUserMutation.isPending || isCurrentUser}
+                          onClick={() => deleteUserMutation.mutate(item.id)}
+                          type="button"
+                        >
+                          Delete user
+                        </button>
+                      </div>
+                      <div className="eg-admin-password">
+                        <input
+                          className="eg-input"
+                          onChange={(event) =>
+                            setPasswordDrafts((current) => ({
+                              ...current,
+                              [item.id]: event.target.value
+                            }))}
+                          placeholder={isCurrentUser ? "Use a separate profile screen later" : "Set a new password"}
+                          type="text"
+                          value={passwordDraft}
+                        />
+                        <button
+                          className="eg-button eg-button--primary"
+                          disabled={updatePasswordMutation.isPending || isCurrentUser || passwordDraft.trim().length < 8}
+                          onClick={() => updatePasswordMutation.mutate({ userId: item.id, password: passwordDraft })}
+                          type="button"
+                        >
+                          Reset password
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </SurfaceCard>
+              </div>
             );
           })}
-        </section>
-      )}
-    </div>
+        </div>
+      ),
+      variant: "full",
+      h: 24,
+      minH: 14
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey="admin-users"
+      introTitle="Users Admin"
+      introDescription="Manage all platform users, change passwords, block access, promote admins, and delete accounts."
+      notices={error ? <p className="eg-form-error">{error}</p> : null}
+      panels={panels}
+    />
   );
 }
 
@@ -6881,190 +7097,227 @@ function AdminSitesPage() {
     });
   }
 
-  return (
-    <div className="eg-page">
-      <PageIntro
-        title="Sites Admin"
-        description="Inspect all tracked sites, manage their domains, review collector keys, and monitor total event activity."
-        action={
-          <button className="eg-button eg-button--primary" onClick={() => setIsPaneOpen(true)} type="button">
-            Add Site
-          </button>
-        }
-      />
-      {error ? <p className="eg-form-error">{error}</p> : null}
-      
-      {!sitesQuery.data ? (
-        <StateCard title="Loading sites" description="Fetching the global platform site inventory." />
+  const adminSites = sitesQuery.data ?? [];
+  const totalDomains = adminSites.reduce((sum, site) => sum + site.domain_count, 0);
+  const totalApiKeys = adminSites.reduce((sum, site) => sum + site.api_key_count, 0);
+  const totalEvents = adminSites.reduce((sum, site) => sum + site.collected_event_count, 0);
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "admin-sites-total-sites",
+      title: "Sites",
+      variant: "metric",
+      content: <WindowMetricContent value={adminSites.length} detail="Tracked sites currently visible in the global admin inventory." />
+    },
+    {
+      id: "admin-sites-total-domains",
+      title: "Domains",
+      variant: "metric",
+      content: <WindowMetricContent value={totalDomains} detail="Verified and managed domains attached across the platform." />
+    },
+    {
+      id: "admin-sites-total-keys",
+      title: "API keys",
+      variant: "metric",
+      content: <WindowMetricContent value={totalApiKeys} detail="Collector keys currently attached to all sites in scope." />
+    },
+    {
+      id: "admin-sites-total-events",
+      title: "Collected events",
+      variant: "metric",
+      content: <WindowMetricContent value={formatCompactNumber(totalEvents)} detail="Total event volume reported by the visible site inventory." />
+    },
+    {
+      id: "admin-sites-inventory",
+      title: "Site inventory",
+      content: !sitesQuery.data ? (
+        <StateCard title="Loading sites" description="Fetching the global platform site inventory." compact />
       ) : (
-        <section className="eg-stack">
+        <div className="eg-stack">
           {sitesQuery.data.map((site) => (
-            <SurfaceCard key={site.id} title={site.name} subtitle={`${site.org_name} · ${site.project_name} · ${site.id}`}>
-              <div className="eg-admin-site">
-                <div className="eg-inline-actions">
-                  <span className="eg-pill is-mono">{site.collector_url}</span>
-                  <button
-                    className="eg-button eg-button--compact"
-                    disabled={deleteSiteMutation.isPending}
-                    onClick={() => {
-                      if(confirm("Are you sure you want to delete this site?")) {
-                        deleteSiteMutation.mutate(site.id);
-                      }
-                    }}
-                    type="button"
-                  >
-                    Delete site
-                  </button>
-                </div>
-                <div className="eg-admin-site__meta">
-                  <MetricMini label="Environment" value={site.environment} />
-                  <MetricMini label="Domains" value={site.domain_count} />
-                  <MetricMini label="API keys" value={site.api_key_count} />
-                  <MetricMini label="Events" value={site.collected_event_count} />
-                  <MetricMini label="Last event" value={formatDateTime(site.last_event_at)} />
-                </div>
-                <div className="eg-grid eg-grid--two">
-                  <div className="eg-admin-panel">
-                    <strong>Verified domains</strong>
-                    <div className="eg-list">
-                      {site.domains.map((domain) => (
-                        <div className="eg-list__row" key={domain.id}>
-                          <div>
-                            <strong>{domain.domain}</strong>
-                            <span>{domain.description ?? domain.kind}</span>
-                          </div>
-                          <div className="eg-inline-actions">
-                            <StatusBadge status={domain.status === "verified" || domain.status === "internal" ? "healthy" : "pending"}>
-                              {domain.status}
-                            </StatusBadge>
-                            {domain.domain !== "goldring.ro" && domain.domain !== "www.goldring.ro" ? (
-                              <button
-                                className="eg-button eg-button--compact"
-                                disabled={deleteDomainMutation.isPending}
-                                onClick={() => deleteDomainMutation.mutate({ siteId: site.id, domainId: domain.id })}
-                                type="button"
-                              >
-                                Remove
-                              </button>
-                            ) : (
-                              <span className="eg-pill">Protected</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <form className="eg-auth-form" onSubmit={(event) => handleAdminDomainSubmit(event, site.id)}>
-                      <label className="eg-field">
-                        <span>Add domain</span>
-                        <input
-                          className="eg-input"
-                          onChange={(event) =>
-                            setDomainDrafts((current) => ({
-                              ...current,
-                              [site.id]: event.target.value
-                            }))}
-                          placeholder="shop.example.com"
-                          required
-                          type="text"
-                          value={domainDrafts[site.id] ?? ""}
-                        />
-                      </label>
-                      <label className="eg-field">
-                        <span>Description</span>
-                        <input
-                          className="eg-input"
-                          onChange={(event) =>
-                            setDescriptionDrafts((current) => ({
-                              ...current,
-                              [site.id]: event.target.value
-                            }))}
-                          placeholder="Regional storefront"
-                          type="text"
-                          value={descriptionDrafts[site.id] ?? ""}
-                        />
-                      </label>
-                      <button
-                        className="eg-button eg-button--primary"
-                        disabled={createDomainMutation.isPending || (domainDrafts[site.id] ?? "").trim().length === 0}
-                        type="submit"
-                      >
-                        {createDomainMutation.isPending ? "Saving domain..." : "Add domain"}
-                      </button>
-                    </form>
+            <div className="eg-card" key={site.id}>
+              <div className="eg-card__body">
+                <div className="eg-admin-site">
+                  <div className="eg-inline-actions">
+                    <span className="eg-pill is-mono">{site.collector_url}</span>
+                    <button
+                      className="eg-button eg-button--compact"
+                      disabled={deleteSiteMutation.isPending}
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete this site?")) {
+                          deleteSiteMutation.mutate(site.id);
+                        }
+                      }}
+                      type="button"
+                    >
+                      Delete site
+                    </button>
                   </div>
-                  <div className="eg-admin-panel">
-                    <strong>Collector keys</strong>
-                    <div className="eg-list">
-                      {site.api_keys.map((item) => {
-                        const activeKeyCount = site.api_keys.filter((key) => key.status === "active").length;
-                        return (
-                          <div className="eg-list__row" key={item.id}>
+                  <div className="eg-admin-site__meta">
+                    <MetricMini label="Name" value={site.name} />
+                    <MetricMini label="Environment" value={site.environment} />
+                    <MetricMini label="Domains" value={site.domain_count} />
+                    <MetricMini label="API keys" value={site.api_key_count} />
+                    <MetricMini label="Events" value={site.collected_event_count} />
+                    <MetricMini label="Last event" value={formatDateTime(site.last_event_at)} />
+                  </div>
+                  <div className="eg-grid eg-grid--two">
+                    <div className="eg-admin-panel">
+                      <strong>Verified domains</strong>
+                      <div className="eg-list">
+                        {site.domains.map((domain) => (
+                          <div className="eg-list__row" key={domain.id}>
                             <div>
-                              <strong>{item.label}</strong>
-                              <span>{item.public_key}</span>
+                              <strong>{domain.domain}</strong>
+                              <span>{domain.description ?? domain.kind}</span>
                             </div>
                             <div className="eg-inline-actions">
-                              <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
-                              {activeKeyCount > 1 ? (
+                              <StatusBadge status={domain.status === "verified" || domain.status === "internal" ? "healthy" : "pending"}>
+                                {domain.status}
+                              </StatusBadge>
+                              {domain.domain !== "goldring.ro" && domain.domain !== "www.goldring.ro" ? (
                                 <button
                                   className="eg-button eg-button--compact"
-                                  disabled={revokeKeyMutation.isPending}
-                                  onClick={() => revokeKeyMutation.mutate({ siteId: site.id, keyId: item.id })}
+                                  disabled={deleteDomainMutation.isPending}
+                                  onClick={() => deleteDomainMutation.mutate({ siteId: site.id, domainId: domain.id })}
                                   type="button"
                                 >
-                                  Revoke
+                                  Remove
                                 </button>
-                              ) : null}
+                              ) : (
+                                <span className="eg-pill">Protected</span>
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
+                      <form className="eg-auth-form" onSubmit={(event) => handleAdminDomainSubmit(event, site.id)}>
+                        <label className="eg-field">
+                          <span>Add domain</span>
+                          <input
+                            className="eg-input"
+                            onChange={(event) =>
+                              setDomainDrafts((current) => ({
+                                ...current,
+                                [site.id]: event.target.value
+                              }))}
+                            placeholder="shop.example.com"
+                            required
+                            type="text"
+                            value={domainDrafts[site.id] ?? ""}
+                          />
+                        </label>
+                        <label className="eg-field">
+                          <span>Description</span>
+                          <input
+                            className="eg-input"
+                            onChange={(event) =>
+                              setDescriptionDrafts((current) => ({
+                                ...current,
+                                [site.id]: event.target.value
+                              }))}
+                            placeholder="Regional storefront"
+                            type="text"
+                            value={descriptionDrafts[site.id] ?? ""}
+                          />
+                        </label>
+                        <button
+                          className="eg-button eg-button--primary"
+                          disabled={createDomainMutation.isPending || (domainDrafts[site.id] ?? "").trim().length === 0}
+                          type="submit"
+                        >
+                          {createDomainMutation.isPending ? "Saving domain..." : "Add domain"}
+                        </button>
+                      </form>
                     </div>
-                    <form
-                      className="eg-auth-form"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        createKeyMutation.mutate({
-                          siteId: site.id,
-                          input: { label: (keyLabelDrafts[site.id] ?? "").trim() }
-                        });
-                      }}
-                    >
-                      <label className="eg-field">
-                        <span>New key label</span>
-                        <input
-                          className="eg-input"
-                          onChange={(event) =>
-                            setKeyLabelDrafts((current) => ({
-                              ...current,
-                              [site.id]: event.target.value
-                            }))}
-                          placeholder="Mobile App Key"
-                          required
-                          type="text"
-                          value={keyLabelDrafts[site.id] ?? ""}
-                        />
-                      </label>
-                      <button
-                        className="eg-button eg-button--primary"
-                        disabled={createKeyMutation.isPending || (keyLabelDrafts[site.id] ?? "").trim().length === 0}
-                        type="submit"
+                    <div className="eg-admin-panel">
+                      <strong>Collector keys</strong>
+                      <div className="eg-list">
+                        {site.api_keys.map((item) => {
+                          const activeKeyCount = site.api_keys.filter((key) => key.status === "active").length;
+                          return (
+                            <div className="eg-list__row" key={item.id}>
+                              <div>
+                                <strong>{item.label}</strong>
+                                <span>{item.public_key}</span>
+                              </div>
+                              <div className="eg-inline-actions">
+                                <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
+                                {activeKeyCount > 1 ? (
+                                  <button
+                                    className="eg-button eg-button--compact"
+                                    disabled={revokeKeyMutation.isPending}
+                                    onClick={() => revokeKeyMutation.mutate({ siteId: site.id, keyId: item.id })}
+                                    type="button"
+                                  >
+                                    Revoke
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <form
+                        className="eg-auth-form"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          createKeyMutation.mutate({
+                            siteId: site.id,
+                            input: { label: (keyLabelDrafts[site.id] ?? "").trim() }
+                          });
+                        }}
                       >
-                        {createKeyMutation.isPending ? "Creating key..." : "Create key"}
-                      </button>
-                    </form>
+                        <label className="eg-field">
+                          <span>New key label</span>
+                          <input
+                            className="eg-input"
+                            onChange={(event) =>
+                              setKeyLabelDrafts((current) => ({
+                                ...current,
+                                [site.id]: event.target.value
+                              }))}
+                            placeholder="Mobile App Key"
+                            required
+                            type="text"
+                            value={keyLabelDrafts[site.id] ?? ""}
+                          />
+                        </label>
+                        <button
+                          className="eg-button eg-button--primary"
+                          disabled={createKeyMutation.isPending || (keyLabelDrafts[site.id] ?? "").trim().length === 0}
+                          type="submit"
+                        >
+                          {createKeyMutation.isPending ? "Creating key..." : "Create key"}
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 </div>
               </div>
-            </SurfaceCard>
+            </div>
           ))}
-        </section>
-      )}
+        </div>
+      ),
+      variant: "full",
+      h: 26,
+      minH: 16
+    }
+  ];
 
-      <SidePane 
-        isOpen={isPaneOpen} 
-        onClose={() => setIsPaneOpen(false)} 
-        title="Add Site" 
+  return (
+    <>
+      <WindowedPage
+        pageKey="admin-sites"
+        introTitle="Sites Admin"
+        introDescription="Inspect all tracked sites, manage their domains, review collector keys, and monitor total event activity."
+        introAction={<button className="eg-button eg-button--primary" onClick={() => setIsPaneOpen(true)} type="button">Add Site</button>}
+        notices={error ? <p className="eg-form-error">{error}</p> : null}
+        panels={panels}
+      />
+      <SidePane
+        isOpen={isPaneOpen}
+        onClose={() => setIsPaneOpen(false)}
+        title="Add Site"
         subtitle="Register a new tracked site with its first collector key and optional primary domain"
       >
         <form className="eg-stack" onSubmit={handleCreateSiteSubmit}>
@@ -7128,7 +7381,7 @@ function AdminSitesPage() {
           </button>
         </form>
       </SidePane>
-    </div>
+    </>
   );
 }
 function RouteDetailPage() {
@@ -7204,122 +7457,149 @@ function RouteDetailPage() {
     };
   }
 
-  return (
-    <div className="eg-page">
-      <PageIntro title={routeQuery.data.name} description={routeQuery.data.description ?? "Detailed route definition."} />
-      {notice ? <StateCard compact title="Route updated" description={notice} /> : null}
-      {error ? <StateCard compact title="Route error" description={error} /> : null}
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Route posture" subtitle="Priority, environment and consent requirements">
-          <div className="eg-stack">
-            <ActionLine title="Priority" text={String(routeQuery.data.priority)} />
-            <ActionLine title="Environment" text={routeQuery.data.environment} />
-            <ActionLine
-              title="Consent required"
-              text={`Analytics ${routeQuery.data.consent_required?.analytics ? "required" : "optional"} · Ads ${routeQuery.data.consent_required?.ads ? "required" : "optional"}`}
-            />
-          </div>
-        </SurfaceCard>
-        <SurfaceCard title="Destinations" subtitle="Choose the live destinations that this route should fan out to">
-          <div className="eg-stack">
-            <DestinationChips
-              destinations={destinationsQuery.data}
-              selectedIds={routeDestinations.map((destination) => destination.destination_id)}
-            />
-            <DestinationPicker
-              destinations={destinationsQuery.data}
-              onToggle={toggleRouteDestination}
-              selectedIds={routeDestinations.map((destination) => destination.destination_id)}
-            />
-            {!routeDestinations.length ? (
-              <StateCard compact title="No destinations selected" description="Choose at least one destination so this route can deliver somewhere." />
-            ) : (
-              <div className="eg-list">
-                {routeDestinations.map((destination) => (
-                  <div className="eg-list__row" key={destination.destination_id}>
-                    <div>
-                      <strong>{getDestinationNames([destination.destination_id], destinationsQuery.data)[0]}</strong>
-                      <span>{destination.destination_id}</span>
-                    </div>
-                    <div className="eg-inline-actions">
-                      <select
-                        className="eg-input"
-                        onChange={(event) => setRouteDestinations((current) => current.map((item) => (
-                          item.destination_id === destination.destination_id
-                            ? { ...item, delivery_mode: event.target.value as DashboardRoute["destinations"][number]["delivery_mode"] }
-                            : item
-                        )))}
-                        value={destination.delivery_mode}
-                      >
-                        <option value="queued">Queued</option>
-                        <option value="realtime">Realtime</option>
-                        <option value="batch">Batch</option>
-                      </select>
-                      <button
-                        className="eg-button eg-button--compact"
-                        onClick={() => setRouteDestinations((current) => current.map((item) => (
-                          item.destination_id === destination.destination_id
-                            ? { ...item, enabled: !item.enabled }
-                            : item
-                        )))}
-                        type="button"
-                      >
-                        {destination.enabled ? "Disable" : "Enable"}
-                      </button>
-                    </div>
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "route-detail-posture",
+      title: "Route posture",
+      content: (
+        <div className="eg-stack">
+          <ActionLine title="Priority" text={String(routeQuery.data.priority)} />
+          <ActionLine title="Environment" text={routeQuery.data.environment} />
+          <ActionLine
+            title="Consent required"
+            text={`Analytics ${routeQuery.data.consent_required?.analytics ? "required" : "optional"} · Ads ${routeQuery.data.consent_required?.ads ? "required" : "optional"}`}
+          />
+        </div>
+      )
+    },
+    {
+      id: "route-detail-destinations",
+      title: "Destinations",
+      content: (
+        <div className="eg-stack">
+          <DestinationChips
+            destinations={destinationsQuery.data}
+            selectedIds={routeDestinations.map((destination) => destination.destination_id)}
+          />
+          <DestinationPicker
+            destinations={destinationsQuery.data}
+            onToggle={toggleRouteDestination}
+            selectedIds={routeDestinations.map((destination) => destination.destination_id)}
+          />
+          {!routeDestinations.length ? (
+            <StateCard compact title="No destinations selected" description="Choose at least one destination so this route can deliver somewhere." />
+          ) : (
+            <div className="eg-list">
+              {routeDestinations.map((destination) => (
+                <div className="eg-list__row" key={destination.destination_id}>
+                  <div>
+                    <strong>{getDestinationNames([destination.destination_id], destinationsQuery.data)[0]}</strong>
+                    <span>{destination.destination_id}</span>
                   </div>
-                ))}
-              </div>
-            )}
-            <button className="eg-button eg-button--primary" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate({ destinations: routeDestinations, match: buildRouteMatch() })} type="button">
-              {saveMutation.isPending ? "Saving route..." : "Save route destinations"}
-            </button>
-          </div>
-        </SurfaceCard>
-      </section>
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Match builder" subtitle="Define event families and conditions without editing raw JSON">
-          <div className="eg-stack">
-            <label className="eg-field">
-              <span>Event types</span>
-              <input
-                className="eg-input"
-                onChange={(event) => setEventTypesInput(event.target.value)}
-                placeholder="Purchase, Lead, PageView"
-                type="text"
-                value={eventTypesInput}
-              />
-            </label>
-            {renderConditionGroupEditor({
-              title: "All conditions",
-              conditions: routeMatch.all,
-              onChange: (next) => setRouteMatch((current) => ({ ...current, all: next.filter((item) => item.path.trim()) }))
-            })}
-            {renderConditionGroupEditor({
-              title: "Any conditions",
-              conditions: routeMatch.any,
-              onChange: (next) => setRouteMatch((current) => ({ ...current, any: next.filter((item) => item.path.trim()) }))
-            })}
-            {renderConditionGroupEditor({
-              title: "None conditions",
-              conditions: routeMatch.none,
-              onChange: (next) => setRouteMatch((current) => ({ ...current, none: next.filter((item) => item.path.trim()) }))
-            })}
-            <button
-              className="eg-button eg-button--primary"
-              disabled={saveMutation.isPending}
-              onClick={() => saveMutation.mutate({ destinations: routeDestinations, match: buildRouteMatch() })}
-              type="button"
-            >
-              {saveMutation.isPending ? "Saving match..." : "Save match and destinations"}
-            </button>
-          </div>
-        </SurfaceCard>
-        <SurfaceCard title="Match JSON" subtitle="Current route condition tree after the visual editor">
-          <JsonPanel value={buildRouteMatch()} />
-        </SurfaceCard>
-      </section>
-    </div>
+                  <div className="eg-inline-actions">
+                    <select
+                      className="eg-input"
+                      onChange={(event) => setRouteDestinations((current) => current.map((item) => (
+                        item.destination_id === destination.destination_id
+                          ? { ...item, delivery_mode: event.target.value as DashboardRoute["destinations"][number]["delivery_mode"] }
+                          : item
+                      )))}
+                      value={destination.delivery_mode}
+                    >
+                      <option value="queued">Queued</option>
+                      <option value="realtime">Realtime</option>
+                      <option value="batch">Batch</option>
+                    </select>
+                    <button
+                      className="eg-button eg-button--compact"
+                      onClick={() => setRouteDestinations((current) => current.map((item) => (
+                        item.destination_id === destination.destination_id
+                          ? { ...item, enabled: !item.enabled }
+                          : item
+                      )))}
+                      type="button"
+                    >
+                      {destination.enabled ? "Disable" : "Enable"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="eg-button eg-button--primary" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate({ destinations: routeDestinations, match: buildRouteMatch() })} type="button">
+            {saveMutation.isPending ? "Saving route..." : "Save route destinations"}
+          </button>
+        </div>
+      ),
+      h: 14
+    },
+    {
+      id: "route-detail-match-builder",
+      title: "Match builder",
+      content: (
+        <div className="eg-stack">
+          <label className="eg-field">
+            <span>Event types</span>
+            <input
+              className="eg-input"
+              onChange={(event) => setEventTypesInput(event.target.value)}
+              placeholder="Purchase, Lead, PageView"
+              type="text"
+              value={eventTypesInput}
+            />
+          </label>
+          {renderConditionGroupEditor({
+            title: "All conditions",
+            conditions: routeMatch.all,
+            onChange: (next) => setRouteMatch((current) => ({ ...current, all: next.filter((item) => item.path.trim()) }))
+          })}
+          {renderConditionGroupEditor({
+            title: "Any conditions",
+            conditions: routeMatch.any,
+            onChange: (next) => setRouteMatch((current) => ({ ...current, any: next.filter((item) => item.path.trim()) }))
+          })}
+          {renderConditionGroupEditor({
+            title: "None conditions",
+            conditions: routeMatch.none,
+            onChange: (next) => setRouteMatch((current) => ({ ...current, none: next.filter((item) => item.path.trim()) }))
+          })}
+          <button
+            className="eg-button eg-button--primary"
+            disabled={saveMutation.isPending}
+            onClick={() => saveMutation.mutate({ destinations: routeDestinations, match: buildRouteMatch() })}
+            type="button"
+          >
+            {saveMutation.isPending ? "Saving match..." : "Save match and destinations"}
+          </button>
+        </div>
+      ),
+      w: 8,
+      h: 18,
+      minH: 12
+    },
+    {
+      id: "route-detail-match-json",
+      title: "Match JSON",
+      content: <JsonPanel value={buildRouteMatch()} />,
+      w: 4,
+      h: 18,
+      minH: 12
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey={`route-detail-${routeId}`}
+      introTitle={routeQuery.data.name}
+      introDescription={routeQuery.data.description ?? "Detailed route definition."}
+      notices={
+        <>
+          {notice ? <StateCard compact title="Route updated" description={notice} /> : null}
+          {error ? <StateCard compact title="Route error" description={error} /> : null}
+        </>
+      }
+      panels={panels}
+    />
   );
 }
 
@@ -7418,93 +7698,110 @@ function TransformationDetailPage() {
     });
   }
 
-  return (
-    <div className="eg-page">
-      <PageIntro
-        title={transformationQuery.data.name}
-        description="Destination payload mapping and version metadata."
-        action={(
-          <button className="eg-button" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()} type="button">
-            {deleteMutation.isPending ? "Deleting..." : "Delete"}
-          </button>
-        )}
-      />
-      {notice ? <StateCard compact title="Transformation updated" description={notice} /> : null}
-      {error ? <StateCard compact title="Transformation error" description={error} /> : null}
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Transformation meta" subtitle="Kind, status and version">
-          <div className="eg-stack">
-            <ActionLine title="Destination kind" text={transformationQuery.data.destination_kind} />
-            <ActionLine title="Version" text={`v${transformationQuery.data.version}`} />
-            <ActionLine title="Status" text={transformationQuery.data.status} />
-          </div>
-        </SurfaceCard>
-        <SurfaceCard title="Edit transformation" subtitle="Adjust mapping and versioned status for this transformation">
-          <form className="eg-auth-form" onSubmit={handleSave}>
-            <label className="eg-field">
-              <span>Name</span>
-              <input className="eg-input" onChange={(event) => setName(event.target.value)} type="text" value={name} />
-            </label>
-            <label className="eg-field">
-              <span>Destination kind</span>
-              <select className="eg-input" onChange={(event) => setDestinationKind(event.target.value as DestinationCreateInput["kind"])} value={destinationKind}>
-                {DESTINATION_KIND_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
-            <label className="eg-field">
-              <span>Status</span>
-              <select className="eg-input" onChange={(event) => setStatus(event.target.value as "active" | "draft")} value={status}>
-                <option value="draft">Draft</option>
-                <option value="active">Active</option>
-              </select>
-            </label>
-            <div className="eg-stack">
-              <strong>Mapping fields</strong>
-              {mappingRows.map((row, index) => (
-                <div className="eg-grid eg-grid--two" key={`mapping-edit-${index}`}>
-                  <label className="eg-field">
-                    <span>Destination field</span>
-                    <input
-                      className="eg-input"
-                      onChange={(event) => handleMappingRowChange(mappingRows.map((item, itemIndex) => itemIndex === index ? { ...item, key: event.target.value } : item))}
-                      type="text"
-                      value={row.key}
-                    />
-                  </label>
-                  <label className="eg-field">
-                    <span>Event source</span>
-                    <input
-                      className="eg-input"
-                      onChange={(event) => handleMappingRowChange(mappingRows.map((item, itemIndex) => itemIndex === index ? { ...item, value: event.target.value } : item))}
-                      type="text"
-                      value={row.value}
-                    />
-                  </label>
-                </div>
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "transformation-detail-meta",
+      title: "Transformation meta",
+      content: (
+        <div className="eg-stack">
+          <ActionLine title="Destination kind" text={transformationQuery.data.destination_kind} />
+          <ActionLine title="Version" text={`v${transformationQuery.data.version}`} />
+          <ActionLine title="Status" text={transformationQuery.data.status} />
+        </div>
+      )
+    },
+    {
+      id: "transformation-detail-edit",
+      title: "Edit transformation",
+      content: (
+        <form className="eg-auth-form" onSubmit={handleSave}>
+          <label className="eg-field">
+            <span>Name</span>
+            <input className="eg-input" onChange={(event) => setName(event.target.value)} type="text" value={name} />
+          </label>
+          <label className="eg-field">
+            <span>Destination kind</span>
+            <select className="eg-input" onChange={(event) => setDestinationKind(event.target.value as DestinationCreateInput["kind"])} value={destinationKind}>
+              {DESTINATION_KIND_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
-              <div className="eg-inline-actions">
-                <button className="eg-button eg-button--compact" onClick={() => handleMappingRowChange([...mappingRows, { key: "", value: "" }])} type="button">
-                  Add mapping row
-                </button>
+            </select>
+          </label>
+          <label className="eg-field">
+            <span>Status</span>
+            <select className="eg-input" onChange={(event) => setStatus(event.target.value as "active" | "draft")} value={status}>
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+            </select>
+          </label>
+          <div className="eg-stack">
+            <strong>Mapping fields</strong>
+            {mappingRows.map((row, index) => (
+              <div className="eg-grid eg-grid--two" key={`mapping-edit-${index}`}>
+                <label className="eg-field">
+                  <span>Destination field</span>
+                  <input
+                    className="eg-input"
+                    onChange={(event) => handleMappingRowChange(mappingRows.map((item, itemIndex) => itemIndex === index ? { ...item, key: event.target.value } : item))}
+                    type="text"
+                    value={row.key}
+                  />
+                </label>
+                <label className="eg-field">
+                  <span>Event source</span>
+                  <input
+                    className="eg-input"
+                    onChange={(event) => handleMappingRowChange(mappingRows.map((item, itemIndex) => itemIndex === index ? { ...item, value: event.target.value } : item))}
+                    type="text"
+                    value={row.value}
+                  />
+                </label>
               </div>
-              <label className="eg-field">
-                <span>Advanced mapping JSON</span>
-                <textarea className="eg-input" onChange={(event) => handleMappingTextChange(event.target.value)} rows={10} value={mappingText} />
-              </label>
-              {mappingError ? <p className="eg-form-error">{mappingError}</p> : null}
+            ))}
+            <div className="eg-inline-actions">
+              <button className="eg-button eg-button--compact" onClick={() => handleMappingRowChange([...mappingRows, { key: "", value: "" }])} type="button">
+                Add mapping row
+              </button>
             </div>
-            <button className="eg-button eg-button--primary" disabled={saveMutation.isPending} type="submit">
-              {saveMutation.isPending ? "Saving..." : "Save transformation"}
-            </button>
-          </form>
-        </SurfaceCard>
-      </section>
-      <SurfaceCard title="Mapping preview" subtitle="Current transformation payload mapping">
-        <JsonPanel value={mappingRows.length ? rowsToMapping(mappingRows) : transformationQuery.data.mapping} />
-      </SurfaceCard>
-    </div>
+            <label className="eg-field">
+              <span>Advanced mapping JSON</span>
+              <textarea className="eg-input" onChange={(event) => handleMappingTextChange(event.target.value)} rows={10} value={mappingText} />
+            </label>
+            {mappingError ? <p className="eg-form-error">{mappingError}</p> : null}
+          </div>
+          <button className="eg-button eg-button--primary" disabled={saveMutation.isPending} type="submit">
+            {saveMutation.isPending ? "Saving..." : "Save transformation"}
+          </button>
+        </form>
+      ),
+      w: 8,
+      h: 18,
+      minH: 12
+    },
+    {
+      id: "transformation-detail-preview",
+      title: "Mapping preview",
+      content: <JsonPanel value={mappingRows.length ? rowsToMapping(mappingRows) : transformationQuery.data.mapping} />,
+      w: 4,
+      h: 18,
+      minH: 12
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey={`transformation-detail-${transformId}`}
+      introTitle={transformationQuery.data.name}
+      introDescription="Destination payload mapping and version metadata."
+      introAction={<button className="eg-button" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()} type="button">{deleteMutation.isPending ? "Deleting..." : "Delete"}</button>}
+      notices={
+        <>
+          {notice ? <StateCard compact title="Transformation updated" description={notice} /> : null}
+          {error ? <StateCard compact title="Transformation error" description={error} /> : null}
+        </>
+      }
+      panels={panels}
+    />
   );
 }
 
@@ -7640,80 +7937,103 @@ function DestinationDetailPage() {
     }
   }
 
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "destination-detail-connection",
+      title: "Connection",
+      content: (
+        <div className="eg-stack">
+          <ActionLine title="Kind" text={destinationQuery.data.kind} />
+          <ActionLine title="Status" text={destinationQuery.data.status} />
+          <ActionLine title="Secret preview" text={destinationQuery.data.secret_preview} />
+        </div>
+      )
+    },
+    {
+      id: "destination-detail-edit",
+      title: "Edit destination",
+      content: (
+        <form className="eg-auth-form" onSubmit={handleSave}>
+          <label className="eg-field">
+            <span>Name</span>
+            <input className="eg-input" onChange={(event) => setName(event.target.value)} type="text" value={name} />
+          </label>
+          <label className="eg-field">
+            <span>Kind</span>
+            <select className="eg-input" onChange={(event) => handleKindChange(event.target.value)} value={kind}>
+              {DESTINATION_KIND_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="eg-field">
+            <span>Status</span>
+            <select className="eg-input" onChange={(event) => setStatus(event.target.value)} value={status}>
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </label>
+          <DestinationConfigEditor
+            config={configDraft}
+            configText={configText}
+            configTextError={configTextError}
+            kind={kind}
+            onConfigTextChange={handleConfigTextChange}
+            onFieldChange={handleConfigFieldChange}
+          />
+          <button className="eg-button eg-button--primary" disabled={saveMutation.isPending} type="submit">
+            {saveMutation.isPending ? "Saving..." : "Save destination"}
+          </button>
+        </form>
+      ),
+      w: 8,
+      h: 18,
+      minH: 12
+    },
+    {
+      id: "destination-detail-raw-config",
+      title: "Raw config",
+      content: <JsonPanel value={configDraft} />,
+      w: 4,
+      h: 18,
+      minH: 12
+    },
+    {
+      id: "destination-detail-vendor-hints",
+      title: "Vendor hints",
+      content: <JsonPanel value={getDefaultDestinationConfig(kind)} />,
+      variant: "full",
+      h: 12
+    }
+  ];
+
   return (
-    <div className="eg-page">
-      <PageIntro
-        title={destinationQuery.data.name}
-        description="Destination credentials, config and operational posture."
-        action={(
-          <div className="eg-actions">
-            <button className="eg-button" disabled={testMutation.isPending} onClick={() => testMutation.mutate()} type="button">
-              {testMutation.isPending ? "Testing..." : "Test destination"}
-            </button>
-            <button className="eg-button" disabled={rotateMutation.isPending} onClick={() => rotateMutation.mutate()} type="button">
-              {rotateMutation.isPending ? "Rotating..." : "Rotate secret"}
-            </button>
-            <button className="eg-button" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()} type="button">
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
-            </button>
-          </div>
-        )}
-      />
-      {notice ? <StateCard compact title="Destination status" description={notice} /> : null}
-      {error ? <StateCard compact title="Destination error" description={error} /> : null}
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Connection" subtitle="Runtime configuration currently attached to this target">
-          <div className="eg-stack">
-            <ActionLine title="Kind" text={destinationQuery.data.kind} />
-            <ActionLine title="Status" text={destinationQuery.data.status} />
-            <ActionLine title="Secret preview" text={destinationQuery.data.secret_preview} />
-          </div>
-        </SurfaceCard>
-        <SurfaceCard title="Edit destination" subtitle="Choose the vendor and edit the runtime config stored in the control panel">
-          <form className="eg-auth-form" onSubmit={handleSave}>
-            <label className="eg-field">
-              <span>Name</span>
-              <input className="eg-input" onChange={(event) => setName(event.target.value)} type="text" value={name} />
-            </label>
-            <label className="eg-field">
-              <span>Kind</span>
-              <select className="eg-input" onChange={(event) => handleKindChange(event.target.value)} value={kind}>
-                {DESTINATION_KIND_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
-            <label className="eg-field">
-              <span>Status</span>
-              <select className="eg-input" onChange={(event) => setStatus(event.target.value)} value={status}>
-                <option value="active">Active</option>
-                <option value="paused">Paused</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </label>
-            <DestinationConfigEditor
-              config={configDraft}
-              configText={configText}
-              configTextError={configTextError}
-              kind={kind}
-              onConfigTextChange={handleConfigTextChange}
-              onFieldChange={handleConfigFieldChange}
-            />
-            <button className="eg-button eg-button--primary" disabled={saveMutation.isPending} type="submit">
-              {saveMutation.isPending ? "Saving..." : "Save destination"}
-            </button>
-          </form>
-        </SurfaceCard>
-      </section>
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Raw config" subtitle="Stored destination configuration snapshot">
-          <JsonPanel value={configDraft} />
-        </SurfaceCard>
-        <SurfaceCard title="Vendor hints" subtitle="Suggested configuration fields for the selected destination kind">
-          <JsonPanel value={getDefaultDestinationConfig(kind)} />
-        </SurfaceCard>
-      </section>
-    </div>
+    <WindowedPage
+      pageKey={`destination-detail-${destinationId}`}
+      introTitle={destinationQuery.data.name}
+      introDescription="Destination credentials, config and operational posture."
+      introAction={(
+        <div className="eg-actions">
+          <button className="eg-button" disabled={testMutation.isPending} onClick={() => testMutation.mutate()} type="button">
+            {testMutation.isPending ? "Testing..." : "Test destination"}
+          </button>
+          <button className="eg-button" disabled={rotateMutation.isPending} onClick={() => rotateMutation.mutate()} type="button">
+            {rotateMutation.isPending ? "Rotating..." : "Rotate secret"}
+          </button>
+          <button className="eg-button" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()} type="button">
+            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      )}
+      notices={
+        <>
+          {notice ? <StateCard compact title="Destination status" description={notice} /> : null}
+          {error ? <StateCard compact title="Destination error" description={error} /> : null}
+        </>
+      }
+      panels={panels}
+    />
   );
 }
 
@@ -7734,40 +8054,44 @@ function UserDetailPage() {
     return <StateCard title="User not found" description="The selected canonical user is not available in the current identity snapshot." />;
   }
 
-  return (
-    <div className="eg-page">
-      <PageIntro title={user.canonical_user_id} description="Identity detail with consent, sessions and stitched journey." />
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Identity profile" subtitle="Canonical record stored by the current stitching layer">
-          <div className="eg-stack">
-            <ActionLine title="Anonymous ids" text={user.anonymous_ids.join(", ") || "None"} />
-            <ActionLine title="Sessions" text={user.session_ids.join(", ") || "None"} />
-            <ActionLine title="Consent" text={`Analytics ${user.consent.analytics ? "yes" : "no"} · Ads ${user.consent.ads ? "yes" : "no"}`} />
-          </div>
-        </SurfaceCard>
-        <SurfaceCard title="Journey events" subtitle="Chronological events tied to this canonical record">
-          {!journeysQuery.data?.items?.length ? (
-            <StateCard title="No journey data" description="No recent events were found for this canonical user." compact />
-          ) : (
-            <div className="eg-stream">
-              {journeysQuery.data.items.map((event) => (
-                <div className="eg-stream__row" key={event.event_id}>
-                  <span className="eg-stream__time">{new Date(event.received_at).toISOString().slice(11, 19)}</span>
-                  <div>
-                    <strong>{event.type}</strong>
-                    <p>{event.page?.path ?? event.source}</p>
-                  </div>
-                  <StatusBadge status={(event.routing?.route_ids?.length ?? 0) > 0 ? "matched" : "pending"}>
-                    {(event.routing?.route_ids?.length ?? 0) > 0 ? "routed" : "stored"}
-                  </StatusBadge>
-                </div>
-              ))}
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "user-detail-profile",
+      title: "Identity profile",
+      content: (
+        <div className="eg-stack">
+          <ActionLine title="Anonymous ids" text={user.anonymous_ids.join(", ") || "None"} />
+          <ActionLine title="Sessions" text={user.session_ids.join(", ") || "None"} />
+          <ActionLine title="Consent" text={`Analytics ${user.consent.analytics ? "yes" : "no"} · Ads ${user.consent.ads ? "yes" : "no"}`} />
+        </div>
+      )
+    },
+    {
+      id: "user-detail-journey-events",
+      title: "Journey events",
+      content: !journeysQuery.data?.items?.length ? (
+        <StateCard title="No journey data" description="No recent events were found for this canonical user." compact />
+      ) : (
+        <div className="eg-stream">
+          {journeysQuery.data.items.map((event) => (
+            <div className="eg-stream__row" key={event.event_id}>
+              <span className="eg-stream__time">{new Date(event.received_at).toISOString().slice(11, 19)}</span>
+              <div>
+                <strong>{event.type}</strong>
+                <p>{event.page?.path ?? event.source}</p>
+              </div>
+              <StatusBadge status={(event.routing?.route_ids?.length ?? 0) > 0 ? "matched" : "pending"}>
+                {(event.routing?.route_ids?.length ?? 0) > 0 ? "routed" : "stored"}
+              </StatusBadge>
             </div>
-          )}
-        </SurfaceCard>
-      </section>
-    </div>
-  );
+          ))}
+        </div>
+      ),
+      h: 14
+    }
+  ];
+
+  return <WindowedPage pageKey={`identity-user-${canonicalUserId}`} introTitle={user.canonical_user_id} introDescription="Identity detail with consent, sessions and stitched journey." panels={panels} />;
 }
 
 function DeliveryDetailPage() {
@@ -7790,40 +8114,45 @@ function DeliveryDetailPage() {
     return <StateCard title="Loading delivery detail" description="Fetching event payload and downstream delivery attempts." />;
   }
 
-  return (
-    <div className="eg-page">
-      <PageIntro
-        title={`Delivery Detail · ${eventId}`}
-        description="Inspect event payload and downstream delivery attempts for a single event."
-        action={
-          <button className="eg-button eg-button--primary" disabled={replayMutation.isPending} onClick={() => replayMutation.mutate()} type="button">
-            {replayMutation.isPending ? "Replaying..." : "Replay event"}
-          </button>
-        }
-      />
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Payload" subtitle="Normalized event stored before routing">
-          <JsonPanel value={eventQuery.data} />
-        </SurfaceCard>
-        <SurfaceCard title="Delivery attempts" subtitle="Known fan-out operations for this event id">
-          {!eventDeliveries.length ? (
-            <StateCard title="No deliveries yet" description="This event has not created any downstream delivery attempts." compact />
-          ) : (
-            <div className="eg-list">
-              {eventDeliveries.map((delivery) => (
-                <div className="eg-list__row" key={`${delivery.destination}-${delivery.attempts}`}>
-                  <div>
-                    <strong>{delivery.destination}</strong>
-                    <span>{delivery.route} · {delivery.latency}</span>
-                  </div>
-                  <StatusBadge status={delivery.status}>{delivery.status}</StatusBadge>
-                </div>
-              ))}
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "delivery-detail-payload",
+      title: "Payload",
+      content: <JsonPanel value={eventQuery.data} />,
+      w: 6,
+      h: 16
+    },
+    {
+      id: "delivery-detail-attempts",
+      title: "Delivery attempts",
+      content: !eventDeliveries.length ? (
+        <StateCard title="No deliveries yet" description="This event has not created any downstream delivery attempts." compact />
+      ) : (
+        <div className="eg-list">
+          {eventDeliveries.map((delivery) => (
+            <div className="eg-list__row" key={`${delivery.destination}-${delivery.attempts}`}>
+              <div>
+                <strong>{delivery.destination}</strong>
+                <span>{delivery.route} · {delivery.latency}</span>
+              </div>
+              <StatusBadge status={delivery.status}>{delivery.status}</StatusBadge>
             </div>
-          )}
-        </SurfaceCard>
-      </section>
-    </div>
+          ))}
+        </div>
+      ),
+      w: 6,
+      h: 16
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey={`delivery-detail-${eventId}`}
+      introTitle={`Delivery Detail · ${eventId}`}
+      introDescription="Inspect event payload and downstream delivery attempts for a single event."
+      introAction={<button className="eg-button eg-button--primary" disabled={replayMutation.isPending} onClick={() => replayMutation.mutate()} type="button">{replayMutation.isPending ? "Replaying..." : "Replay event"}</button>}
+      panels={panels}
+    />
   );
 }
 
@@ -7844,19 +8173,24 @@ function SchemaDetailPage() {
     return <StateCard title="Schema not found" description="The selected event type is not present in the current normalized stream." />;
   }
 
-  return (
-    <div className="eg-page">
-      <PageIntro title={`Schema · ${eventType}`} description="Tracked fields and sample payloads for one normalized event family." />
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Observed shape" subtitle="Field paths detected for this event type">
-          <JsonPanel value={schema.sample_paths} />
-        </SurfaceCard>
-        <SurfaceCard title="Sample payloads" subtitle="Recent examples that produced the current schema view">
-          <JsonPanel value={examples} />
-        </SurfaceCard>
-      </section>
-    </div>
-  );
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "schema-detail-shape",
+      title: "Observed shape",
+      content: <JsonPanel value={schema.sample_paths} />,
+      w: 6,
+      h: 16
+    },
+    {
+      id: "schema-detail-samples",
+      title: "Sample payloads",
+      content: <JsonPanel value={examples} />,
+      w: 6,
+      h: 16
+    }
+  ];
+
+  return <WindowedPage pageKey={`schema-detail-${eventType}`} introTitle={`Schema · ${eventType}`} introDescription="Tracked fields and sample payloads for one normalized event family." panels={panels} />;
 }
 
 function RoutesTable({
@@ -8115,11 +8449,7 @@ function StatusBadge({
 }
 
 function NotFoundPage() {
-  return (
-    <div className="eg-page">
-      <StateCard title="Route not found" description="This dashboard module is not mapped in the current control center." />
-    </div>
-  );
+  return <WindowedPage pageKey="not-found" introTitle="Route not found" introDescription="This dashboard module is not mapped in the current control center." panels={[{ id: "not-found-state", title: "Unavailable module", content: <StateCard title="Route not found" description="This dashboard module is not mapped in the current control center." compact />, variant: "full" }]} />;
 }
 
 
@@ -8127,29 +8457,29 @@ function SiteSelectorPage() {
   const { bootstrap, user } = useAuth();
   if (!user || !bootstrap) return <Navigate replace to="/login" />;
 
-  return (
-    <div className="eg-auth-shell" style={{ alignItems: "flex-start", paddingTop: "4rem" }}>
-      <div style={{ width: "min(100%, 800px)", display: "grid", gap: "2rem" }}>
-        <header>
-          <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>Select a site</h1>
-          <p style={{ color: "var(--eg-muted)" }}>Choose a site to access its control plane.</p>
-        </header>
-        <div className="eg-grid eg-grid--two">
-          {bootstrap.accessible_sites.map(site => (
-            <a 
-              key={site.id} 
-              href={`/app/orgs/${site.org_id}/projects/${site.project_id}/sites/${site.id}/overview`}
-              className="eg-card"
-              style={{ display: "block", textDecoration: "none", transition: "transform 0.2s" }}
-            >
-              <h3 style={{ margin: "0 0 0.5rem", color: "var(--eg-accent)" }}>{site.name}</h3>
-              <p style={{ color: "var(--eg-muted)", fontSize: "0.9rem", margin: 0 }}>{site.org_name} · {site.project_name}</p>
-              <div style={{ marginTop: "1rem", fontSize: "0.8rem", color: "var(--eg-subtle)" }}>
-                Role: {site.role}
-              </div>
-            </a>
-          ))}
+  const panels: WindowPanelDefinition[] = bootstrap.accessible_sites.map((site) => ({
+    id: `site-selector-${site.id}`,
+    title: site.name,
+    content: (
+      <a
+        href={`/app/orgs/${site.org_id}/projects/${site.project_id}/sites/${site.id}/overview`}
+        style={{ display: "grid", gap: "0.8rem", textDecoration: "none" }}
+      >
+        <div className="eg-stack">
+          <ActionLine title="Organization" text={site.org_name} />
+          <ActionLine title="Project" text={site.project_name} />
+          <ActionLine title="Role" text={site.role} />
         </div>
+        <span className="eg-button eg-button--primary">Open control plane</span>
+      </a>
+    ),
+    h: 10
+  }));
+
+  return (
+    <div className="eg-auth-shell" style={{ alignItems: "flex-start", paddingTop: "2rem" }}>
+      <div style={{ width: "min(100%, 1100px)" }}>
+        <WindowedPage pageKey="site-selector" introTitle="Select a site" introDescription="Choose a site to access its control plane." panels={panels} />
       </div>
     </div>
   );
@@ -8217,57 +8547,60 @@ function MyProfilePage() {
     updatePasswordMutation.mutate();
   }
 
-  return (
-    <div className="eg-page eg-page--admin">
-      <PageIntro title="My Profile" description="Manage your personal account details and security credentials." />
-      
-      <div className="eg-grid eg-grid--two">
-        <SurfaceCard title="Personal Information" subtitle="Update your contact details and display name.">
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "my-profile-details",
+      title: "Personal information",
+      content: (
+        <form className="eg-stack" onSubmit={handleProfileSubmit}>
           {error ? <p className="eg-form-error">{error}</p> : null}
-          {notice ? <p className="eg-form-notice" style={{ color: "var(--eg-healthy)" }}>{notice}</p> : null}
-          <form className="eg-stack" onSubmit={handleProfileSubmit}>
-            <label className="eg-field">
-              <span>Full name</span>
-              <input className="eg-input" type="text" value={name} onChange={e => setName(e.target.value)} required />
-            </label>
-            <label className="eg-field">
-              <span>Email address</span>
-              <input className="eg-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-            </label>
-            <label className="eg-field">
-              <span>Phone number</span>
-              <input className="eg-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} />
-            </label>
-            <button className="eg-button eg-button--primary" type="submit" disabled={updateProfileMutation.isPending}>
-              {updateProfileMutation.isPending ? "Saving..." : "Save changes"}
-            </button>
-          </form>
-        </SurfaceCard>
-
-        <SurfaceCard title="Security" subtitle="Change your account password.">
+          {notice ? <p className="eg-form-success">{notice}</p> : null}
+          <label className="eg-field">
+            <span>Full name</span>
+            <input className="eg-input" type="text" value={name} onChange={(event) => setName(event.target.value)} required />
+          </label>
+          <label className="eg-field">
+            <span>Email address</span>
+            <input className="eg-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          </label>
+          <label className="eg-field">
+            <span>Phone number</span>
+            <input className="eg-input" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} />
+          </label>
+          <button className="eg-button eg-button--primary" type="submit" disabled={updateProfileMutation.isPending}>
+            {updateProfileMutation.isPending ? "Saving..." : "Save changes"}
+          </button>
+        </form>
+      )
+    },
+    {
+      id: "my-profile-security",
+      title: "Security",
+      content: (
+        <form className="eg-stack" onSubmit={handlePasswordSubmit}>
           {passwordError ? <p className="eg-form-error">{passwordError}</p> : null}
-          {passwordNotice ? <p className="eg-form-notice" style={{ color: "var(--eg-healthy)" }}>{passwordNotice}</p> : null}
-          <form className="eg-stack" onSubmit={handlePasswordSubmit}>
-            <label className="eg-field">
-              <span>Current password</span>
-              <input className="eg-input" type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
-            </label>
-            <label className="eg-field">
-              <span>New password</span>
-              <input className="eg-input" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
-            </label>
-            <label className="eg-field">
-              <span>Confirm new password</span>
-              <input className="eg-input" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
-            </label>
-            <button className="eg-button eg-button--primary" type="submit" disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword}>
-              {updatePasswordMutation.isPending ? "Updating..." : "Update password"}
-            </button>
-          </form>
-        </SurfaceCard>
-      </div>
-    </div>
-  );
+          {passwordNotice ? <p className="eg-form-success">{passwordNotice}</p> : null}
+          <label className="eg-field">
+            <span>Current password</span>
+            <input className="eg-input" type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />
+          </label>
+          <label className="eg-field">
+            <span>New password</span>
+            <input className="eg-input" type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required />
+          </label>
+          <label className="eg-field">
+            <span>Confirm new password</span>
+            <input className="eg-input" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required />
+          </label>
+          <button className="eg-button eg-button--primary" type="submit" disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword}>
+            {updatePasswordMutation.isPending ? "Updating..." : "Update password"}
+          </button>
+        </form>
+      )
+    }
+  ];
+
+  return <WindowedPage pageKey="my-profile" introTitle="My Profile" introDescription="Manage your personal account details and security credentials." panels={panels} />;
 }
 function ProtectedAdminShell() {
   const { user } = useAuth();
