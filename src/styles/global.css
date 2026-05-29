@@ -129,7 +129,6 @@ main {
 }
 
 .hero-title {
-  max-width: 12ch;
   font-size: clamp(3.4rem, 8vw, 6.2rem);
 }
 
