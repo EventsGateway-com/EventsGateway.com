@@ -201,72 +201,102 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
               </a>
             ))
           }
-          <div class="mobile-nav__group">
-            <span class="mobile-nav__label">Docs</span>
-            {
-              docsLinks.map((item) => (
-                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
-                  <span class="nav-link__dot"></span>
-                  {item.label}
-                </a>
-              ))
-            }
-          </div>
-          <div class="mobile-nav__group">
-            <span class="mobile-nav__label">Compare</span>
-            {
-              compareLinks.map((item) => (
-                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
-                  <span class="nav-link__dot"></span>
-                  {item.label}
-                </a>
-              ))
-            }
-          </div>
-          <div class="mobile-nav__group">
-            <span class="mobile-nav__label">Integrations</span>
-            <a class:list={["mobile-link", isActivePath("/integrations/") && "is-active"]} href="/integrations/">
-              <span class="nav-link__dot"></span>
-              Integrations Home
-            </a>
-            {
-              integrationGroups.map((group) => (
-                <div class="mobile-nav__subgroup">
-                  <span class="mobile-nav__subgroup-label">{group.label}</span>
-                  {
-                    group.items.map((item) => (
-                      <a class:list={["mobile-link", "mobile-link--subtle", isActivePath(item.href) && "is-active"]} href={item.href}>
-                        <span class="nav-link__dot"></span>
-                        {item.label}
-                      </a>
-                    ))
-                  }
-                </div>
-              ))
-            }
-          </div>
-          <div class="mobile-nav__group">
-            <span class="mobile-nav__label">Community</span>
-            {
-              communityLinks.map((item) => (
-                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noreferrer" : undefined}>
-                  <span class="nav-link__dot"></span>
-                  {item.label}
-                </a>
-              ))
-            }
-          </div>
-          <div class="mobile-nav__group">
-            <span class="mobile-nav__label">Contact</span>
-            {
-              contactLinks.map((item) => (
-                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
-                  <span class="nav-link__dot"></span>
-                  {item.label}
-                </a>
-              ))
-            }
-          </div>
+          <details class="mobile-nav__group">
+            <summary class="mobile-nav__label">
+              Docs
+              <svg aria-hidden="true" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="14"><path d="m6 9 6 6 6-6"></path></svg>
+            </summary>
+            <div class="mobile-nav__group-content">
+              {
+                docsLinks.map((item) => (
+                  <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
+                    <span class="nav-link__dot"></span>
+                    {item.label}
+                  </a>
+                ))
+              }
+            </div>
+          </details>
+          <details class="mobile-nav__group">
+            <summary class="mobile-nav__label">
+              Compare
+              <svg aria-hidden="true" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="14"><path d="m6 9 6 6 6-6"></path></svg>
+            </summary>
+            <div class="mobile-nav__group-content">
+              {
+                compareLinks.map((item) => (
+                  <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
+                    <span class="nav-link__dot"></span>
+                    {item.label}
+                  </a>
+                ))
+              }
+            </div>
+          </details>
+          <details class="mobile-nav__group">
+            <summary class="mobile-nav__label">
+              Integrations
+              <svg aria-hidden="true" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="14"><path d="m6 9 6 6 6-6"></path></svg>
+            </summary>
+            <div class="mobile-nav__group-content">
+              <a class:list={["mobile-link", isActivePath("/integrations/") && "is-active"]} href="/integrations/">
+                <span class="nav-link__dot"></span>
+                Integrations Home
+              </a>
+              {
+                integrationGroups.map((group) => (
+                  <details class="mobile-nav__subgroup">
+                    <summary class="mobile-nav__subgroup-label">
+                      {group.label}
+                      <svg aria-hidden="true" fill="none" height="12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="12"><path d="m6 9 6 6 6-6"></path></svg>
+                    </summary>
+                    <div class="mobile-nav__subgroup-content">
+                      {
+                        group.items.map((item) => (
+                          <a class:list={["mobile-link", "mobile-link--subtle", isActivePath(item.href) && "is-active"]} href={item.href}>
+                            <span class="nav-link__dot"></span>
+                            {item.label}
+                          </a>
+                        ))
+                      }
+                    </div>
+                  </details>
+                ))
+              }
+            </div>
+          </details>
+          <details class="mobile-nav__group">
+            <summary class="mobile-nav__label">
+              Community
+              <svg aria-hidden="true" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="14"><path d="m6 9 6 6 6-6"></path></svg>
+            </summary>
+            <div class="mobile-nav__group-content">
+              {
+                communityLinks.map((item) => (
+                  <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noreferrer" : undefined}>
+                    <span class="nav-link__dot"></span>
+                    {item.label}
+                  </a>
+                ))
+              }
+            </div>
+          </details>
+          <details class="mobile-nav__group">
+            <summary class="mobile-nav__label">
+              Contact
+              <svg aria-hidden="true" fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="14"><path d="m6 9 6 6 6-6"></path></svg>
+            </summary>
+            <div class="mobile-nav__group-content">
+              {
+                contactLinks.map((item) => (
+                  <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
+                    <span class="nav-link__dot"></span>
+                    {item.label}
+                  </a>
+                ))
+              }
+            </div>
+          </details>
         </nav>
         <Button href={siteConfig.auth.login.href} variant="secondary" icon="arrow-right">
           Dashboard
@@ -552,15 +582,60 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
   }
 
   .mobile-nav__group {
+    margin-top: 0.25rem;
+  }
+  
+  .mobile-nav__group > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+  }
+
+  .mobile-nav__group > summary::-webkit-details-marker,
+  .mobile-nav__subgroup > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile-nav__group[open] > summary svg,
+  .mobile-nav__subgroup[open] > summary svg {
+    transform: rotate(180deg);
+  }
+
+  .mobile-nav__group > summary svg,
+  .mobile-nav__subgroup > summary svg {
+    transition: transform 180ms ease;
+  }
+
+  .mobile-nav__group-content {
     display: grid;
     gap: 0.15rem;
+    padding-left: 0.5rem;
     margin-top: 0.25rem;
   }
 
   .mobile-nav__subgroup {
+    margin-top: 0.2rem;
+  }
+  
+  .mobile-nav__subgroup > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+  }
+
+  .mobile-nav__subgroup-content {
     display: grid;
     gap: 0.15rem;
-    margin-top: 0.2rem;
+    padding-left: 0.5rem;
+    margin-top: 0.25rem;
   }
 
   .mobile-link--subtle {
@@ -600,16 +675,27 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
 </style>
 
 <script>
-  document.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
+  function initNav() {
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
 
-    const openDetails = document.querySelectorAll<HTMLDetailsElement>("details[open].mobile-nav, details[open].desktop-dropdown");
-    
-    openDetails.forEach((details) => {
-      if (!details.contains(target)) {
-        details.removeAttribute("open");
-      }
+      const openDetails = document.querySelectorAll<HTMLDetailsElement>("details[open].mobile-nav, details[open].desktop-dropdown");
+      
+      openDetails.forEach((details) => {
+        if (!details.contains(target)) {
+          details.removeAttribute("open");
+        }
+      });
     });
-  });
+  }
+
+  // Support for Astro View Transitions
+  document.addEventListener("astro:page-load", initNav);
+  // Initial load
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initNav);
+  } else {
+    initNav();
+  }
 </script>
