@@ -34,36 +34,30 @@ const softwareJsonLd = {
   <section class="section section--hero">
     <Container>
       <div class="stack hero-stack">
-        <div class="hero-lead">
-          <div class="stack hero-title-block">
-            <span class="eyebrow">{homeContent.eyebrow}</span>
-            <h1 class="hero-title">{homeContent.title}</h1>
-          </div>
-          <div class="stack hero-message-block">
-            <p class="hero-copy">{homeContent.description}</p>
-            <ul class="hero-proof-list">
-              {
-                heroOutcomes.map((item) => (
-                  <li>{item}</li>
-                ))
-              }
-            </ul>
-            <div class="hero-actions">
-              <Button href={siteConfig.auth.register.href} variant="primary" icon="arrow-right">
-                Start Free
-              </Button>
-              <Button href="/contact/" variant="secondary" icon="mail">
-                Contact
-              </Button>
-            </div>
-            <div class="pill-row">
-              {
-                homeContent.trustMarks.map((mark) => (
-                  <span class="status-pill">{mark}</span>
-                ))
-              }
-            </div>
-          </div>
+        <span class="eyebrow">{homeContent.eyebrow}</span>
+        <h1 class="hero-title">{homeContent.title}</h1>
+        <p class="hero-copy">{homeContent.description}</p>
+        <ul class="hero-proof-list">
+          {
+            heroOutcomes.map((item) => (
+              <li>{item}</li>
+            ))
+          }
+        </ul>
+        <div class="hero-actions">
+          <Button href={siteConfig.auth.register.href} variant="primary" icon="arrow-right">
+            Start Free
+          </Button>
+          <Button href="/contact/" variant="secondary" icon="mail">
+            Contact
+          </Button>
+        </div>
+        <div class="pill-row">
+          {
+            homeContent.trustMarks.map((mark) => (
+              <span class="status-pill">{mark}</span>
+            ))
+          }
         </div>
         <div class="hero-proof-grid">
           <div class="hero-proof-stat">
@@ -264,20 +258,12 @@ const softwareJsonLd = {
     margin-inline: auto;
   }
 
-  .hero-lead {
-    display: grid;
-    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-    gap: 1.5rem;
-    align-items: start;
+  .hero-stack .hero-title {
+    max-width: 15ch;
   }
 
-  .hero-title-block,
-  .hero-message-block {
-    align-content: start;
-  }
-
-  .hero-message-block .hero-copy {
-    max-width: none;
+  .hero-stack .hero-copy {
+    max-width: 62rem;
   }
 
   .hero-stats-grid {
@@ -349,7 +335,6 @@ const softwareJsonLd = {
   }
 
   @media (max-width: 960px) {
-    .hero-lead,
     .hero-stats-grid,
     .hero-proof-grid {
       width: 100%;
