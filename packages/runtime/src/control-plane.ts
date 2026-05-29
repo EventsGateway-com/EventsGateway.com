@@ -1,4 +1,13 @@
-import type { DatabaseBinding } from "./index";
+import type { DatabaseBinding, EnvironmentBindings } from "./index";
+import type { EventGatewayEvent, EventRoute } from "../../schemas/src/index";
+import { dispatchManagedDestination } from "./managed-destinations";
+import { compileRoutingConfig, routePlanFromCompiledConfig, simulateRoutes, type CompiledSiteRoutingConfig } from "../../routing-engine/src/index";
+import {
+  listDestinations as listSeedDestinations,
+  listRouteVersions as listSeedRouteVersions,
+  listRoutes as listSeedRoutes,
+  listTransformations as listSeedTransformations
+} from "../../platform-data/src/index";
 
 type DatabaseRecord = Record<string, unknown>;
 
@@ -56,6 +65,55 @@ export type SiteKey = {
   last_used_at: string | null;
 };
 
+export type SiteDestinationKind =
+  | "meta"
+  | "ga4"
+  | "google_ads"
+  | "webhook"
+  | "facebook-pixel"
+  | "google-analytics-4"
+  | "tiktok"
+  | "segment"
+  | "ziprecruiter"
+  | "upward"
+  | "tatari"
+  | "taboola"
+  | "snapchat";
+
+export type SiteDestinationStatus = "active" | "paused" | "disabled";
+
+export type SiteDestination = {
+  id: string;
+  site_id: string;
+  name: string;
+  kind: SiteDestinationKind;
+  status: SiteDestinationStatus;
+  secret_preview: string;
+  config: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SiteTransformationStatus = "active" | "draft";
+
+export type SiteTransformation = {
+  id: string;
+  site_id: string;
+  name: string;
+  destination_kind: SiteDestinationKind;
+  status: SiteTransformationStatus;
+  version: number;
+  mapping: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SiteRouteVersion = {
+  version: number;
+  active: boolean;
+  created_at: string;
+};
+
 export type BootstrapPayload = {
   user: DashboardUser;
   site: DashboardSite;
@@ -107,7 +165,7 @@ export type DeliveryAttemptRecord = {
 export type StoredCollectedEvent = {
   accepted: true;
   collected_event_id: string;
-  delivery_attempt_id: string;
+  delivery_attempt_ids: string[];
   site_id: string;
   event_id: string;
   received_at: string;
@@ -137,6 +195,8 @@ const DEFAULT_ORG_NAME = "Open Commerce Lab";
 const DEFAULT_PROJECT_ID = "project_gateway";
 const DEFAULT_PROJECT_NAME = "Events Core";
 const DEFAULT_ENVIRONMENT = "production";
+const PASSWORD_RESET_TTL_MS = 1000 * 60 * 60;
+const DEFAULT_PASSWORD_RESET_BASE_URL = "https://dash.eventsgateway.com/reset-password";
 
 let ensurePromise: Promise<void> | null = null;
 
@@ -162,6 +222,220 @@ function asNullableString(value: unknown) {
 
 function asNumber(value: unknown) {
   return typeof value === "number" ? value : Number(value ?? 0);
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function parseStoredPayload(value: unknown): EventGatewayEvent | null {
+  if (typeof value !== "string" || !value) return null;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return asRecord(parsed) as EventGatewayEvent | null;
+  } catch {
+    return null;
+  }
+}
+
+function parseJsonRecord(value: unknown): Record<string, unknown> {
+  if (typeof value !== "string" || !value) return {};
+  try {
+    return asRecord(JSON.parse(value)) ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function parseJsonArray<T>(value: unknown): T[] {
+  if (typeof value !== "string" || !value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed as T[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function getPathValue(input: unknown, path: string): unknown {
+  if (!path) return input;
+  return path.split(".").reduce<unknown>((current, segment) => {
+    if (current === null || current === undefined) return undefined;
+    if (typeof current !== "object") return undefined;
+    return (current as Record<string, unknown>)[segment];
+  }, input);
+}
+
+function mapTransformationValue(sourceEvent: EventGatewayEvent, value: unknown): unknown {
+  if (typeof value === "string" && value.startsWith("$."))
+    return getPathValue(sourceEvent as unknown as Record<string, unknown>, value.slice(2));
+  return value;
+}
+
+function applyTransformationMapping(event: EventGatewayEvent, mapping?: Record<string, unknown>): EventGatewayEvent {
+  if (!mapping || !Object.keys(mapping).length) return event;
+
+  const nextEvent: EventGatewayEvent = {
+    ...event,
+    page: event.page ? { ...event.page } : undefined,
+    campaign: event.campaign ? { ...event.campaign } : undefined,
+    click_ids: event.click_ids ? { ...event.click_ids } : undefined,
+    ecommerce: event.ecommerce ? { ...event.ecommerce, items: event.ecommerce.items ? [...event.ecommerce.items] : undefined } : undefined,
+    device: event.device ? { ...event.device } : undefined,
+    geo: event.geo ? { ...event.geo } : undefined,
+    consent: event.consent ? { ...event.consent } : undefined,
+    debug: event.debug ? { ...event.debug } : undefined,
+    properties: { ...(event.properties ?? {}) }
+  };
+
+  for (const [targetPath, rawValue] of Object.entries(mapping)) {
+    const resolvedValue = mapTransformationValue(event, rawValue);
+    if (typeof resolvedValue === "undefined") continue;
+
+    const path = targetPath.trim();
+    if (!path) continue;
+
+    if (path === "type") {
+      nextEvent.type = String(resolvedValue);
+      continue;
+    }
+
+    if (path === "event_name" || path === "name") {
+      nextEvent.type = String(resolvedValue);
+      continue;
+    }
+
+    if (path === "canonical_user_id") {
+      nextEvent.canonical_user_id = String(resolvedValue);
+      continue;
+    }
+
+    if (path === "value") {
+      nextEvent.ecommerce = {
+        ...(nextEvent.ecommerce ?? {}),
+        value: typeof resolvedValue === "number" ? resolvedValue : Number(resolvedValue)
+      };
+      continue;
+    }
+
+    if (path === "currency") {
+      nextEvent.ecommerce = {
+        ...(nextEvent.ecommerce ?? {}),
+        currency: String(resolvedValue)
+      };
+      continue;
+    }
+
+    if (path === "transaction_id" || path === "order_id") {
+      nextEvent.ecommerce = {
+        ...(nextEvent.ecommerce ?? {}),
+        order_id: String(resolvedValue)
+      };
+      continue;
+    }
+
+    if (path.startsWith("page.")) {
+      nextEvent.page = { ...(nextEvent.page ?? {}), [path.slice(5)]: resolvedValue as never };
+      continue;
+    }
+
+    if (path.startsWith("ecommerce.")) {
+      nextEvent.ecommerce = { ...(nextEvent.ecommerce ?? {}), [path.slice(10)]: resolvedValue as never };
+      continue;
+    }
+
+    if (path.startsWith("campaign.")) {
+      nextEvent.campaign = { ...(nextEvent.campaign ?? {}), [path.slice(9)]: resolvedValue as never };
+      continue;
+    }
+
+    if (path.startsWith("click_ids.")) {
+      nextEvent.click_ids = { ...(nextEvent.click_ids ?? {}), [path.slice(10)]: resolvedValue as never };
+      continue;
+    }
+
+    nextEvent.properties = {
+      ...(nextEvent.properties ?? {}),
+      [path]: resolvedValue
+    };
+  }
+
+  return nextEvent;
+}
+
+function buildStoredRuntimeEvent(
+  siteId: string,
+  input: {
+    event_id: string;
+    type: string;
+    source: string;
+    environment: string;
+    canonical_user_id?: string;
+    anonymous_id?: string;
+    session_id?: string;
+    consent?: { analytics?: boolean; ads?: boolean; functional?: boolean; source?: "default" | "cmp" | "api"; updated_at?: number };
+    payload: unknown;
+  }
+): EventGatewayEvent {
+  const payload = asRecord(input.payload) ?? {};
+  const timestamp = typeof payload.timestamp === "number" ? payload.timestamp : Date.now();
+
+  return {
+    version: "1.0",
+    event_id: input.event_id,
+    site_id: siteId,
+    type: input.type,
+    source: input.source as EventGatewayEvent["source"],
+    environment: input.environment as EventGatewayEvent["environment"],
+    timestamp,
+    received_at: typeof payload.received_at === "number" ? payload.received_at : timestamp,
+    anonymous_id: input.anonymous_id ?? asNullableString(payload.anonymous_id) ?? undefined,
+    session_id: input.session_id ?? asNullableString(payload.session_id) ?? undefined,
+    canonical_user_id: input.canonical_user_id ?? asNullableString(payload.canonical_user_id) ?? undefined,
+    user_id_hash: asNullableString(payload.user_id_hash) ?? undefined,
+    email_hmac: asNullableString(payload.email_hmac) ?? undefined,
+    customer_id_hash: asNullableString(payload.customer_id_hash) ?? undefined,
+    page: asRecord(payload.page) as EventGatewayEvent["page"],
+    campaign: asRecord(payload.campaign) as EventGatewayEvent["campaign"],
+    click_ids: asRecord(payload.click_ids) as EventGatewayEvent["click_ids"],
+    ecommerce: asRecord(payload.ecommerce) as EventGatewayEvent["ecommerce"],
+    device: asRecord(payload.device) as EventGatewayEvent["device"],
+    geo: asRecord(payload.geo) as EventGatewayEvent["geo"],
+    consent: input.consent ?? (asRecord(payload.consent) as EventGatewayEvent["consent"]),
+    properties: asRecord(payload.properties) ?? {},
+    routing: asRecord(payload.routing) as EventGatewayEvent["routing"],
+    debug: asRecord(payload.debug) as EventGatewayEvent["debug"]
+  };
+}
+
+function getDeliveryTargets(payload: unknown, fallbackDestination?: string | null) {
+  const record = asRecord(payload);
+  const routing = asRecord(record?.routing);
+  const destinationIds = Array.isArray(routing?.destination_ids)
+    ? routing.destination_ids.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+  const routeIds = Array.isArray(routing?.route_ids)
+    ? routing.route_ids.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+
+  if (destinationIds.length) {
+    return destinationIds.map((destinationId, index) => ({
+      destinationId,
+      routeId: routeIds[index] ?? routeIds[0] ?? "route_dynamic"
+    }));
+  }
+
+  const directDestination = typeof fallbackDestination === "string" && fallbackDestination.trim()
+    ? fallbackDestination.trim()
+    : undefined;
+
+  return [
+    {
+      destinationId: directDestination ?? "forwarder_default",
+      routeId: "route_ingest"
+    }
+  ];
 }
 
 function toEpochMillis(value: unknown) {
@@ -233,6 +507,108 @@ function toSiteKey(record: DatabaseRecord): SiteKey {
   };
 }
 
+function toSiteDestinationKind(value: unknown): SiteDestinationKind {
+  switch (asString(value)) {
+    case "meta":
+    case "ga4":
+    case "google_ads":
+    case "webhook":
+    case "facebook-pixel":
+    case "google-analytics-4":
+    case "tiktok":
+    case "segment":
+    case "ziprecruiter":
+    case "upward":
+    case "tatari":
+    case "taboola":
+    case "snapchat":
+      return asString(value) as SiteDestinationKind;
+    default:
+      return "webhook";
+  }
+}
+
+function toSiteDestinationStatus(value: unknown): SiteDestinationStatus {
+  switch (asString(value)) {
+    case "paused":
+      return "paused";
+    case "disabled":
+      return "disabled";
+    default:
+      return "active";
+  }
+}
+
+function toSiteDestination(record: DatabaseRecord): SiteDestination {
+  let config: Record<string, unknown> = {};
+  if (typeof record.config_json === "string" && record.config_json) {
+    try {
+      config = asRecord(JSON.parse(record.config_json)) ?? {};
+    } catch {
+      config = {};
+    }
+  }
+
+  return {
+    id: asString(record.id),
+    site_id: asString(record.site_id),
+    name: asString(record.name),
+    kind: toSiteDestinationKind(record.kind),
+    status: toSiteDestinationStatus(record.status),
+    secret_preview: asString(record.secret_preview),
+    config,
+    created_at: asString(record.created_at),
+    updated_at: asString(record.updated_at)
+  };
+}
+
+function toSiteTransformationStatus(value: unknown): SiteTransformationStatus {
+  return asString(value) === "active" ? "active" : "draft";
+}
+
+function toSiteRoute(record: DatabaseRecord): EventRoute {
+  return {
+    id: asString(record.id),
+    site_id: asString(record.site_id),
+    name: asString(record.name),
+    description: asNullableString(record.description),
+    enabled: asNumber(record.enabled) !== 0,
+    priority: asNumber(record.priority),
+    environment: asString(record.environment) || "all",
+    match: parseJsonRecord(record.match_json) as EventRoute["match"],
+    consent_required: parseJsonRecord(record.consent_required_json) as EventRoute["consent_required"],
+    sampling: parseJsonRecord(record.sampling_json) as EventRoute["sampling"],
+    destinations: parseJsonArray<EventRoute["destinations"][number]>(record.destinations_json)
+  };
+}
+
+function toSiteTransformation(record: DatabaseRecord): SiteTransformation {
+  return {
+    id: asString(record.id),
+    site_id: asString(record.site_id),
+    name: asString(record.name),
+    destination_kind: toSiteDestinationKind(record.destination_kind),
+    status: toSiteTransformationStatus(record.status),
+    version: asNumber(record.version),
+    mapping: parseJsonRecord(record.mapping_json),
+    created_at: asString(record.created_at),
+    updated_at: asString(record.updated_at)
+  };
+}
+
+function toSiteRouteVersion(record: DatabaseRecord): SiteRouteVersion {
+  return {
+    version: asNumber(record.version),
+    active: asNumber(record.active) !== 0,
+    created_at: asString(record.created_at)
+  };
+}
+
+function toCompiledSiteRoutingConfig(record: DatabaseRecord): CompiledSiteRoutingConfig {
+  const raw = typeof record.config_json === "string" && record.config_json ? record.config_json : "{}";
+  return JSON.parse(raw) as CompiledSiteRoutingConfig;
+}
+
 function toDeliveryAttemptRecord(record: DatabaseRecord): DeliveryAttemptRecord {
   return {
     id: asString(record.id),
@@ -296,6 +672,10 @@ export async function sha256Hex(value: string) {
 
 function createSessionToken() {
   return `${crypto.randomUUID()}${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
+function createPasswordResetToken() {
+  return `${crypto.randomUUID().replace(/-/g, "")}${crypto.randomUUID().replace(/-/g, "")}`;
 }
 
 function createPublicKey() {
@@ -377,6 +757,8 @@ async function ensureOperationsTables(db: DatabaseBinding) {
         event_id TEXT NOT NULL,
         route_id TEXT NOT NULL,
         destination_id TEXT NOT NULL,
+        transform_id TEXT,
+        delivery_mode TEXT,
         status TEXT NOT NULL,
         latency_ms INTEGER,
         attempts INTEGER NOT NULL DEFAULT 0,
@@ -387,6 +769,15 @@ async function ensureOperationsTables(db: DatabaseBinding) {
       )
     `
   ).run();
+
+  const deliveryColumns = await allRecords(db, "PRAGMA table_info(delivery_attempts)");
+  const deliveryColumnNames = new Set(deliveryColumns.map((column) => asString(column.name)));
+  if (!deliveryColumnNames.has("transform_id")) {
+    await db.prepare("ALTER TABLE delivery_attempts ADD COLUMN transform_id TEXT").run();
+  }
+  if (!deliveryColumnNames.has("delivery_mode")) {
+    await db.prepare("ALTER TABLE delivery_attempts ADD COLUMN delivery_mode TEXT").run();
+  }
 
   await db.prepare(
     `
@@ -424,6 +815,8 @@ async function ensureOperationsTables(db: DatabaseBinding) {
           event_id,
           route_id,
           destination_id,
+          transform_id,
+          delivery_mode,
           status,
           latency_ms,
           attempts,
@@ -431,7 +824,7 @@ async function ensureOperationsTables(db: DatabaseBinding) {
           queued_at,
           sent_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
     )
       .bind(
@@ -441,6 +834,8 @@ async function ensureOperationsTables(db: DatabaseBinding) {
         asString(event.event_id),
         "route_ingest",
         "forwarder_default",
+        null,
+        "queued",
         "pending",
         null,
         0,
@@ -453,10 +848,233 @@ async function ensureOperationsTables(db: DatabaseBinding) {
   }
 }
 
+async function ensurePasswordResetTable(db: DatabaseBinding) {
+  await db.prepare(
+    `
+      CREATE TABLE IF NOT EXISTS dashboard_password_reset_tokens (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        used_at TEXT
+      )
+    `
+  ).run();
+}
+
+async function ensureDestinationsTable(db: DatabaseBinding) {
+  await db.prepare(
+    `
+      CREATE TABLE IF NOT EXISTS site_destinations (
+        id TEXT PRIMARY KEY,
+        site_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        status TEXT NOT NULL,
+        secret_preview TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `
+  ).run();
+}
+
+async function ensureRoutingTables(db: DatabaseBinding) {
+  await db.prepare(
+    `
+      CREATE TABLE IF NOT EXISTS site_routes (
+        id TEXT PRIMARY KEY,
+        site_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        priority INTEGER NOT NULL DEFAULT 100,
+        environment TEXT NOT NULL DEFAULT 'all',
+        match_json TEXT NOT NULL,
+        consent_required_json TEXT NOT NULL,
+        sampling_json TEXT NOT NULL,
+        destinations_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `
+  ).run();
+
+  await db.prepare(
+    `
+      CREATE TABLE IF NOT EXISTS site_route_versions (
+        site_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        active INTEGER NOT NULL DEFAULT 0,
+        config_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (site_id, version)
+      )
+    `
+  ).run();
+
+  await db.prepare(
+    `
+      CREATE TABLE IF NOT EXISTS site_transformations (
+        id TEXT PRIMARY KEY,
+        site_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        destination_kind TEXT NOT NULL,
+        status TEXT NOT NULL,
+        version INTEGER NOT NULL DEFAULT 1,
+        mapping_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `
+  ).run();
+}
+
+async function seedControlPlaneRouting(db: DatabaseBinding) {
+  const seededSite = await firstRecord(db, "SELECT id FROM sites WHERE id = ? LIMIT 1", DEFAULT_SITE_ID);
+  if (!seededSite) return;
+
+  const destinationCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_destinations WHERE site_id = ?", DEFAULT_SITE_ID);
+  if (destinationCount === 0) {
+    const createdAt = nowIso();
+    for (const destination of listSeedDestinations(DEFAULT_SITE_ID)) {
+      await db.prepare(
+        `
+          INSERT INTO site_destinations (
+            id, site_id, name, kind, status, secret_preview, config_json, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+      )
+        .bind(
+          destination.id,
+          destination.site_id,
+          destination.name,
+          destination.kind,
+          destination.status,
+          destination.secret_preview,
+          JSON.stringify(destination.config ?? {}),
+          createdAt,
+          createdAt
+        )
+        .run();
+    }
+  }
+
+  const routeCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_routes WHERE site_id = ?", DEFAULT_SITE_ID);
+  if (routeCount === 0) {
+    const createdAt = nowIso();
+    for (const route of listSeedRoutes(DEFAULT_SITE_ID)) {
+      await db.prepare(
+        `
+          INSERT INTO site_routes (
+            id, site_id, name, description, enabled, priority, environment, match_json,
+            consent_required_json, sampling_json, destinations_json, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+      )
+        .bind(
+          route.id,
+          route.site_id,
+          route.name,
+          route.description ?? null,
+          route.enabled ? 1 : 0,
+          route.priority,
+          route.environment,
+          JSON.stringify(route.match ?? {}),
+          JSON.stringify(route.consent_required ?? {}),
+          JSON.stringify(route.sampling ?? {}),
+          JSON.stringify(route.destinations ?? []),
+          createdAt,
+          createdAt
+        )
+        .run();
+    }
+  }
+
+  const transformationCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_transformations WHERE site_id = ?", DEFAULT_SITE_ID);
+  if (transformationCount === 0) {
+    const createdAt = nowIso();
+    for (const transformation of listSeedTransformations(DEFAULT_SITE_ID)) {
+      await db.prepare(
+        `
+          INSERT INTO site_transformations (
+            id, site_id, name, destination_kind, status, version, mapping_json, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+      )
+        .bind(
+          transformation.id,
+          transformation.site_id,
+          transformation.name,
+          transformation.destination_kind,
+          transformation.status,
+          transformation.version,
+          JSON.stringify(transformation.mapping ?? {}),
+          createdAt,
+          createdAt
+        )
+        .run();
+    }
+  }
+
+  const versionCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_route_versions WHERE site_id = ?", DEFAULT_SITE_ID);
+  if (versionCount === 0) {
+    const seedVersions = listSeedRouteVersions(DEFAULT_SITE_ID);
+    const activeVersion = seedVersions.find((item) => item.active)?.version ?? 1;
+    const routes = listSeedRoutes(DEFAULT_SITE_ID);
+    const destinations = listSeedDestinations(DEFAULT_SITE_ID).reduce<Record<string, CompiledSiteRoutingConfig["destinations"][string]>>((accumulator, destination) => {
+      accumulator[destination.id] = {
+        id: destination.id,
+        kind: destination.kind,
+        name: destination.name,
+        enabled: destination.status === "active",
+        config: destination.config
+      };
+      return accumulator;
+    }, {});
+    const transformations = listSeedTransformations(DEFAULT_SITE_ID).reduce<Record<string, CompiledSiteRoutingConfig["transformations"][string]>>((accumulator, transformation) => {
+      accumulator[transformation.id] = {
+        id: transformation.id,
+        name: transformation.name,
+        version: transformation.version,
+        destination_kind: transformation.destination_kind,
+        enabled: transformation.status === "active",
+        mapping: transformation.mapping
+      };
+      return accumulator;
+    }, {});
+    const compiled = compileRoutingConfig({
+      site_id: DEFAULT_SITE_ID,
+      version: activeVersion,
+      routes,
+      destinations,
+      transformations
+    });
+    await db.prepare(
+      `
+        INSERT INTO site_route_versions (site_id, version, active, config_json, created_at)
+        VALUES (?, ?, ?, ?, ?)
+      `
+    )
+      .bind(DEFAULT_SITE_ID, activeVersion, 1, JSON.stringify(compiled), nowIso())
+      .run();
+  }
+}
+
 export async function ensureControlPlane(dbInput?: DatabaseBinding) {
   const db = ensureDb(dbInput);
   if (!ensurePromise) {
-    ensurePromise = Promise.all([ensureDashboardUsersTableColumns(db), ensureOperationsTables(db)]).then(() => undefined);
+    ensurePromise = Promise.all([
+      ensureDashboardUsersTableColumns(db),
+      ensureOperationsTables(db),
+      ensurePasswordResetTable(db),
+      ensureDestinationsTable(db),
+      ensureRoutingTables(db)
+    ])
+      .then(() => seedControlPlaneRouting(db))
+      .then(() => undefined);
   }
 
   await ensurePromise;
@@ -504,6 +1122,57 @@ async function createOperationJob(
     .run();
 
   return toOperationJobRecord(record);
+}
+
+async function sendPasswordResetEmail(
+  env: Pick<EnvironmentBindings, "BREVO_API_KEY" | "BREVO_SENDER_EMAIL" | "PASSWORD_RESET_BASE_URL">,
+  input: { email: string; name: string; token: string }
+) {
+  const apiKey = env.BREVO_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error("BREVO_API_KEY is not configured.");
+  }
+
+  const senderEmail = env.BREVO_SENDER_EMAIL?.trim() || "no-reply@eventsgateway.com";
+  const resetBaseUrl = env.PASSWORD_RESET_BASE_URL?.trim() || DEFAULT_PASSWORD_RESET_BASE_URL;
+  const separator = resetBaseUrl.includes("?") ? "&" : "?";
+  const resetUrl = `${resetBaseUrl}${separator}token=${encodeURIComponent(input.token)}`;
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "api-key": apiKey
+    },
+    body: JSON.stringify({
+      sender: {
+        email: senderEmail,
+        name: "EventsGateway"
+      },
+      to: [{ email: input.email, name: input.name }],
+      subject: "Reset your EventsGateway password",
+      htmlContent: [
+        "<p>Hello,</p>",
+        "<p>We received a request to reset your EventsGateway dashboard password.</p>",
+        `<p><a href="${resetUrl}">Reset password</a></p>`,
+        "<p>If you did not request this change, you can ignore this email.</p>",
+        "<p>This link expires in 60 minutes.</p>"
+      ].join(""),
+      textContent: [
+        "We received a request to reset your EventsGateway dashboard password.",
+        `Reset password: ${resetUrl}`,
+        "If you did not request this change, you can ignore this email.",
+        "This link expires in 60 minutes."
+      ].join("\n")
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error("Brevo rejected the password reset email request.");
+  }
+}
+
+async function deletePasswordResetToken(db: DatabaseBinding, resetId: string) {
+  await db.prepare("DELETE FROM dashboard_password_reset_tokens WHERE id = ?").bind(resetId).run();
 }
 
 export async function getOperationsHealth(dbInput: DatabaseBinding | undefined, siteId: string): Promise<OperationsHealthService[]> {
@@ -609,16 +1278,19 @@ export async function getOperationJob(dbInput: DatabaseBinding | undefined, site
 export async function flushPendingDeliveries(
   dbInput: DatabaseBinding | undefined,
   siteId: string,
-  limit = 25
+  limit = 25,
+  env?: Pick<EnvironmentBindings, "MANAGED_DESTINATIONS_CONFIG">
 ): Promise<DeliveryAttemptRecord[]> {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
   const records = await allRecords(
     db,
     `
-      SELECT da.id, da.site_id, da.event_id, da.route_id, da.destination_id, da.status, da.latency_ms, da.attempts, da.last_error, da.queued_at, da.sent_at, ce.event_type
+      SELECT da.id, da.site_id, da.event_id, da.route_id, da.destination_id, da.transform_id, da.delivery_mode, da.status, da.latency_ms, da.attempts, da.last_error, da.queued_at, da.sent_at, ce.event_type, ce.payload_json, sd.kind AS destination_kind, sd.config_json AS destination_config_json, st.mapping_json AS transform_mapping_json
       FROM delivery_attempts da
       INNER JOIN collected_events ce ON ce.id = da.collected_event_id
+      LEFT JOIN site_destinations sd ON sd.site_id = da.site_id AND sd.id = da.destination_id
+      LEFT JOIN site_transformations st ON st.site_id = da.site_id AND st.id = da.transform_id
       WHERE da.site_id = ? AND da.status IN ('pending', 'retrying')
       ORDER BY da.queued_at ASC
       LIMIT ?
@@ -629,7 +1301,7 @@ export async function flushPendingDeliveries(
 
   const processed: DeliveryAttemptRecord[] = [];
   for (const record of records) {
-    const processedRecord = await processDeliveryAttemptRecord(db, record);
+    const processedRecord = await processDeliveryAttemptRecord(db, record, env);
     if (processedRecord) {
       processed.push(processedRecord);
     }
@@ -646,29 +1318,64 @@ export async function flushPendingDeliveries(
   return processed;
 }
 
-async function processDeliveryAttemptRecord(db: DatabaseBinding, record: DatabaseRecord): Promise<DeliveryAttemptRecord | null> {
+async function processDeliveryAttemptRecord(
+  db: DatabaseBinding,
+  record: DatabaseRecord,
+  env?: Pick<EnvironmentBindings, "MANAGED_DESTINATIONS_CONFIG">
+): Promise<DeliveryAttemptRecord | null> {
   const currentStatus = asString(record.status) as DeliveryAttemptRecord["status"];
   if (currentStatus !== "pending" && currentStatus !== "retrying") {
     return toDeliveryAttemptRecord(record);
   }
 
   const attempts = asNumber(record.attempts) + 1;
-  const eventType = asString(record.event_type).toLowerCase();
   const updatedAt = nowIso();
-  const hardFailure = eventType.includes("failed") || eventType.includes("error");
+  const storedEvent = parseStoredPayload(record.payload_json);
+  const startedAt = Date.now();
 
-  let status: DeliveryAttemptRecord["status"] = "healthy";
+  let status: DeliveryAttemptRecord["status"] = "retrying";
   let latencyMs: number | null = null;
-  let sentAt: string | null = updatedAt;
+  let sentAt: string | null = null;
   let lastError: string | null = null;
 
-  if (hardFailure) {
+  if (!storedEvent) {
     status = "failed";
-    latencyMs = null;
-    sentAt = null;
-    lastError = "Destination rejected the delivery payload.";
+    lastError = "Stored payload is missing or invalid.";
   } else {
-    latencyMs = 120 + Math.min(380, attempts * 35);
+    try {
+      const storedDestinationConfig = parseJsonRecord(record.destination_config_json);
+      const transformMapping = parseJsonRecord(record.transform_mapping_json);
+      const transformedEvent = applyTransformationMapping(storedEvent, transformMapping);
+      const delivery = await dispatchManagedDestination({
+        siteId: asString(record.site_id),
+        destinationId: asString(record.destination_id),
+        event: transformedEvent,
+        configSource: env?.MANAGED_DESTINATIONS_CONFIG,
+        configOverride: {
+          kind: asString(record.destination_kind),
+          ...storedDestinationConfig
+        }
+      });
+
+      if (delivery.ok) {
+        status = "healthy";
+        latencyMs = Math.max(1, Date.now() - startedAt);
+        sentAt = updatedAt;
+      } else if ((delivery.status ?? 500) >= 500 && attempts < 3) {
+        status = "retrying";
+        lastError = delivery.error ?? "Transient upstream failure.";
+      } else {
+        status = "failed";
+        lastError = delivery.error ?? "Destination rejected the delivery payload.";
+      }
+    } catch (error) {
+      if (attempts < 3) {
+        status = "retrying";
+      } else {
+        status = "failed";
+      }
+      lastError = error instanceof Error ? error.message : "Destination dispatch failed.";
+    }
   }
 
   await db.prepare(
@@ -693,16 +1400,19 @@ async function processDeliveryAttemptRecord(db: DatabaseBinding, record: Databas
 
 export async function processQueuedDeliveryAttempt(
   dbInput: DatabaseBinding | undefined,
-  input: { deliveryAttemptId: string; siteId?: string }
+  input: { deliveryAttemptId: string; siteId?: string },
+  env?: Pick<EnvironmentBindings, "MANAGED_DESTINATIONS_CONFIG">
 ): Promise<DeliveryAttemptRecord | null> {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
   const record = await firstRecord(
     db,
     `
-      SELECT da.id, da.site_id, da.event_id, da.route_id, da.destination_id, da.status, da.latency_ms, da.attempts, da.last_error, da.queued_at, da.sent_at, ce.event_type
+      SELECT da.id, da.site_id, da.event_id, da.route_id, da.destination_id, da.transform_id, da.delivery_mode, da.status, da.latency_ms, da.attempts, da.last_error, da.queued_at, da.sent_at, ce.event_type, ce.payload_json, sd.kind AS destination_kind, sd.config_json AS destination_config_json, st.mapping_json AS transform_mapping_json
       FROM delivery_attempts da
       INNER JOIN collected_events ce ON ce.id = da.collected_event_id
+      LEFT JOIN site_destinations sd ON sd.site_id = da.site_id AND sd.id = da.destination_id
+      LEFT JOIN site_transformations st ON st.site_id = da.site_id AND st.id = da.transform_id
       WHERE da.id = ? AND (? IS NULL OR da.site_id = ?)
       LIMIT 1
     `,
@@ -715,7 +1425,7 @@ export async function processQueuedDeliveryAttempt(
     return null;
   }
 
-  return processDeliveryAttemptRecord(db, record);
+  return processDeliveryAttemptRecord(db, record, env);
 }
 
 export async function replayDlqOperations(dbInput: DatabaseBinding | undefined, siteId: string) {
@@ -901,6 +1611,132 @@ export async function loginUserSession(
   }
 
   return createSession(db, asString(record.id), record);
+}
+
+export async function requestUserPasswordReset(
+  dbInput: DatabaseBinding | undefined,
+  env: Pick<EnvironmentBindings, "BREVO_API_KEY" | "BREVO_SENDER_EMAIL" | "PASSWORD_RESET_BASE_URL">,
+  input: { email: string }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const email = normalizeEmail(input.email);
+  if (!email.includes("@")) {
+    throw new Error("Enter a valid email address.");
+  }
+
+  const user = await firstRecord(
+    db,
+    `
+      SELECT id, name, email, status
+      FROM dashboard_users
+      WHERE email = ?
+      LIMIT 1
+    `,
+    email
+  );
+
+  if (!user || toDashboardUserStatus(user.status) === "blocked") {
+    return { requested: true };
+  }
+
+  const createdAt = nowIso();
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MS).toISOString();
+  const token = createPasswordResetToken();
+  const resetId = crypto.randomUUID();
+
+  await db.prepare("DELETE FROM dashboard_password_reset_tokens WHERE user_id = ? OR expires_at <= ?")
+    .bind(asString(user.id), createdAt)
+    .run();
+
+  await db.prepare(
+    `
+      INSERT INTO dashboard_password_reset_tokens (
+        id,
+        user_id,
+        token_hash,
+        expires_at,
+        created_at,
+        used_at
+      ) VALUES (?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(resetId, asString(user.id), await sha256Hex(token), expiresAt, createdAt, null)
+    .run();
+
+  try {
+    await sendPasswordResetEmail(env, {
+      email: asString(user.email),
+      name: asString(user.name),
+      token
+    });
+  } catch (error) {
+    await deletePasswordResetToken(db, resetId);
+    throw error;
+  }
+
+  return { requested: true };
+}
+
+export async function resetUserPasswordWithToken(
+  dbInput: DatabaseBinding | undefined,
+  input: { token: string; password: string }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const token = input.token.trim();
+  const nextPassword = input.password;
+  if (!token) {
+    throw new Error("Reset token is required.");
+  }
+  if (nextPassword.trim().length < 8) {
+    throw new Error("Password must contain at least 8 characters.");
+  }
+
+  const reset = await firstRecord(
+    db,
+    `
+      SELECT pr.id, pr.user_id, pr.expires_at, pr.used_at, u.status
+      FROM dashboard_password_reset_tokens pr
+      INNER JOIN dashboard_users u ON u.id = pr.user_id
+      WHERE pr.token_hash = ?
+      LIMIT 1
+    `,
+    await sha256Hex(token)
+  );
+
+  if (!reset) {
+    throw new Error("This reset link is invalid or expired.");
+  }
+  if (asNullableString(reset.used_at)) {
+    throw new Error("This reset link has already been used.");
+  }
+  if (Date.parse(asString(reset.expires_at)) <= Date.now()) {
+    await deletePasswordResetToken(db, asString(reset.id));
+    throw new Error("This reset link is invalid or expired.");
+  }
+  if (toDashboardUserStatus(reset.status) === "blocked") {
+    throw new Error("This account is blocked.");
+  }
+
+  const passwordChangedAt = nowIso();
+  await db.prepare(
+    "UPDATE dashboard_users SET password_hash = ?, password_changed_at = ? WHERE id = ?"
+  )
+    .bind(await sha256Hex(nextPassword), passwordChangedAt, asString(reset.user_id))
+    .run();
+
+  await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(asString(reset.user_id)).run();
+  await db.prepare("UPDATE dashboard_password_reset_tokens SET used_at = ? WHERE id = ?")
+    .bind(passwordChangedAt, asString(reset.id))
+    .run();
+  await db.prepare("DELETE FROM dashboard_password_reset_tokens WHERE user_id = ? AND id != ?")
+    .bind(asString(reset.user_id), asString(reset.id))
+    .run();
+
+  return { password_changed_at: passwordChangedAt };
 }
 
 async function createSession(db: DatabaseBinding, userId: string, existingUser?: DatabaseRecord | null) {
@@ -1431,6 +2267,10 @@ export async function deleteAdminSite(dbInput: DatabaseBinding | undefined, site
   }
 
   await db.prepare("DELETE FROM site_domains WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("DELETE FROM site_destinations WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("DELETE FROM site_routes WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("DELETE FROM site_route_versions WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("DELETE FROM site_transformations WHERE site_id = ?").bind(siteId).run();
   await db.prepare("DELETE FROM site_keys WHERE site_id = ?").bind(siteId).run();
   await db.prepare("DELETE FROM collected_events WHERE site_id = ?").bind(siteId).run();
   await db.prepare("DELETE FROM identity_profiles WHERE site_id = ?").bind(siteId).run();
@@ -1523,6 +2363,667 @@ export async function listSiteKeys(dbInput: DatabaseBinding | undefined, siteId:
     siteId
   );
   return records.map(toSiteKey);
+}
+
+function createDestinationSecretPreview(kind: string) {
+  return `${kind}_***${Math.floor(Math.random() * 90 + 10)}`;
+}
+
+export async function listSiteDestinations(dbInput: DatabaseBinding | undefined, siteId: string): Promise<SiteDestination[]> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const records = await allRecords(
+    db,
+    `
+      SELECT id, site_id, name, kind, status, secret_preview, config_json, created_at, updated_at
+      FROM site_destinations
+      WHERE site_id = ?
+      ORDER BY created_at DESC, name ASC
+    `,
+    siteId
+  );
+  return records.map(toSiteDestination);
+}
+
+export async function getSiteDestination(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  destinationId: string
+): Promise<SiteDestination | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const record = await firstRecord(
+    db,
+    `
+      SELECT id, site_id, name, kind, status, secret_preview, config_json, created_at, updated_at
+      FROM site_destinations
+      WHERE site_id = ? AND id = ?
+      LIMIT 1
+    `,
+    siteId,
+    destinationId
+  );
+  return record ? toSiteDestination(record) : null;
+}
+
+export async function createSiteDestination(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  input: { name: string; kind: string; status?: string; config?: Record<string, unknown> }
+): Promise<SiteDestination> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const site = await firstRecord(db, "SELECT id FROM sites WHERE id = ? LIMIT 1", siteId);
+  if (!site) {
+    throw new Error("Site not found.");
+  }
+
+  const name = input.name.trim();
+  if (name.length < 2) {
+    throw new Error("Destination name must contain at least 2 characters.");
+  }
+
+  const id = `dst_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  const kind = toSiteDestinationKind(input.kind);
+  const status = toSiteDestinationStatus(input.status);
+  const createdAt = nowIso();
+
+  await db.prepare(
+    `
+      INSERT INTO site_destinations (
+        id, site_id, name, kind, status, secret_preview, config_json, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      id,
+      siteId,
+      name,
+      kind,
+      status,
+      createDestinationSecretPreview(kind),
+      JSON.stringify(input.config ?? {}),
+      createdAt,
+      createdAt
+    )
+    .run();
+
+  const created = await getSiteDestination(db, siteId, id);
+  if (!created) {
+    throw new Error("Destination was created but could not be loaded.");
+  }
+
+  return created;
+}
+
+export async function updateSiteDestination(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  destinationId: string,
+  patch: { name?: string; kind?: string; status?: string; config?: Record<string, unknown> }
+): Promise<SiteDestination | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const current = await getSiteDestination(db, siteId, destinationId);
+  if (!current) return null;
+
+  const nextName = typeof patch.name === "string" && patch.name.trim() ? patch.name.trim() : current.name;
+  const nextKind = patch.kind ? toSiteDestinationKind(patch.kind) : current.kind;
+  const nextStatus = patch.status ? toSiteDestinationStatus(patch.status) : current.status;
+  const nextConfig = patch.config ? patch.config : current.config;
+  const nextSecretPreview = nextKind !== current.kind ? createDestinationSecretPreview(nextKind) : current.secret_preview;
+
+  await db.prepare(
+    `
+      UPDATE site_destinations
+      SET name = ?, kind = ?, status = ?, secret_preview = ?, config_json = ?, updated_at = ?
+      WHERE site_id = ? AND id = ?
+    `
+  )
+    .bind(
+      nextName,
+      nextKind,
+      nextStatus,
+      nextSecretPreview,
+      JSON.stringify(nextConfig),
+      nowIso(),
+      siteId,
+      destinationId
+    )
+    .run();
+
+  return getSiteDestination(db, siteId, destinationId);
+}
+
+export async function deleteSiteDestination(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  destinationId: string
+): Promise<boolean> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const existing = await getSiteDestination(db, siteId, destinationId);
+  if (!existing) return false;
+  await db.prepare("DELETE FROM site_destinations WHERE site_id = ? AND id = ?")
+    .bind(siteId, destinationId)
+    .run();
+  return true;
+}
+
+export async function rotateSiteDestinationSecret(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  destinationId: string
+): Promise<SiteDestination | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const current = await getSiteDestination(db, siteId, destinationId);
+  if (!current) return null;
+  await db.prepare(
+    `
+      UPDATE site_destinations
+      SET secret_preview = ?, updated_at = ?
+      WHERE site_id = ? AND id = ?
+    `
+  )
+    .bind(createDestinationSecretPreview(current.kind), nowIso(), siteId, destinationId)
+    .run();
+  return getSiteDestination(db, siteId, destinationId);
+}
+
+export async function testSiteDestination(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  destinationId: string
+): Promise<{ destination_id: string; ok: boolean; latency_ms: number; message: string }> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const destination = await getSiteDestination(db, siteId, destinationId);
+  if (!destination) {
+    return { destination_id: destinationId, ok: false, latency_ms: 0, message: "Destination not found." };
+  }
+
+  const startedAt = Date.now();
+  try {
+    const result = await dispatchManagedDestination({
+      siteId,
+      destinationId,
+      configOverride: { kind: destination.kind, ...destination.config },
+      event: {
+        version: "1.0",
+        event_id: crypto.randomUUID(),
+        site_id: siteId,
+        type: "PageView",
+        source: "browser",
+        environment: "production",
+        timestamp: Date.now(),
+        received_at: Date.now(),
+        anonymous_id: crypto.randomUUID(),
+        session_id: crypto.randomUUID(),
+        page: {
+          url: "https://eventsgateway.com/destination-test",
+          path: "/destination-test",
+          title: "Destination Test",
+          referrer: "https://dash.eventsgateway.com/"
+        },
+        consent: {
+          analytics: true,
+          ads: true,
+          functional: true
+        },
+        properties: { test_event: true }
+      }
+    });
+    return {
+      destination_id: destinationId,
+      ok: result.ok,
+      latency_ms: Date.now() - startedAt,
+      message: result.ok
+        ? `Destination ${destination.name} accepted a test dispatch.`
+        : result.error ?? "Destination test failed."
+    };
+  } catch (error) {
+    return {
+      destination_id: destinationId,
+      ok: false,
+      latency_ms: Date.now() - startedAt,
+      message: error instanceof Error ? error.message : "Destination test failed."
+    };
+  }
+}
+
+function buildSimulatedEvent(siteId: string, input: Partial<EventGatewayEvent> & Pick<EventGatewayEvent, "type" | "source" | "environment">): EventGatewayEvent {
+  const timestamp = typeof input.timestamp === "number" ? input.timestamp : Date.now();
+  return {
+    version: input.version ?? "1.0",
+    event_id: input.event_id ?? crypto.randomUUID(),
+    site_id: siteId,
+    type: input.type,
+    source: input.source,
+    environment: input.environment,
+    timestamp,
+    received_at: typeof input.received_at === "number" ? input.received_at : timestamp,
+    anonymous_id: input.anonymous_id ?? crypto.randomUUID(),
+    session_id: input.session_id ?? crypto.randomUUID(),
+    page: input.page,
+    consent: input.consent ?? { analytics: true, ads: true, functional: true },
+    properties: input.properties ?? {}
+  };
+}
+
+async function compileSiteRouting(db: DatabaseBinding, siteId: string, version: number): Promise<CompiledSiteRoutingConfig> {
+  const [routes, destinations, transformations] = await Promise.all([
+    listSiteRoutes(db, siteId),
+    listSiteDestinations(db, siteId),
+    listSiteTransformations(db, siteId)
+  ]);
+
+  return compileRoutingConfig({
+    site_id: siteId,
+    version,
+    routes,
+    destinations: destinations.reduce<CompiledSiteRoutingConfig["destinations"]>((accumulator, destination) => {
+      accumulator[destination.id] = {
+        id: destination.id,
+        kind: destination.kind,
+        name: destination.name,
+        enabled: destination.status === "active",
+        config: destination.config
+      };
+      return accumulator;
+    }, {}),
+    transformations: transformations.reduce<CompiledSiteRoutingConfig["transformations"]>((accumulator, transformation) => {
+      accumulator[transformation.id] = {
+        id: transformation.id,
+        name: transformation.name,
+        version: transformation.version,
+        destination_kind: transformation.destination_kind,
+        enabled: transformation.status === "active",
+        mapping: transformation.mapping
+      };
+      return accumulator;
+    }, {})
+  });
+}
+
+async function nextSiteRoutingVersion(db: DatabaseBinding, siteId: string) {
+  const record = await firstRecord(db, "SELECT COALESCE(MAX(version), 0) AS version FROM site_route_versions WHERE site_id = ?", siteId);
+  return asNumber(record?.version) + 1;
+}
+
+export async function listSiteRoutes(dbInput: DatabaseBinding | undefined, siteId: string): Promise<EventRoute[]> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const records = await allRecords(
+    db,
+    `
+      SELECT id, site_id, name, description, enabled, priority, environment, match_json, consent_required_json, sampling_json, destinations_json
+      FROM site_routes
+      WHERE site_id = ?
+      ORDER BY priority ASC, created_at ASC
+    `,
+    siteId
+  );
+  return records.map(toSiteRoute);
+}
+
+export async function getSiteRoute(dbInput: DatabaseBinding | undefined, siteId: string, routeId: string): Promise<EventRoute | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const record = await firstRecord(
+    db,
+    `
+      SELECT id, site_id, name, description, enabled, priority, environment, match_json, consent_required_json, sampling_json, destinations_json
+      FROM site_routes
+      WHERE site_id = ? AND id = ?
+      LIMIT 1
+    `,
+    siteId,
+    routeId
+  );
+  return record ? toSiteRoute(record) : null;
+}
+
+export async function createSiteRoute(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  route: Omit<EventRoute, "id" | "site_id">
+): Promise<EventRoute> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const createdAt = nowIso();
+  const id = `route_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  await db.prepare(
+    `
+      INSERT INTO site_routes (
+        id, site_id, name, description, enabled, priority, environment, match_json, consent_required_json,
+        sampling_json, destinations_json, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      id,
+      siteId,
+      route.name.trim(),
+      route.description ?? null,
+      route.enabled ? 1 : 0,
+      route.priority,
+      route.environment,
+      JSON.stringify(route.match ?? {}),
+      JSON.stringify(route.consent_required ?? {}),
+      JSON.stringify(route.sampling ?? {}),
+      JSON.stringify(route.destinations ?? []),
+      createdAt,
+      createdAt
+    )
+    .run();
+
+  const created = await getSiteRoute(db, siteId, id);
+  if (!created) {
+    throw new Error("Route was created but could not be loaded.");
+  }
+  return created;
+}
+
+export async function updateSiteRoute(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  routeId: string,
+  patch: Partial<EventRoute>
+): Promise<EventRoute | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const current = await getSiteRoute(db, siteId, routeId);
+  if (!current) return null;
+
+  const nextRoute: EventRoute = {
+    ...current,
+    ...patch,
+    id: current.id,
+    site_id: current.site_id
+  };
+
+  await db.prepare(
+    `
+      UPDATE site_routes
+      SET name = ?, description = ?, enabled = ?, priority = ?, environment = ?, match_json = ?,
+          consent_required_json = ?, sampling_json = ?, destinations_json = ?, updated_at = ?
+      WHERE site_id = ? AND id = ?
+    `
+  )
+    .bind(
+      nextRoute.name.trim(),
+      nextRoute.description ?? null,
+      nextRoute.enabled ? 1 : 0,
+      nextRoute.priority,
+      nextRoute.environment,
+      JSON.stringify(nextRoute.match ?? {}),
+      JSON.stringify(nextRoute.consent_required ?? {}),
+      JSON.stringify(nextRoute.sampling ?? {}),
+      JSON.stringify(nextRoute.destinations ?? []),
+      nowIso(),
+      siteId,
+      routeId
+    )
+    .run();
+
+  return getSiteRoute(db, siteId, routeId);
+}
+
+export async function deleteSiteRoute(dbInput: DatabaseBinding | undefined, siteId: string, routeId: string): Promise<boolean> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const existing = await getSiteRoute(db, siteId, routeId);
+  if (!existing) return false;
+  await db.prepare("DELETE FROM site_routes WHERE site_id = ? AND id = ?").bind(siteId, routeId).run();
+  return true;
+}
+
+export async function duplicateSiteRoute(dbInput: DatabaseBinding | undefined, siteId: string, routeId: string): Promise<EventRoute | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const current = await getSiteRoute(db, siteId, routeId);
+  if (!current) return null;
+  return createSiteRoute(db, siteId, {
+    ...current,
+    name: `${current.name} Copy`,
+    priority: current.priority + 1
+  });
+}
+
+export async function listSiteRouteVersions(dbInput: DatabaseBinding | undefined, siteId: string): Promise<SiteRouteVersion[]> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const records = await allRecords(
+    db,
+    `
+      SELECT version, active, created_at
+      FROM site_route_versions
+      WHERE site_id = ?
+      ORDER BY version DESC
+    `,
+    siteId
+  );
+  return records.map(toSiteRouteVersion);
+}
+
+export async function getSiteCompiledRouting(dbInput: DatabaseBinding | undefined, siteId: string): Promise<CompiledSiteRoutingConfig> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const activeRecord = await firstRecord(
+    db,
+    `
+      SELECT version, config_json, created_at
+      FROM site_route_versions
+      WHERE site_id = ? AND active = 1
+      ORDER BY version DESC
+      LIMIT 1
+    `,
+    siteId
+  );
+  if (activeRecord) {
+    return toCompiledSiteRoutingConfig(activeRecord);
+  }
+
+  const version = await nextSiteRoutingVersion(db, siteId);
+  return compileSiteRouting(db, siteId, Math.max(1, version - 1));
+}
+
+export async function publishSiteRoutes(dbInput: DatabaseBinding | undefined, siteId: string) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const version = await nextSiteRoutingVersion(db, siteId);
+  const config = await compileSiteRouting(db, siteId, version);
+  const createdAt = nowIso();
+
+  await db.prepare("UPDATE site_route_versions SET active = 0 WHERE site_id = ?").bind(siteId).run();
+  await db.prepare(
+    `
+      INSERT INTO site_route_versions (site_id, version, active, config_json, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `
+  )
+    .bind(siteId, version, 1, JSON.stringify(config), createdAt)
+    .run();
+
+  return { version, config };
+}
+
+export async function rollbackSiteRoutes(dbInput: DatabaseBinding | undefined, siteId: string, version?: number) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const active = await firstRecord(
+    db,
+    `
+      SELECT version
+      FROM site_route_versions
+      WHERE site_id = ? AND active = 1
+      ORDER BY version DESC
+      LIMIT 1
+    `,
+    siteId
+  );
+  const target = version
+    ? await firstRecord(db, "SELECT version, config_json, created_at FROM site_route_versions WHERE site_id = ? AND version = ? LIMIT 1", siteId, version)
+    : await firstRecord(
+      db,
+      `
+        SELECT version, config_json, created_at
+        FROM site_route_versions
+        WHERE site_id = ? AND version < ?
+        ORDER BY version DESC
+        LIMIT 1
+      `,
+      siteId,
+      asNumber(active?.version)
+    );
+
+  if (!target) {
+    const compiled = await getSiteCompiledRouting(db, siteId);
+    return { version: compiled.version, config: compiled };
+  }
+
+  await db.prepare("UPDATE site_route_versions SET active = 0 WHERE site_id = ?").bind(siteId).run();
+  await db.prepare("UPDATE site_route_versions SET active = 1 WHERE site_id = ? AND version = ?").bind(siteId, asNumber(target.version)).run();
+  return { version: asNumber(target.version), config: toCompiledSiteRoutingConfig(target) };
+}
+
+export async function simulateSiteRoute(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  routeId: string,
+  event: Partial<EventGatewayEvent> & Pick<EventGatewayEvent, "type" | "source" | "environment">
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const routes = routeId === "all"
+    ? await listSiteRoutes(db, siteId)
+    : (await getSiteRoute(db, siteId, routeId)) ? [await getSiteRoute(db, siteId, routeId) as EventRoute] : [];
+  return simulateRoutes(buildSimulatedEvent(siteId, event), routes);
+}
+
+export async function listSiteTransformations(dbInput: DatabaseBinding | undefined, siteId: string): Promise<SiteTransformation[]> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const records = await allRecords(
+    db,
+    `
+      SELECT id, site_id, name, destination_kind, status, version, mapping_json, created_at, updated_at
+      FROM site_transformations
+      WHERE site_id = ?
+      ORDER BY created_at DESC, name ASC
+    `,
+    siteId
+  );
+  return records.map(toSiteTransformation);
+}
+
+export async function getSiteTransformation(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  transformationId: string
+): Promise<SiteTransformation | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const record = await firstRecord(
+    db,
+    `
+      SELECT id, site_id, name, destination_kind, status, version, mapping_json, created_at, updated_at
+      FROM site_transformations
+      WHERE site_id = ? AND id = ?
+      LIMIT 1
+    `,
+    siteId,
+    transformationId
+  );
+  return record ? toSiteTransformation(record) : null;
+}
+
+export async function createSiteTransformation(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  input: { name: string; destination_kind: string; status?: string; mapping?: Record<string, unknown> }
+): Promise<SiteTransformation> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const createdAt = nowIso();
+  const id = `tf_${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  await db.prepare(
+    `
+      INSERT INTO site_transformations (
+        id, site_id, name, destination_kind, status, version, mapping_json, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      id,
+      siteId,
+      input.name.trim(),
+      toSiteDestinationKind(input.destination_kind),
+      toSiteTransformationStatus(input.status),
+      1,
+      JSON.stringify(input.mapping ?? {}),
+      createdAt,
+      createdAt
+    )
+    .run();
+
+  const created = await getSiteTransformation(db, siteId, id);
+  if (!created) {
+    throw new Error("Transformation was created but could not be loaded.");
+  }
+  return created;
+}
+
+export async function updateSiteTransformation(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  transformationId: string,
+  patch: { name?: string; destination_kind?: string; status?: string; mapping?: Record<string, unknown> }
+): Promise<SiteTransformation | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const current = await getSiteTransformation(db, siteId, transformationId);
+  if (!current) return null;
+  const nextName = typeof patch.name === "string" && patch.name.trim() ? patch.name.trim() : current.name;
+  const nextDestinationKind = patch.destination_kind ? toSiteDestinationKind(patch.destination_kind) : current.destination_kind;
+  const nextStatus = patch.status ? toSiteTransformationStatus(patch.status) : current.status;
+  const nextMapping = patch.mapping ?? current.mapping;
+  const nextVersion = JSON.stringify(nextMapping) !== JSON.stringify(current.mapping) ? current.version + 1 : current.version;
+
+  await db.prepare(
+    `
+      UPDATE site_transformations
+      SET name = ?, destination_kind = ?, status = ?, version = ?, mapping_json = ?, updated_at = ?
+      WHERE site_id = ? AND id = ?
+    `
+  )
+    .bind(
+      nextName,
+      nextDestinationKind,
+      nextStatus,
+      nextVersion,
+      JSON.stringify(nextMapping),
+      nowIso(),
+      siteId,
+      transformationId
+    )
+    .run();
+
+  return getSiteTransformation(db, siteId, transformationId);
+}
+
+export async function deleteSiteTransformation(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  transformationId: string
+): Promise<boolean> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const existing = await getSiteTransformation(db, siteId, transformationId);
+  if (!existing) return false;
+  await db.prepare("DELETE FROM site_transformations WHERE site_id = ? AND id = ?").bind(siteId, transformationId).run();
+  return true;
 }
 
 export async function createAdminSiteKey(
@@ -1631,44 +3132,22 @@ export async function getInstallConfigFromDb(dbInput: DatabaseBinding | undefine
   }
 
   const key = await getPrimarySiteKey(dbInput, siteId);
-  const snippet = [
-    "<script>",
-    "  (function () {",
-    "    const collector = 'https://e.eventsgateway.com/v1/collect';",
-    `    const siteId = '${site.id}';`,
-    `    const apiKey = '${key.public_key}';`,
-    "    window.e_g = window.e_g || function (type, properties) {",
-    "      const payload = {",
-    "        site_id: siteId,",
-    "        api_key: apiKey,",
-    "        type: type,",
-    "        source: 'browser',",
-    "        environment: 'production',",
-    "        page: { path: location.pathname, url: location.href, title: document.title },",
-    "        properties: properties || {}",
-    "      };",
-    "      navigator.sendBeacon(",
-    "        collector,",
-    "        new Blob([JSON.stringify(payload)], { type: 'application/json' })",
-    "      );",
-    "    };",
-    "    window.e_g('PageView');",
-    "  })();",
-    "</script>"
-  ].join("\n");
+  const loaderUrl = site.collector_url.replace(/\/v1\/collect$/, "/tracker.js");
+  const snippet = `<script src="${loaderUrl}" data-site-id="${site.id}" data-api-key="${key.public_key}" data-endpoint="${site.collector_url}" async></script>`;
 
   return {
     collector_url: site.collector_url,
+    loader_url: loaderUrl,
     npm_package: "@eventsgateway/tracker-sdk",
     site_id: site.id,
     site_name: site.name,
     public_key: key.public_key,
     sdk_loader: snippet,
     sample_init: [
-      "window.e_g('Purchase', {",
-      "  order_id: 'ORDER-1001',",
-      "  value: 249.99,",
-      "  currency: 'RON'",
+      "window.eventsgateway.track({",
+      "  type: 'Purchase',",
+      "  ecommerce: { order_id: 'ORDER-1001', value: 249.99, currency: 'RON' },",
+      "  properties: { plan: 'pro' }",
       "});"
     ].join("\n")
   };
@@ -1737,7 +3216,37 @@ export async function storeCollectedEvent(
   const receivedAt = nowIso();
   const eventId = input.event.event_id?.trim() || crypto.randomUUID();
   const collectedEventId = crypto.randomUUID();
-  const deliveryAttemptId = crypto.randomUUID();
+  const runtimeEvent = buildStoredRuntimeEvent(input.siteId, {
+    ...input.event,
+    event_id: eventId
+  });
+  const explicitRouting = Array.isArray(runtimeEvent.routing?.destination_ids) && runtimeEvent.routing.destination_ids.length > 0;
+  const compiledConfig = explicitRouting ? null : await getSiteCompiledRouting(db, input.siteId);
+  const routePlan = compiledConfig ? routePlanFromCompiledConfig(runtimeEvent, compiledConfig) : null;
+  const persistedEvent: EventGatewayEvent = routePlan
+    ? {
+      ...runtimeEvent,
+      routing: {
+        route_ids: routePlan.route_ids,
+        destination_ids: routePlan.deliveries.map((delivery) => delivery.destination_id),
+        route_trace_id: routePlan.trace_id
+      }
+    }
+    : runtimeEvent;
+
+  const deliveryTargets = routePlan
+    ? routePlan.deliveries.map((delivery) => ({
+      routeId: delivery.route_id,
+      destinationId: delivery.destination_id,
+      transformId: delivery.transform_id ?? null,
+      deliveryMode: delivery.delivery_mode
+    }))
+    : getDeliveryTargets(persistedEvent, input.event.destination ?? null).map((target) => ({
+      ...target,
+      transformId: null,
+      deliveryMode: "queued"
+    }));
+  const deliveryAttemptIds = deliveryTargets.map(() => crypto.randomUUID());
 
   await db.prepare(
     `
@@ -1782,46 +3291,52 @@ export async function storeCollectedEvent(
       input.event.consent?.analytics ? 1 : 0,
       input.event.consent?.ads ? 1 : 0,
       input.event.consent?.functional ? 1 : 0,
-      JSON.stringify(input.event.payload),
+      JSON.stringify(persistedEvent),
       receivedAt
     )
     .run();
 
-  await db.prepare(
-    `
-      INSERT INTO delivery_attempts (
-        id,
-        site_id,
-        collected_event_id,
-        event_id,
-        route_id,
-        destination_id,
-        status,
-        latency_ms,
-        attempts,
-        last_error,
-        queued_at,
-        sent_at,
-        updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-  )
-    .bind(
-      deliveryAttemptId,
-      input.siteId,
-      collectedEventId,
-      eventId,
-      "route_ingest",
-      "forwarder_default",
-      "pending",
-      null,
-      0,
-      null,
-      receivedAt,
-      null,
-      receivedAt
+  const deliveryStatements = deliveryTargets.map((target, index) => (
+    db.prepare(
+      `
+        INSERT INTO delivery_attempts (
+          id,
+          site_id,
+          collected_event_id,
+          event_id,
+          route_id,
+          destination_id,
+          transform_id,
+          delivery_mode,
+          status,
+          latency_ms,
+          attempts,
+          last_error,
+          queued_at,
+          sent_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `
     )
-    .run();
+      .bind(
+        deliveryAttemptIds[index],
+        input.siteId,
+        collectedEventId,
+        eventId,
+        target.routeId,
+        target.destinationId,
+        target.transformId,
+        target.deliveryMode,
+        "pending",
+        null,
+        0,
+        null,
+        receivedAt,
+        null,
+        receivedAt
+      )
+  ));
+  await db.batch(deliveryStatements);
 
   if (input.event.canonical_user_id) {
     const existing = await firstRecord(
@@ -1883,7 +3398,7 @@ export async function storeCollectedEvent(
   return {
     accepted: true,
     collected_event_id: collectedEventId,
-    delivery_attempt_id: deliveryAttemptId,
+    delivery_attempt_ids: deliveryAttemptIds,
     site_id: input.siteId,
     event_id: eventId,
     received_at: receivedAt

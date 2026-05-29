@@ -18,6 +18,15 @@ CREATE TABLE IF NOT EXISTS dashboard_sessions (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS dashboard_password_reset_tokens (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  used_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS sites (
   id TEXT PRIMARY KEY,
   org_id TEXT NOT NULL,

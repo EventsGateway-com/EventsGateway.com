@@ -13,7 +13,7 @@
 	"observability": {
 		"enabled": true
 	},
-	"account_id": "63e37d6abff509f43d4d9a722361d03a",
+	"account_id": "__CLOUDFLARE_ACCOUNT_ID__",
 	"workers_dev": false,
 	"env": {
 		"production": {
@@ -21,12 +21,12 @@
 				{
 					"pattern": "eventsgateway.com",
 					"custom_domain": true,
-					"zone_id": "dc8513a03681904c320e4ab0517f312e"
+					"zone_id": "__CLOUDFLARE_ZONE_ID__"
 				},
 				{
 					"pattern": "www.eventsgateway.com",
 					"custom_domain": true,
-					"zone_id": "dc8513a03681904c320e4ab0517f312e"
+					"zone_id": "__CLOUDFLARE_ZONE_ID__"
 				}
 			]
 		}

@@ -43,6 +43,8 @@ type ErrorEnvelope = {
   };
 };
 
+export type CaptchaProvider = "turnstile" | "recaptcha" | "hcaptcha";
+
 export type DashboardUser = {
   id: string;
   name: string;
@@ -60,6 +62,29 @@ export type DashboardSession = {
   user_id: string;
   expires_at: string;
   created_at: string;
+};
+
+export type PasswordResetRequestResult = {
+  requested: boolean;
+};
+
+export type PasswordResetResult = {
+  password_changed_at: string;
+};
+
+export type InstallWizardInput = {
+  root_domain: string;
+  dashboard_domain: string;
+  api_domain: string;
+  collector_domain: string;
+  cloudflare_account_id: string;
+  cloudflare_zone_id: string;
+  control_plane_database_id: string;
+  control_plane_database_name: string;
+  events_queue_name: string;
+  captcha_provider: CaptchaProvider;
+  captcha_site_key: string;
+  captcha_secret_key: string;
 };
 
 export type DashboardBootstrap = {
@@ -95,6 +120,101 @@ export type SiteKeyRecord = {
   status: string;
   created_at: string;
   last_used_at: string | null;
+};
+
+export type TagManagerTag = {
+  id: string;
+  name: string;
+  template_key: string;
+  delivery: "edge" | "browser" | "hybrid";
+  trigger_ids: string[];
+  variable_ids: string[];
+  destination_ids: string[];
+  consent_mode: "inherit" | "analytics" | "marketing" | "always";
+  status: "active" | "draft" | "paused";
+  notes: string;
+};
+
+export type TagManagerTrigger = {
+  id: string;
+  name: string;
+  event: string;
+  match: string;
+  scope: "page" | "session" | "user";
+  status: "active" | "draft" | "paused";
+};
+
+export type TagManagerVariable = {
+  id: string;
+  name: string;
+  kind: "data_layer" | "cookie" | "query" | "dom" | "context";
+  source: string;
+  fallback: string;
+  scope: "browser" | "edge";
+  status: "active" | "draft";
+};
+
+export type TagManagerTemplate = {
+  key: string;
+  name: string;
+  category: string;
+  description: string;
+  default_delivery: "edge" | "browser" | "hybrid";
+  default_consent: "inherit" | "analytics" | "marketing" | "always";
+  fields: string[];
+  status: "ready" | "beta";
+};
+
+export type TagManagerScriptRule = {
+  id: string;
+  name: string;
+  script: string;
+  placement: "head" | "body-end" | "event-hook";
+  strategy: "lazy" | "immediate" | "after-consent";
+  consent_category: "inherit" | "analytics" | "marketing" | "functional";
+  status: "active" | "blocked" | "draft";
+};
+
+export type TagManagerConsentRule = {
+  id: string;
+  category: "analytics" | "marketing" | "functional";
+  default_state: "granted" | "denied" | "inherit";
+  enforcement: "block" | "queue" | "annotate";
+  scope: string;
+};
+
+export type TagManagerVersion = {
+  id: string;
+  version: number;
+  status: "active" | "draft" | "archived";
+  summary: string;
+  published_by: string;
+  published_at: string;
+  change_count: number;
+};
+
+export type TagManagerData = {
+  container_id: string;
+  install_mode: "loader" | "npm" | "worker";
+  loader_status: "active" | "draft";
+  tags: TagManagerTag[];
+  triggers: TagManagerTrigger[];
+  variables: TagManagerVariable[];
+  templates: TagManagerTemplate[];
+  script_rules: TagManagerScriptRule[];
+  consent_rules: TagManagerConsentRule[];
+  versions: TagManagerVersion[];
+  publish: {
+    draft_version: number;
+    active_version: number;
+    pending_changes: number;
+    last_published_at: string;
+    last_published_by: string;
+  };
+  snippets: {
+    loader: string;
+    data_layer: string;
+  };
 };
 
 export type AdminOverview = {
@@ -139,6 +259,8 @@ type HealthData = ReturnType<typeof getHealth>;
 type DestinationsListData = ReturnType<typeof listDestinations>;
 type TransformationsListData = ReturnType<typeof listTransformations>;
 type TransformationDetailData = ReturnType<typeof getTransformation>;
+export type TransformationCreateInput = Omit<TransformationDetailData, "id" | "site_id" | "version">;
+export type TransformationUpdateInput = Partial<Pick<TransformationDetailData, "name" | "destination_kind" | "status" | "mapping">>;
 type UsersListData = ReturnType<typeof listUsers>;
 type JourneysData = ReturnType<typeof getJourneys>;
 type ConsentData = ReturnType<typeof getConsent>;
@@ -147,11 +269,15 @@ type InstallData = ReturnType<typeof getInstallConfig> & {
   site_name: string;
   public_key: string;
 };
+type TagManagerDraftInput = Omit<TagManagerData, "publish" | "versions">;
 type QueuesData = ReturnType<typeof getQueues>;
 type JobsData = ReturnType<typeof listJobs>;
 type DestinationDetailData = ReturnType<typeof getDestination>;
+export type DestinationCreateInput = Omit<DestinationDetailData, "id" | "site_id" | "secret_preview">;
+export type DestinationUpdateInput = Partial<Pick<DestinationDetailData, "name" | "kind" | "status" | "config">>;
 type DlqData = ReturnType<typeof getDlq>;
 type RouteDetailData = ReturnType<typeof getRoute>;
+export type RouteUpdateInput = Partial<RouteDetailData>;
 type ReplayDlqData = ReturnType<typeof replayDlq>;
 type ReplayEventData = ReturnType<typeof replayEvent>;
 type BackfillAttributionData = ReturnType<typeof backfillAttribution>;
@@ -177,7 +303,9 @@ const API_BASE_URL = (
   (import.meta.env.PROD ? "https://api.eventsgateway.com" : "")
 ).replace(/\/$/, "");
 const API_TOKEN = (import.meta.env.VITE_API_TOKEN as string | undefined) ?? "";
+const CAPTCHA_SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined)?.trim() ?? "";
 const SESSION_TOKEN_STORAGE_KEY = "eventsgateway-dashboard-session-token-v2";
+const TAG_MANAGER_STORAGE_PREFIX = "eventsgateway-dashboard-tag-manager-v1";
 
 export function readSessionToken() {
   if (typeof window === "undefined") return "";
@@ -192,6 +320,361 @@ export function writeSessionToken(token: string | null) {
   }
 
   window.localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+}
+
+export function readCaptchaSiteKey() {
+  return CAPTCHA_SITE_KEY;
+}
+
+function createLocalId(prefix: string) {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${prefix}_${crypto.randomUUID().slice(0, 8)}`;
+  }
+
+  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function getTagManagerStorageKey(siteId: string) {
+  return `${TAG_MANAGER_STORAGE_PREFIX}:${siteId}`;
+}
+
+function buildDefaultTagManager(siteId: string): TagManagerData {
+  const now = new Date().toISOString();
+  return {
+    container_id: `egtm_${siteId}`,
+    install_mode: "loader",
+    loader_status: "active",
+    tags: [
+      {
+        id: "tag_meta_purchase",
+        name: "Meta Purchase",
+        template_key: "meta-conversions",
+        delivery: "edge",
+        trigger_ids: ["trigger_purchase"],
+        variable_ids: ["var_order_id", "var_order_value"],
+        destination_ids: ["facebook-pixel"],
+        consent_mode: "marketing",
+        status: "active",
+        notes: "Routes canonical purchase events into Meta via the edge delivery path."
+      },
+      {
+        id: "tag_ga4_page_view",
+        name: "GA4 Page View",
+        template_key: "ga4",
+        delivery: "hybrid",
+        trigger_ids: ["trigger_page_view"],
+        variable_ids: ["var_page_path", "var_page_title"],
+        destination_ids: ["google-analytics-4"],
+        consent_mode: "analytics",
+        status: "active",
+        notes: "Maintains page-level analytics while keeping the canonical event contract stable."
+      }
+    ],
+    triggers: [
+      {
+        id: "trigger_page_view",
+        name: "Page View",
+        event: "page_view",
+        match: "event.type === 'page_view'",
+        scope: "page",
+        status: "active"
+      },
+      {
+        id: "trigger_purchase",
+        name: "Purchase",
+        event: "purchase",
+        match: "event.type === 'purchase' && event.order.total > 0",
+        scope: "session",
+        status: "active"
+      }
+    ],
+    variables: [
+      {
+        id: "var_page_path",
+        name: "page_path",
+        kind: "context",
+        source: "context.page.path",
+        fallback: "/",
+        scope: "browser",
+        status: "active"
+      },
+      {
+        id: "var_page_title",
+        name: "page_title",
+        kind: "dom",
+        source: "document.title",
+        fallback: "Untitled page",
+        scope: "browser",
+        status: "active"
+      },
+      {
+        id: "var_order_id",
+        name: "order_id",
+        kind: "data_layer",
+        source: "event.order.id",
+        fallback: "",
+        scope: "edge",
+        status: "active"
+      },
+      {
+        id: "var_order_value",
+        name: "order_value",
+        kind: "data_layer",
+        source: "event.order.total",
+        fallback: "0",
+        scope: "edge",
+        status: "active"
+      }
+    ],
+    templates: [
+      {
+        key: "ga4",
+        name: "Google Analytics 4",
+        category: "Analytics",
+        description: "Managed GA4 tag with canonical event mapping and browser plus edge delivery options.",
+        default_delivery: "hybrid",
+        default_consent: "analytics",
+        fields: ["measurement_id", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
+        key: "google-analytics-4",
+        name: "Google Analytics 4 Managed",
+        category: "Analytics",
+        description: "Managed Components inspired GA4 relay with Measurement Protocol mapping and hybrid audience support.",
+        default_delivery: "hybrid",
+        default_consent: "analytics",
+        fields: ["measurement_id", "api_secret", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
+        key: "meta-conversions",
+        name: "Meta Conversions",
+        category: "Ads",
+        description: "Managed Meta tag oriented around canonical commerce and lead events.",
+        default_delivery: "edge",
+        default_consent: "marketing",
+        fields: ["pixel_id", "event_name", "value", "currency"],
+        status: "ready"
+      },
+      {
+        key: "facebook-pixel",
+        name: "Facebook Pixel Managed",
+        category: "Ads",
+        description: "Managed Components inspired Meta relay with Pixel ID, access token and CAPI-ready payload mapping.",
+        default_delivery: "edge",
+        default_consent: "marketing",
+        fields: ["pixel_id", "access_token", "event_name", "value", "currency"],
+        status: "ready"
+      },
+      {
+        key: "google-ads",
+        name: "Google Ads Conversion",
+        category: "Ads",
+        description: "Routes conversion signals to Google Ads without duplicating browser logic.",
+        default_delivery: "edge",
+        default_consent: "marketing",
+        fields: ["conversion_id", "label", "value"],
+        status: "ready"
+      },
+      {
+        key: "tiktok",
+        name: "TikTok Events API",
+        category: "Ads",
+        description: "Managed Components inspired TikTok relay with pixel code and access token support.",
+        default_delivery: "edge",
+        default_consent: "marketing",
+        fields: ["pixel_code", "access_token", "event_name", "value", "currency"],
+        status: "ready"
+      },
+      {
+        key: "segment",
+        name: "Segment HTTP API",
+        category: "CDP",
+        description: "Managed Components inspired Segment relay with page, track and identify payload support.",
+        default_delivery: "edge",
+        default_consent: "analytics",
+        fields: ["write_key", "hostname", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
+        key: "ziprecruiter",
+        name: "ZipRecruiter Conversion",
+        category: "Ads",
+        description: "Managed Components inspired ZipRecruiter conversion beacon for lightweight conversion reporting.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["key", "event_name", "value", "order_id"],
+        status: "ready"
+      },
+      {
+        key: "upward",
+        name: "Upward Conversion",
+        category: "Ads",
+        description: "Managed Components inspired Upward conversion relay with tid-based attribution.",
+        default_delivery: "edge",
+        default_consent: "marketing",
+        fields: ["tid", "event_name", "value", "order_id"],
+        status: "ready"
+      },
+      {
+        key: "tatari",
+        name: "Tatari",
+        category: "Attribution",
+        description: "Managed Components inspired Tatari beacon using encoded payload delivery.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["key", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
+        key: "taboola",
+        name: "Taboola",
+        category: "Ads",
+        description: "Managed Components inspired Taboola event beacon with revenue and order mapping.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["id", "event_name", "value", "currency", "order_id"],
+        status: "ready"
+      },
+      {
+        key: "snapchat",
+        name: "Snapchat Pixel",
+        category: "Ads",
+        description: "Managed Components inspired Snapchat dual-request pixel delivery.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["pid", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
+        key: "custom-script",
+        name: "Custom Script Wrapper",
+        category: "Scripts",
+        description: "Registers a third-party script inside the governance layer with placement and consent controls.",
+        default_delivery: "browser",
+        default_consent: "inherit",
+        fields: ["script_url", "placement", "strategy"],
+        status: "beta"
+      }
+    ],
+    script_rules: [
+      {
+        id: "script_hotjar",
+        name: "Hotjar",
+        script: "https://static.hotjar.com/c/hotjar.js",
+        placement: "head",
+        strategy: "after-consent",
+        consent_category: "analytics",
+        status: "active"
+      },
+      {
+        id: "script_linkedin",
+        name: "LinkedIn Insight",
+        script: "https://snap.licdn.com/li.lms-analytics/insight.min.js",
+        placement: "body-end",
+        strategy: "lazy",
+        consent_category: "marketing",
+        status: "draft"
+      }
+    ],
+    consent_rules: [
+      {
+        id: "consent_analytics",
+        category: "analytics",
+        default_state: "denied",
+        enforcement: "queue",
+        scope: "Browser analytics tags"
+      },
+      {
+        id: "consent_marketing",
+        category: "marketing",
+        default_state: "denied",
+        enforcement: "block",
+        scope: "Ads and remarketing tags"
+      },
+      {
+        id: "consent_functional",
+        category: "functional",
+        default_state: "granted",
+        enforcement: "annotate",
+        scope: "Functional helper scripts"
+      }
+    ],
+    versions: [
+      {
+        id: "tm_version_3",
+        version: 3,
+        status: "active",
+        summary: "Current published tag manager container.",
+        published_by: "Marian Vasile",
+        published_at: now,
+        change_count: 6
+      },
+      {
+        id: "tm_version_4",
+        version: 4,
+        status: "draft",
+        summary: "Draft container with managed templates and consent rules.",
+        published_by: "Marian Vasile",
+        published_at: now,
+        change_count: 14
+      }
+    ],
+    publish: {
+      draft_version: 4,
+      active_version: 3,
+      pending_changes: 14,
+      last_published_at: now,
+      last_published_by: "Marian Vasile"
+    },
+    snippets: {
+      loader: `<script src="https://e.eventsgateway.com/tag-manager.js" data-container="egtm_${siteId}" async></script>`,
+      data_layer: `window.eventsgateway = window.eventsgateway || [];\nwindow.eventsgateway.push({ type: "page_view", page: { path: location.pathname } });`
+    }
+  };
+}
+
+function readTagManagerStore(siteId: string): TagManagerData {
+  if (typeof window === "undefined") {
+    return buildDefaultTagManager(siteId);
+  }
+
+  const storageKey = getTagManagerStorageKey(siteId);
+  const existing = window.localStorage.getItem(storageKey);
+  if (!existing) {
+    const fallback = buildDefaultTagManager(siteId);
+    window.localStorage.setItem(storageKey, JSON.stringify(fallback));
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(existing) as TagManagerData;
+    return {
+      ...parsed,
+      tags: (parsed.tags ?? []).map((tag) => ({
+        ...tag,
+        destination_ids: Array.isArray(tag.destination_ids) ? tag.destination_ids : []
+      }))
+    };
+  } catch {
+    const fallback = buildDefaultTagManager(siteId);
+    window.localStorage.setItem(storageKey, JSON.stringify(fallback));
+    return fallback;
+  }
+}
+
+function writeTagManagerStore(siteId: string, value: TagManagerData) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(getTagManagerStorageKey(siteId), JSON.stringify(value));
+}
+
+function computePendingChanges(input: TagManagerDraftInput) {
+  return input.tags.length +
+    input.triggers.length +
+    input.variables.length +
+    input.script_rules.length +
+    input.consent_rules.length;
 }
 
 function buildUrl(path: string) {
@@ -232,14 +715,14 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return payload.data;
 }
 
-export function registerDashboardUser(input: { name: string; email: string; password: string }) {
+export function registerDashboardUser(input: { name: string; email: string; password: string; turnstile_token: string }) {
   return requestJson<{ user: DashboardUser; session: DashboardSession }>("/v1/auth/register", {
     method: "POST",
     body: JSON.stringify(input)
   });
 }
 
-export function loginDashboardUser(input: { email: string; password: string }) {
+export function loginDashboardUser(input: { email: string; password: string; turnstile_token: string }) {
   return requestJson<{ user: DashboardUser; session: DashboardSession }>("/v1/auth/login", {
     method: "POST",
     body: JSON.stringify(input)
@@ -250,6 +733,20 @@ export function logoutDashboardUser() {
   return requestJson<{ logged_out: boolean }>("/v1/auth/logout", {
     method: "POST",
     body: JSON.stringify({})
+  });
+}
+
+export function requestDashboardPasswordReset(input: { email: string; turnstile_token: string }) {
+  return requestJson<PasswordResetRequestResult>("/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export function resetDashboardPassword(input: { token: string; password: string }) {
+  return requestJson<PasswordResetResult>("/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(input)
   });
 }
 
@@ -311,6 +808,20 @@ export function fetchRouteDetail(siteId: string, routeId: string): Promise<Route
   return requestJson<RouteDetailData>(`/v1/sites/${siteId}/routes/${routeId}`);
 }
 
+export function updateRouteRecord(siteId: string, routeId: string, input: RouteUpdateInput): Promise<RouteDetailData> {
+  return requestJson<RouteDetailData>(`/v1/sites/${siteId}/routes/${routeId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export function publishRoutesRecord(siteId: string): Promise<{ version: number; config: CompiledRoutingData }> {
+  return requestJson<{ version: number; config: CompiledRoutingData }>(`/v1/sites/${siteId}/routes/publish`, {
+    method: "POST",
+    body: JSON.stringify({})
+  });
+}
+
 export function fetchDeliveries(siteId: string): Promise<DeliveryRow[]> {
   return requestJson<DeliveriesListData>(`/v1/sites/${siteId}/deliveries`).then(async (deliveries) => {
     const routes = await requestJson<RoutesListData>(`/v1/sites/${siteId}/routes`);
@@ -341,12 +852,65 @@ export function fetchDestinations(siteId: string): Promise<DestinationsListData>
   return requestJson<DestinationsListData>(`/v1/sites/${siteId}/destinations`);
 }
 
+export function createDestinationRecord(siteId: string, input: DestinationCreateInput): Promise<DestinationDetailData> {
+  return requestJson<DestinationDetailData>(`/v1/sites/${siteId}/destinations`, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export function updateDestinationRecord(siteId: string, destinationId: string, input: DestinationUpdateInput): Promise<DestinationDetailData> {
+  return requestJson<DestinationDetailData>(`/v1/sites/${siteId}/destinations/${destinationId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export function deleteDestinationRecord(siteId: string, destinationId: string): Promise<{ deleted: true }> {
+  return requestJson<{ deleted: true }>(`/v1/sites/${siteId}/destinations/${destinationId}`, {
+    method: "DELETE"
+  });
+}
+
+export function testDestinationRecord(siteId: string, destinationId: string): Promise<{ destination_id: string; ok: boolean; latency_ms: number; message: string }> {
+  return requestJson<{ destination_id: string; ok: boolean; latency_ms: number; message: string }>(
+    `/v1/sites/${siteId}/destinations/${destinationId}/test`,
+    { method: "POST" }
+  );
+}
+
+export function rotateDestinationSecretRecord(siteId: string, destinationId: string): Promise<DestinationDetailData> {
+  return requestJson<DestinationDetailData>(`/v1/sites/${siteId}/destinations/${destinationId}/rotate-secret`, {
+    method: "POST"
+  });
+}
+
 export function fetchTransformations(siteId: string): Promise<TransformationsListData> {
   return requestJson<TransformationsListData>(`/v1/sites/${siteId}/transformations`);
 }
 
 export function fetchTransformationDetail(siteId: string, transformationId: string): Promise<TransformationDetailData> {
   return requestJson<TransformationDetailData>(`/v1/sites/${siteId}/transformations/${transformationId}`);
+}
+
+export function createTransformationRecord(siteId: string, input: TransformationCreateInput): Promise<TransformationDetailData> {
+  return requestJson<TransformationDetailData>(`/v1/sites/${siteId}/transformations`, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export function updateTransformationRecord(siteId: string, transformationId: string, input: TransformationUpdateInput): Promise<TransformationDetailData> {
+  return requestJson<TransformationDetailData>(`/v1/sites/${siteId}/transformations/${transformationId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export function deleteTransformationRecord(siteId: string, transformationId: string): Promise<{ deleted: true }> {
+  return requestJson<{ deleted: true }>(`/v1/sites/${siteId}/transformations/${transformationId}`, {
+    method: "DELETE"
+  });
 }
 
 export function fetchUsers(siteId: string): Promise<UsersListData> {
@@ -363,6 +927,81 @@ export function fetchConsent(siteId: string): Promise<ConsentData> {
 
 export function fetchInstall(siteId: string): Promise<InstallData> {
   return requestJson<InstallData>(`/v1/sites/${siteId}/settings/install`);
+}
+
+export function fetchTagManager(siteId: string): Promise<TagManagerData> {
+  return Promise.resolve(readTagManagerStore(siteId));
+}
+
+export function saveTagManager(siteId: string, input: TagManagerDraftInput): Promise<TagManagerData> {
+  const current = readTagManagerStore(siteId);
+  const pendingChanges = computePendingChanges(input);
+  const next: TagManagerData = {
+    ...input,
+    versions: current.versions.map((version) => (
+      version.version === current.publish.draft_version
+        ? { ...version, change_count: pendingChanges, summary: "Draft container updated from dashboard." }
+        : version
+    )),
+    publish: {
+      ...current.publish,
+      pending_changes: pendingChanges
+    }
+  };
+  writeTagManagerStore(siteId, next);
+  return Promise.resolve(next);
+}
+
+export function publishTagManager(siteId: string, input: { draft: TagManagerDraftInput; summary: string }): Promise<TagManagerData> {
+  const current = readTagManagerStore(siteId);
+  const now = new Date().toISOString();
+  const nextActiveVersion = current.publish.draft_version;
+  const nextDraftVersion = nextActiveVersion + 1;
+  const nextVersions: TagManagerVersion[] = [
+    ...current.versions
+      .map((version) => {
+        if (version.version === nextActiveVersion) {
+          return {
+            ...version,
+            status: "active" as const,
+            summary: input.summary || version.summary,
+            published_at: now,
+            published_by: current.publish.last_published_by
+          };
+        }
+
+        return version.status === "active"
+          ? { ...version, status: "archived" as const }
+          : version.version === current.publish.draft_version
+            ? { ...version, status: "archived" as const }
+            : version;
+      })
+      .filter((version, index, versions) => versions.findIndex((candidate) => candidate.id === version.id) === index),
+    {
+      id: createLocalId("tm_version"),
+      version: nextDraftVersion,
+      status: "draft",
+      summary: "Fresh draft created after publish.",
+      published_by: current.publish.last_published_by,
+      published_at: now,
+      change_count: 0
+    }
+  ];
+
+  const next: TagManagerData = {
+    ...input.draft,
+    versions: nextVersions,
+    publish: {
+      draft_version: nextDraftVersion,
+      active_version: nextActiveVersion,
+      pending_changes: 0,
+      last_published_at: now,
+      last_published_by: current.publish.last_published_by
+    }
+  };
+
+  writeTagManagerStore(siteId, next);
+  return Promise.resolve(next);
 }
 
 export function fetchDomains(siteId: string) {

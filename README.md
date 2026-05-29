@@ -183,6 +183,7 @@ The dashboard uses public Vite variables because they are embedded into the brow
 
 ```env
 VITE_API_BASE_URL=https://api.eventsgateway.com
+VITE_TURNSTILE_SITE_KEY=replace-with-your-turnstile-site-key
 ```
 
 Example files:
@@ -198,6 +199,7 @@ The API Worker supports:
 
 ```env
 API_TOKEN=replace-with-a-long-random-token
+TURNSTILE_SECRET_KEY=replace-with-your-captcha-secret-key
 ```
 
 Example file:
@@ -205,6 +207,21 @@ Example file:
 - `apps/api-worker/.dev.vars.example`
 
 For production, use Wrangler secrets instead of committing values into the repository.
+
+### Initial setup
+
+The open source repository keeps Cloudflare identifiers out of tracked source files.
+
+Use the install flow at `/setup` to prepare:
+
+- Cloudflare account ID
+- Cloudflare zone ID
+- D1 database ID and name
+- Queue name
+- captcha provider choice between Turnstile, reCAPTCHA, and hCaptcha
+- public captcha site key and private API secret key
+
+Keep those values only in private local configuration, secret managers, or private CI variables.
 
 ## Current Behavior Notes
 

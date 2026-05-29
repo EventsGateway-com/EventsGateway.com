@@ -125,6 +125,19 @@ p {
   gap: 0.75rem;
 }
 
+.eg-auth-form__meta {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 0.86rem;
+}
+
+.eg-auth-form__links {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .eg-field {
   display: grid;
   gap: 0.4rem;
@@ -156,6 +169,16 @@ p {
 
 .eg-form-error {
   font-size: 0.86rem;
+}
+
+.eg-form-success {
+  font-size: 0.86rem;
+  color: #86efac;
+}
+
+.eg-captcha-widget {
+  display: flex;
+  justify-content: center;
 }
 
 .eg-auth-card__footer {

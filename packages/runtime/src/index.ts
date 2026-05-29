@@ -69,6 +69,11 @@ export type DeliveryQueueMessage = {
 export type EnvironmentBindings = {
   API_TOKEN?: string;
   CORS_ORIGIN?: string;
+  BREVO_API_KEY?: string;
+  BREVO_SENDER_EMAIL?: string;
+  PASSWORD_RESET_BASE_URL?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  MANAGED_DESTINATIONS_CONFIG?: string;
   DB?: DatabaseBinding;
   EVENTS_QUEUE?: QueueSendBinding<DeliveryQueueMessage>;
 };

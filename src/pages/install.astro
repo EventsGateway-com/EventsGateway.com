@@ -147,6 +147,112 @@ const installJsonLd = {
 
   <section class="section section--tight">
     <Container>
+      <SectionHeader
+        eyebrow="Install Wizard"
+        title="Generate the private setup values before deployment."
+        description="This initial install flow lives on the public root domain and prepares the private Cloudflare and captcha values that must stay out of the public repository."
+      />
+      <div class="wizard-grid" data-install-wizard>
+        <div class="surface-panel wizard-panel">
+          <div class="surface-panel__inner stack wizard-form">
+            <label class="wizard-field">
+              <span>Root domain</span>
+              <input id="install-root-domain" type="text" value="example.com" />
+            </label>
+            <label class="wizard-field">
+              <span>Dashboard domain</span>
+              <input id="install-dashboard-domain" type="text" value="dash.example.com" />
+            </label>
+            <label class="wizard-field">
+              <span>API domain</span>
+              <input id="install-api-domain" type="text" value="api.example.com" />
+            </label>
+            <label class="wizard-field">
+              <span>Collector domain</span>
+              <input id="install-collector-domain" type="text" value="events.example.com" />
+            </label>
+            <label class="wizard-field">
+              <span>Cloudflare account ID</span>
+              <input id="install-account-id" type="text" value="" />
+            </label>
+            <label class="wizard-field">
+              <span>Cloudflare zone ID</span>
+              <input id="install-zone-id" type="text" value="" />
+            </label>
+            <label class="wizard-field">
+              <span>D1 database ID</span>
+              <input id="install-database-id" type="text" value="" />
+            </label>
+            <label class="wizard-field">
+              <span>D1 database name</span>
+              <input id="install-database-name" type="text" value="eventsgateway-control-plane" />
+            </label>
+            <label class="wizard-field">
+              <span>Queue name</span>
+              <input id="install-queue-name" type="text" value="eventsgateway-ingest" />
+            </label>
+          </div>
+        </div>
+
+        <div class="surface-panel wizard-panel">
+          <div class="surface-panel__inner stack wizard-form">
+            <label class="wizard-field">
+              <span>Captcha provider</span>
+              <select id="install-captcha-provider">
+                <option value="turnstile">Cloudflare Turnstile</option>
+                <option value="recaptcha">Google reCAPTCHA</option>
+                <option value="hcaptcha">hCaptcha</option>
+              </select>
+            </label>
+            <label class="wizard-field">
+              <span>Captcha site key</span>
+              <input id="install-captcha-site-key" type="text" value="" />
+            </label>
+            <label class="wizard-field">
+              <span>Captcha secret key</span>
+              <input id="install-captcha-secret-key" type="password" value="" />
+            </label>
+            <div class="wizard-note">
+              The site key is public at runtime, but it should still be injected during install instead of being committed.
+            </div>
+            <div class="wizard-note">
+              The secret key must stay only in private local files, CI secrets, or Cloudflare secret storage.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="command-grid wizard-output-grid">
+        <div class="surface-panel command-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Dashboard Public Env</span>
+            <pre class="command-block"><code id="install-output-dashboard-env"></code></pre>
+          </div>
+        </div>
+        <div class="surface-panel command-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">API Private Env</span>
+            <pre class="command-block"><code id="install-output-api-env"></code></pre>
+          </div>
+        </div>
+        <div class="surface-panel command-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Tracked Placeholder Map</span>
+            <pre class="command-block"><code id="install-output-placeholders"></code></pre>
+          </div>
+        </div>
+        <div class="surface-panel command-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Private Deployment Values</span>
+            <pre class="command-block"><code id="install-output-private-values"></code></pre>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
       <div class="two-column">
         <div class="surface-panel cta-panel">
           <div class="surface-panel__inner stack">
@@ -185,6 +291,53 @@ const installJsonLd = {
     display: grid;
     gap: 1.25rem;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .wizard-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wizard-panel {
+    height: 100%;
+  }
+
+  .wizard-form {
+    gap: 0.9rem;
+  }
+
+  .wizard-field {
+    display: grid;
+    gap: 0.45rem;
+    color: var(--color-muted);
+  }
+
+  .wizard-field span {
+    font-size: 0.85rem;
+  }
+
+  .wizard-field input,
+  .wizard-field select {
+    min-height: 3rem;
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.9rem;
+    background: rgba(5, 10, 24, 0.9);
+    color: var(--color-text);
+  }
+
+  .wizard-note {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-muted);
+    line-height: 1.7;
+  }
+
+  .wizard-output-grid {
+    margin-top: 1rem;
   }
 
   .command-panel {
@@ -229,4 +382,12 @@ const installJsonLd = {
     font-family: var(--font-mono);
     color: var(--color-text);
   }
+
+  @media (max-width: 900px) {
+    .wizard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
+
+<script src="/scripts/install-wizard.js"></script>
