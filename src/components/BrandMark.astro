@@ -1,5 +1,4 @@
 ---
-import Icon from "./Icon.astro";
 import { siteConfig } from "../config/site";
 
 const { showTagline = true } = Astro.props as {
@@ -8,9 +7,9 @@ const { showTagline = true } = Astro.props as {
 ---
 
 <a class="brand" href="/" aria-label={`${siteConfig.name} home`}>
-  <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="38" height="38" />
+  <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="46" height="46" />
   <span class="brand__text">
-    <strong>{siteConfig.name}</strong>
+    <strong>EVENTS<br />Gateway</strong>
     {showTagline && <small>{siteConfig.tagline}</small>}
   </span>
 </a>
@@ -33,6 +32,7 @@ const { showTagline = true } = Astro.props as {
     font-family: var(--font-display);
     font-size: 1.12rem;
     font-weight: 700;
+    line-height: 1.1;
     letter-spacing: -0.03em;
   }
 

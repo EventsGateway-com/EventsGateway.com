@@ -474,6 +474,7 @@ p {
 .eg-brand strong {
   display: block;
   font-size: 0.96rem;
+  line-height: 1.1;
   letter-spacing: -0.03em;
 }
 

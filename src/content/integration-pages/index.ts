@@ -61,4 +61,4 @@ export const integrationItems = [
   counterscale,
 ] as const satisfies readonly IntegrationItem[];
 
-export type { IntegrationItem } from "./types";
+export type { IntegrationCard, IntegrationItem } from "./types";

@@ -1,3 +1,8 @@
+export type IntegrationCard = {
+  title: string;
+  text: string;
+};
+
 export type IntegrationItem = {
   slug: string;
   label: string;
@@ -5,6 +10,10 @@ export type IntegrationItem = {
   summary: string;
   hero: string;
   repository: string;
-  points: [string, string, string];
-  useCases: [string, string, string];
+  whyTitle: string;
+  whyDescription: string;
+  useCasesTitle: string;
+  useCasesDescription: string;
+  reasons: IntegrationCard[];
+  useCases: IntegrationCard[];
 };

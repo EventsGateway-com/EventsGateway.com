@@ -344,9 +344,9 @@ function AppShell() {
 
       <aside className={`eg-sidebar${isSidebarOpen ? " is-open" : ""}`} id="dashboard-navigation">
         <div className="eg-brand">
-          <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="34" height="34" />
+          <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="40" height="40" />
           <div>
-            <strong>EVENTS Gateway</strong>
+            <strong>EVENTS<br />Gateway</strong>
             <span>Control center</span>
           </div>
           <button
@@ -7657,8 +7657,8 @@ function ProtectedAdminShell() {
     <div className="eg-shell">
       <aside className="eg-sidebar is-open" style={{ transform: "none", position: "sticky", top: 0, height: "100dvh", float: "left" }}>
         <div className="eg-brand">
-          <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="34" height="34" />
-          <div><strong>Platform Admin</strong></div>
+          <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="40" height="40" />
+          <div><strong>Platform<br />Admin</strong></div>
         </div>
         <div className="eg-sidebar__content">
           <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
