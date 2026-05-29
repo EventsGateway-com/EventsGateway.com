@@ -867,6 +867,11 @@ select.eg-input option {
   margin-bottom: 0.6rem;
 }
 
+.eg-card__body {
+  display: grid;
+  gap: 0.8rem;
+}
+
 .eg-card__header h3 {
   font-size: 0.98rem;
   letter-spacing: -0.03em;
@@ -1195,6 +1200,61 @@ select.eg-input option {
 
 .eg-state-card.is-compact {
   box-shadow: none;
+}
+
+.eg-page--admin .eg-metric-card,
+.eg-page--admin .eg-card,
+.eg-page--admin .eg-state-card {
+  border-radius: var(--eg-radius-lg);
+  background: var(--eg-bg-elevated);
+  box-shadow: none;
+}
+
+.eg-page--admin .eg-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.eg-page--admin .eg-card__header {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--eg-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.eg-page--admin .eg-card__body {
+  padding: 1rem;
+}
+
+.eg-page--admin .eg-metric-card,
+.eg-page--admin .eg-state-card {
+  padding: 1rem;
+}
+
+.eg-page--admin .eg-list__row,
+.eg-page--admin .eg-action-line,
+.eg-page--admin .eg-stat-line,
+.eg-page--admin .eg-metric-mini,
+.eg-page--admin .eg-admin-user,
+.eg-page--admin .eg-admin-site,
+.eg-page--admin .eg-admin-panel,
+.eg-page--admin .eg-trace__item {
+  border-color: var(--eg-border);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.eg-page--admin .eg-admin-user,
+.eg-page--admin .eg-admin-site,
+.eg-page--admin .eg-admin-panel {
+  padding: 0.9rem;
+}
+
+.eg-page--admin .eg-metric-mini,
+.eg-page--admin .eg-action-line,
+.eg-page--admin .eg-list__row,
+.eg-page--admin .eg-stat-line {
+  min-height: 100%;
 }
 
 @media (min-width: 721px) {

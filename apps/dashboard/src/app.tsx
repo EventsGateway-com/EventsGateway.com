@@ -5469,7 +5469,11 @@ function AdminBillingPage() {
   });
 
   if (!overviewQuery.data || !subscriptionsQuery.data || !transactionsQuery.data) {
-    return <StateCard title="Loading billing admin" description="Preparing subscriptions, transactions, and revenue monitoring." />;
+    return (
+      <div className="eg-page eg-page--admin">
+        <StateCard title="Loading billing admin" description="Preparing subscriptions, transactions, and revenue monitoring." />
+      </div>
+    );
   }
 
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
@@ -5908,11 +5912,15 @@ function AdminOverviewPage() {
   });
 
   if (!overviewQuery.data) {
-    return <StateCard title="Loading admin overview" description="Preparing platform-wide totals and recent activity." />;
+    return (
+      <div className="eg-page eg-page--admin">
+        <StateCard title="Loading admin overview" description="Preparing platform-wide totals and recent activity." />
+      </div>
+    );
   }
 
   return (
-    <div className="eg-page">
+    <div className="eg-page eg-page--admin">
       <PageIntro
         title="Platform Admin"
         description="Global control surface for all users, all sites, platform totals, and privileged operations."
@@ -7392,7 +7400,7 @@ function SurfaceCard({
           {subtitle ? <p>{subtitle}</p> : null}
         </div>
       </header>
-      <div>{children}</div>
+      <div className="eg-card__body">{children}</div>
     </section>
   );
 }
@@ -7571,7 +7579,7 @@ function MyProfilePage() {
   }
 
   return (
-    <div className="eg-page">
+    <div className="eg-page eg-page--admin">
       <PageIntro title="My Profile" description="Manage your personal account details and security credentials." />
       
       <div className="eg-grid eg-grid--two">
