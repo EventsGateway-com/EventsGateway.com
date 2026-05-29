@@ -1,6 +1,6 @@
 export const homeContent = {
   eyebrow: "Commercial Event Gateway",
-  title: "The best-priced event gateway for teams that want more signal and less spend.",
+  title: "The best-priced event gateway for marketers who want less spend and better performance.",
   description:
     "EventsGateway is built for advertisers who care about Meta signal quality, Event Match Score, cleaner conversion routing, stronger targeting, and lower tracking cost. Replace scattered pixels and expensive stacks with one event gateway that helps Meta receive the strongest possible data while the same event stream also feeds GA4, Google Ads, TikTok, and custom destinations, with cleaner mobile tracking and far better resilience on iOS devices.",
   trustMarks: [
