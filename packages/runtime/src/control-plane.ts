@@ -354,8 +354,8 @@ function renderTransactionalEmail(input: {
   const ctaLabel = input.ctaLabel ? escapeHtml(input.ctaLabel) : "";
   const ctaUrl = input.ctaUrl ? escapeHtml(input.ctaUrl) : "";
   const note = input.note ? escapeHtml(input.note) : "";
-  const closing = escapeHtml(input.closing || "Thanks for choosing EVENTS Gateway.");
-  const signature = escapeHtml(input.signature || "The EVENTS Gateway team");
+  const closing = escapeHtml(input.closing || "Thanks for choosing EventsGateway.");
+  const signature = escapeHtml(input.signature || "The EventsGateway team");
 
   const ctaHtml = input.ctaLabel && input.ctaUrl
     ? `
@@ -395,7 +395,7 @@ function renderTransactionalEmail(input: {
             <tr>
               <td style="padding-bottom:18px;text-align:center;">
                 <div style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:rgba(255,255,255,0.78);border:1px solid rgba(148,163,184,0.18);font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4338ca;">
-                  EVENTS Gateway
+                  EventsGateway
                 </div>
               </td>
             </tr>
@@ -434,8 +434,8 @@ function renderTransactionalEmail(input: {
       ...input.paragraphs,
       input.ctaLabel && input.ctaUrl ? `${input.ctaLabel}: ${input.ctaUrl}` : "",
       input.note || "",
-      input.closing || "Thanks for choosing EVENTS Gateway.",
-      input.signature || "The EVENTS Gateway team"
+      input.closing || "Thanks for choosing EventsGateway.",
+      input.signature || "The EventsGateway team"
     ]
       .filter(Boolean)
       .join("\n\n")
@@ -461,7 +461,7 @@ async function sendBrevoEmail(
     body: JSON.stringify({
       sender: {
         email: senderEmail,
-        name: "EVENTS Gateway"
+        name: "EventsGateway"
       },
       to: [{ email: input.email, name: input.name }],
       subject: input.subject,
@@ -1617,14 +1617,14 @@ async function sendPasswordResetEmail(
   await sendBrevoEmail(env, {
     email: input.email,
     name: input.name,
-    subject: "Reset your EVENTS Gateway password",
+    subject: "Reset your EventsGateway password",
     template: renderTransactionalEmail({
       preheader: "Reset your password and get back into your dashboard securely.",
       eyebrow: "Password reset request",
       heading: "Reset your password",
       greeting: `Hello ${input.name || "there"},`,
       paragraphs: [
-        "We received a request to reset the password for your EVENTS Gateway dashboard account.",
+        "We received a request to reset the password for your EventsGateway dashboard account.",
         "Use the secure button below to choose a new password and continue where you left off."
       ],
       ctaLabel: "Reset password",
@@ -1647,21 +1647,21 @@ async function sendWelcomeEmail(
   await sendBrevoEmail(env, {
     email: input.email,
     name: input.name,
-    subject: "Welcome to EVENTS Gateway",
+    subject: "Welcome to EventsGateway",
     template: renderTransactionalEmail({
-      preheader: "Your EVENTS Gateway dashboard account is ready.",
+      preheader: "Your EventsGateway dashboard account is ready.",
       eyebrow: "Welcome aboard",
       heading: "Your account is live",
       greeting: `Hello ${input.name || "there"},`,
       paragraphs: [
-        "Welcome to EVENTS Gateway. Your dashboard account has been created successfully.",
+        "Welcome to EventsGateway. Your dashboard account has been created successfully.",
         roleMessage,
         "From here you can configure routing, connect destinations, and start validating your event flow in one place."
       ],
       ctaLabel: "Open dashboard",
       ctaUrl: dashboardLoginUrl,
       note: "Keep this email for quick access. If you ever lose your password, you can request a secure reset from the dashboard login page.",
-      closing: "We are glad to have you building with EVENTS Gateway."
+      closing: "We are glad to have you building with EventsGateway."
     })
   });
 }
@@ -1686,14 +1686,14 @@ async function sendSiteInviteEmail(
   await sendBrevoEmail(env, {
     email: input.email,
     name: input.invited_name,
-    subject: `You were invited to ${input.site_name} on EVENTS Gateway`,
+    subject: `You were invited to ${input.site_name} on EventsGateway`,
     template: renderTransactionalEmail({
-      preheader: `Join ${input.site_name} on EVENTS Gateway and activate your access.`,
+      preheader: `Join ${input.site_name} on EventsGateway and activate your access.`,
       eyebrow: "Workspace invitation",
       heading: "You have been invited",
       greeting: `Hello ${input.invited_name || "there"},`,
       paragraphs: [
-        `${input.inviter_name} invited you to join ${input.site_name} on EVENTS Gateway.`,
+        `${input.inviter_name} invited you to join ${input.site_name} on EventsGateway.`,
         `Your access will be created with the ${roleLabel} role for this site.`,
         "Use the secure button below to accept the invitation and finish account access."
       ],
@@ -3123,12 +3123,221 @@ export async function updateMyProfile(
   const nextEmail = input.email ? normalizeEmail(input.email) : asString(target.email);
   const nextPhone = input.phone !== undefined ? input.phone.trim() : asNullableString(target.phone);
 
-  await db
-    .prepare("UPDATE dashboard_users SET name = ?, email = ?, phone = ? WHERE id = ?")
+  await db.prepare("UPDATE dashboard_users SET name = ?, email = ?, phone = ? WHERE id = ?")
     .bind(nextName, nextEmail, nextPhone || null, userId)
     .run();
 
-  return { updated: true };
+  return { success: true };
+}
+
+export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId: string): Promise<BootstrapPayload> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const user = await firstRecord(
+    db,
+    `
+      SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
+      FROM dashboard_users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    userId
+  );
+  if (!user) {
+    throw new Error("User not found.");
+  }
+
+  let accessibleSites: any[] = [];
+  if (user.role === "global_admin") {
+    accessibleSites = await allRecords(
+      db,
+      `
+        SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at, 'admin' as role
+        FROM sites
+        ORDER BY created_at ASC
+      `
+    );
+  } else {
+    accessibleSites = await allRecords(
+      db,
+      `
+        SELECT s.id, s.org_id, s.org_name, s.project_id, s.project_name, s.name, s.environment, s.collector_url, s.created_at, sm.role
+        FROM sites s
+        INNER JOIN site_memberships sm ON sm.site_id = s.id
+        WHERE sm.user_id = ? AND sm.status = 'active'
+        ORDER BY s.created_at ASC
+      `,
+      userId
+    );
+  }
+
+  const site = await getDefaultSite(db);
+  const domains = await listSiteDomains(db, site.id);
+  return {
+    user: toDashboardUser(user),
+    accessible_sites: accessibleSites.map(s => ({ ...s, id: asString(s.id) })),
+    site,
+    domains
+  };
+}
+
+async function countGlobalAdmins(db: DatabaseBinding) {
+  return countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE role = 'global_admin'");
+}
+
+export async function getAdminOverview(dbInput: DatabaseBinding | undefined): Promise<AdminOverview> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const [
+    users,
+    admins,
+    blockedUsers,
+    activeSessions,
+    sites,
+    domains,
+    apiKeys,
+    collectedEvents,
+    recentUsersRecords,
+    recentSiteRecords
+  ] = await Promise.all([
+    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE role = 'global_admin'"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE status = 'blocked'"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_sessions"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM sites"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM site_domains"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM site_keys"),
+    countRecords(db, "SELECT COUNT(*) AS count FROM collected_events"),
+    allRecords(
+      db,
+      `
+        SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
+        FROM dashboard_users
+        ORDER BY created_at DESC, email DESC
+        LIMIT 6
+      `
+    ),
+    allRecords(
+      db,
+      `
+        SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at
+        FROM sites
+        ORDER BY created_at DESC, name ASC
+        LIMIT 6
+      `
+    )
+  ]);
+
+  return {
+    totals: {
+      users,
+      admins,
+      blocked_users: blockedUsers,
+      active_sessions: activeSessions,
+      sites,
+      domains,
+      api_keys: apiKeys,
+      collected_events: collectedEvents
+    },
+    recent_users: recentUsersRecords.map(toDashboardUser),
+    recent_sites: recentSiteRecords.map(toDashboardSite)
+  };
+}
+
+export async function listAdminUsers(dbInput: DatabaseBinding | undefined): Promise<AdminUserRecord[]> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const records = await allRecords(
+    db,
+    `
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.role,
+        u.status,
+        u.created_at,
+        u.last_login_at,
+        u.password_changed_at,
+        COUNT(s.id) AS session_count
+      FROM dashboard_users u
+      LEFT JOIN dashboard_sessions s ON s.user_id = u.id
+      GROUP BY u.id, u.name, u.email, u.role, u.status, u.created_at, u.last_login_at, u.password_changed_at
+      ORDER BY
+        CASE WHEN u.role = 'global_admin' THEN 0 ELSE 1 END,
+        u.created_at ASC,
+        u.email ASC
+    `
+  );
+
+  return records.map((record) => ({
+    ...toDashboardUser(record),
+    session_count: Number(record.session_count ?? 0)
+  }));
+}
+
+export async function updateAdminUser(
+  dbInput: DatabaseBinding | undefined,
+  actorUserId: string,
+  targetUserId: string,
+  input: { role?: DashboardUserRole; status?: DashboardUserStatus }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const target = await firstRecord(
+    db,
+    "SELECT id, role, status FROM dashboard_users WHERE id = ? LIMIT 1",
+    targetUserId
+  );
+  if (!target) {
+    throw new Error("User not found.");
+  }
+
+  const nextRole = input.role ?? toDashboardUserRole(target.role);
+  const nextStatus = input.status ?? toDashboardUserStatus(target.status);
+
+  if (actorUserId === targetUserId && nextRole !== "global_admin") {
+    throw new Error("You cannot remove your own admin role.");
+  }
+
+  if (actorUserId === targetUserId && nextStatus === "blocked") {
+    throw new Error("You cannot block your own account.");
+  }
+
+  if (toDashboardUserRole(target.role) === "global_admin" && nextRole !== "global_admin") {
+    const adminCount = await countGlobalAdmins(db);
+    if (adminCount <= 1) {
+      throw new Error("At least one global admin must remain.");
+    }
+  }
+
+  await db.prepare("UPDATE dashboard_users SET role = ?, status = ? WHERE id = ?")
+    .bind(nextRole, nextStatus, targetUserId)
+    .run();
+
+  if (nextStatus === "blocked") {
+    await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(targetUserId).run();
+  }
+
+  const updated = await firstRecord(
+    db,
+    `
+      SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
+      FROM dashboard_users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    targetUserId
+  );
+
+  if (!updated) {
+    throw new Error("User not found after update.");
+  }
+
+  return toDashboardUser(updated);
 }
 
 export async function adminSetUserPassword(
