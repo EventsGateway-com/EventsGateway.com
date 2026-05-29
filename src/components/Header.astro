@@ -5,6 +5,7 @@ import Container from "./Container.astro";
 import { siteConfig } from "../config/site";
 import { docsContent } from "../content/docs";
 import { comparePages } from "../content/compare-pages";
+import { integrationsContent } from "../content/integrations";
 
 const pathname = Astro.url.pathname;
 const coreLinks = [
@@ -24,6 +25,13 @@ const compareLinks = [
   ...Object.entries(comparePages).map(([slug, page]) => ({
     label: slug === "cloudflare-zaraz" ? "Zaraz" : page.title.replace("EventsGateway vs ", ""),
     href: `/compare/${slug}/`
+  }))
+] as Array<{ label: string; href: string }>;
+const integrationsLinks = [
+  { label: "Integrations Home", href: "/integrations/" },
+  ...integrationsContent.items.map((item) => ({
+    label: item.label,
+    href: `/integrations/${item.slug}/`
   }))
 ] as Array<{ label: string; href: string }>;
 const communityLinks = [
@@ -52,6 +60,7 @@ function isActivePath(href: string) {
 
 const docsActive = pathname.startsWith("/docs/");
 const compareActive = pathname.startsWith("/compare/") || pathname === "/why-not-direct-pixels/";
+const integrationsActive = pathname.startsWith("/integrations/");
 const communityActive = pathname.startsWith("/open-source/") || pathname.startsWith("/install/") || pathname.startsWith("/status/");
 const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/founder/");
 ---
@@ -93,6 +102,21 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
             <div class="nav-dropdown__panel nav-dropdown__panel--wide nav-dropdown__panel--scroll">
               {
                 compareLinks.map((item) => (
+                  <a class:list={[isActivePath(item.href) && "is-active"]} href={item.href}>
+                    {item.label}
+                  </a>
+                ))
+              }
+            </div>
+          </details>
+          <details class:list={["nav-dropdown", integrationsActive && "is-active"]}>
+            <summary class="nav-link">
+              <span class="nav-link__dot"></span>
+              Integrations
+            </summary>
+            <div class="nav-dropdown__panel nav-dropdown__panel--wide">
+              {
+                integrationsLinks.map((item) => (
                   <a class:list={[isActivePath(item.href) && "is-active"]} href={item.href}>
                     {item.label}
                   </a>
@@ -166,6 +190,17 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
             <span class="mobile-nav__label">Compare</span>
             {
               compareLinks.map((item) => (
+                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
+                  <span class="nav-link__dot"></span>
+                  {item.label}
+                </a>
+              ))
+            }
+          </div>
+          <div class="mobile-nav__group">
+            <span class="mobile-nav__label">Integrations</span>
+            {
+              integrationsLinks.map((item) => (
                 <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
                   <span class="nav-link__dot"></span>
                   {item.label}

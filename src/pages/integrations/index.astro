@@ -1,0 +1,66 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Button from "../../components/Button.astro";
+import Container from "../../components/Container.astro";
+import PremiumCard from "../../components/PremiumCard.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { integrationsContent } from "../../content/integrations";
+---
+
+<BaseLayout
+  title="Integrations - EventsGateway"
+  description={integrationsContent.intro}
+  canonicalPath="/integrations/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{integrationsContent.eyebrow}</span>
+        <h1 class="page-title">{integrationsContent.title}</h1>
+        <p class="page-copy">{integrationsContent.intro}</p>
+        <div class="button-row">
+          <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
+          <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Available Integrations"
+        title="Choose the destinations that matter for your campaigns."
+        description="Every integration is built around the same idea: cleaner events, less tracking waste, and one setup reused across the rest of your growth stack."
+      />
+      <div class="card-grid">
+        {
+          integrationsContent.items.map((item) => (
+            <PremiumCard icon="layers" title={item.label} text={item.summary}>
+              <Button href={`/integrations/${item.slug}/`} variant="secondary" icon="arrow-right">Open integration</Button>
+            </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="eyebrow">Next Step</span>
+          <h2 class="section-title">Use one cleaner event stream across every important destination.</h2>
+          <p class="section-copy">
+            EventsGateway helps marketers stop rebuilding the same purchase and lead tracking logic for every ad,
+            analytics, and reporting tool.
+          </p>
+          <div class="button-row">
+            <Button href="/pricing/" variant="primary" icon="arrow-right">Open pricing</Button>
+            <Button href="/docs/" variant="secondary" icon="arrow-right">Read docs</Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

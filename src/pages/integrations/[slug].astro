@@ -1,0 +1,84 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Button from "../../components/Button.astro";
+import Container from "../../components/Container.astro";
+import PremiumCard from "../../components/PremiumCard.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { integrationsContent, type IntegrationSlug } from "../../content/integrations";
+
+export function getStaticPaths() {
+  return integrationsContent.items.map((item) => ({
+    params: { slug: item.slug },
+    props: { item }
+  }));
+}
+
+const { item } = Astro.props as {
+  item: (typeof integrationsContent.items)[number];
+};
+---
+
+<BaseLayout
+  title={`${item.label} - EventsGateway`}
+  description={item.summary}
+  canonicalPath={`/integrations/${Astro.params.slug as IntegrationSlug}/`}
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">Integration</span>
+        <h1 class="page-title">{item.title}</h1>
+        <p class="page-copy">{item.hero}</p>
+        <div class="button-row">
+          <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
+          <Button href="/integrations/" variant="secondary" icon="arrow-right">Back to integrations</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Why It Matters"
+        title={`Why marketers use ${item.label}.`}
+        description="The goal is simple: cleaner data, better optimization inputs, and less wasted spend caused by fragmented tracking."
+      />
+      <div class="card-grid">
+        {item.points.map((point) => <PremiumCard icon="check" title={item.label} text={point} />)}
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Use Cases"
+        title="Where this integration helps most."
+        description="These are common situations where one cleaner event stream makes campaign tracking easier to trust."
+      />
+      <div class="card-grid">
+        {item.useCases.map((point) => <PremiumCard icon="layers" title={item.label} text={point} />)}
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="surface-panel cta-panel">
+        <div class="surface-panel__inner stack">
+          <span class="eyebrow">Next Step</span>
+          <h2 class="section-title">Connect this integration without rebuilding tracking from scratch.</h2>
+          <p class="section-copy">
+            EventsGateway lets your team keep one cleaner event setup while sending the same conversion truth to the
+            platforms that matter most.
+          </p>
+          <div class="button-row">
+            <Button href="/pricing/" variant="primary" icon="arrow-right">Open pricing</Button>
+            <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
