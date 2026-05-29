@@ -62,7 +62,12 @@ const emphasizeText = (value: string) => {
     const index = lower.indexOf(target);
 
     if (index !== -1) {
-      return `${escaped.slice(0, index)}<span class="copy-accent">${escaped.slice(index, index + escapedPhrase.length)}</span>${escaped.slice(index + escapedPhrase.length)}`;
+      const before = escaped.slice(0, index);
+      const after = escaped.slice(index + escapedPhrase.length);
+      const safeBefore = before.endsWith(" ") ? `${before.slice(0, -1)}&nbsp;` : before;
+      const safeAfter = after.startsWith(" ") ? `&nbsp;${after.slice(1)}` : after;
+
+      return `${safeBefore}<span class="copy-accent">${escaped.slice(index, index + escapedPhrase.length)}</span>${safeAfter}`;
     }
   }
 
