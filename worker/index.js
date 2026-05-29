@@ -1,3 +1,11 @@
+import { handleApiRequest } from "../apps/api-worker/src/index.ts";
+import {
+  handleCollectorRequest,
+  handleCollectorScheduled,
+  VisitorStateDurableObject as CollectorVisitorStateDurableObject
+} from "../apps/collector-worker/src/index.ts";
+import { handleForwarderQueue } from "../apps/forwarder-worker/src/index.ts";
+
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
     status: init.status ?? 200,
@@ -416,77 +424,57 @@ async function handleInfrastructureStatus(env) {
   }
 }
 
-function normalizeVisitorConsent(input, fallback) {
-  return {
-    analytics: Boolean(input?.analytics ?? fallback?.analytics ?? false),
-    ads: Boolean(input?.ads ?? fallback?.ads ?? false),
-    functional: Boolean(input?.functional ?? fallback?.functional ?? false)
-  };
+function createAssetRequest(request, pathname) {
+  const url = new URL(request.url);
+  url.pathname = pathname;
+  return new Request(url.toString(), request);
 }
 
-function buildVisitorStateSnapshot(input, current) {
-  return {
-    site_id: input.site_id,
-    visitor_key: input.visitor_key,
-    canonical_user_id: input.event?.canonical_user_id ?? current?.canonical_user_id ?? null,
-    anonymous_id: input.event?.anonymous_id ?? current?.anonymous_id ?? null,
-    session_id: input.event?.session_id ?? current?.session_id ?? null,
-    first_seen_at: current?.first_seen_at ?? input.received_at,
-    last_seen_at: input.received_at,
-    last_event_id: input.event?.event_id ?? current?.last_event_id ?? null,
-    last_event_type: input.event?.type ?? current?.last_event_type ?? null,
-    last_source: input.event?.source ?? current?.last_source ?? null,
-    last_environment: input.event?.environment ?? current?.last_environment ?? null,
-    last_page_path: input.event?.page?.path ?? current?.last_page_path ?? null,
-    last_page_url: input.event?.page?.url ?? current?.last_page_url ?? null,
-    consent: normalizeVisitorConsent(input.event?.consent, current?.consent),
-    event_count: (current?.event_count ?? 0) + 1
-  };
-}
-
-export class VisitorStateDurableObject {
-  constructor(state) {
-    this.state = state;
+function isFileLikePath(pathname) {
+  if (pathname === "/") {
+    return false;
   }
 
-  async fetch(request) {
-    const url = new URL(request.url);
-    if (request.method === "GET" && url.pathname === "/snapshot") {
-      const snapshot = await this.state.storage.get("snapshot");
-      return new Response(JSON.stringify(snapshot ?? null), {
-        headers: {
-          "content-type": "application/json; charset=utf-8"
-        }
-      });
-    }
-
-    if (request.method !== "POST" || url.pathname !== "/track") {
-      return new Response("Not found", { status: 404 });
-    }
-
-    const input = await request.json();
-    const snapshot = await this.state.blockConcurrencyWhile(async () => {
-      const current = await this.state.storage.get("snapshot");
-      const next = buildVisitorStateSnapshot(input, current);
-      await this.state.storage.put("snapshot", next);
-      return next;
-    });
-
-    return new Response(JSON.stringify(snapshot), {
-      headers: {
-        "content-type": "application/json; charset=utf-8"
-      }
-    });
-  }
+  const lastSegment = pathname.split("/").pop() || "";
+  return lastSegment.includes(".");
 }
+
+async function handleDashboardRequest(request, env) {
+  const url = new URL(request.url);
+
+  if (url.pathname === "/__dashboard" || url.pathname === "/__dashboard/") {
+    return env.ASSETS.fetch(createAssetRequest(request, "/__dashboard/index.html"));
+  }
+
+  if (isFileLikePath(url.pathname) || url.pathname.startsWith("/assets/")) {
+    return env.ASSETS.fetch(request);
+  }
+
+  return env.ASSETS.fetch(createAssetRequest(request, "/__dashboard/index.html"));
+}
+
+export { CollectorVisitorStateDurableObject as VisitorStateDurableObject };
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const hostname = url.hostname.toLowerCase();
 
-    if (url.hostname === "www.eventsgateway.com") {
+    if (hostname === "www.eventsgateway.com") {
       url.hostname = "eventsgateway.com";
       return Response.redirect(url.toString(), 301);
+    }
+
+    if (hostname === "api.eventsgateway.com") {
+      return handleApiRequest(request, env);
+    }
+
+    if (hostname === "e.eventsgateway.com") {
+      return handleCollectorRequest(request, env);
+    }
+
+    if (hostname === "dash.eventsgateway.com") {
+      return handleDashboardRequest(request, env);
     }
 
     if (url.pathname === "/api/live-stats") {
@@ -498,5 +486,11 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
+  },
+  async queue(batch, env) {
+    await handleForwarderQueue(batch, env);
+  },
+  async scheduled(controller, env) {
+    await handleCollectorScheduled(controller, env);
   }
 };

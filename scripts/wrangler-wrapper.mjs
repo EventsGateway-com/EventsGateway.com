@@ -90,17 +90,8 @@ async function runRealWrangler(commandArgs, cwd) {
 }
 
 async function runHostedDeploy() {
-  console.log("[eventsgateway] Running hosted deploy for root, dashboard, api-worker, collector-worker, and forwarder-worker");
-
+  console.log("[eventsgateway] Running unified deploy for the single root worker");
   await runRealWrangler(["deploy", "--env", "production"], rootDir);
-  await installAppDependencies("apps/dashboard");
-  await spawnCommand(npmExecutable(), ["--prefix", "apps/dashboard", "run", "deploy"], rootDir);
-  await installAppDependencies("apps/api-worker");
-  await spawnCommand(npmExecutable(), ["--prefix", "apps/api-worker", "run", "deploy"], rootDir);
-  await installAppDependencies("apps/collector-worker");
-  await spawnCommand(npmExecutable(), ["--prefix", "apps/collector-worker", "run", "deploy"], rootDir);
-  await installAppDependencies("apps/forwarder-worker");
-  await spawnCommand(npmExecutable(), ["--prefix", "apps/forwarder-worker", "run", "deploy"], rootDir);
 }
 
 async function main() {

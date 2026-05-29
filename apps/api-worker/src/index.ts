@@ -252,7 +252,7 @@ function requireGlobalAdmin(
   return null;
 }
 
-async function routeRequest(request: Request, env?: EnvironmentBindings) {
+export async function handleApiRequest(request: Request, env?: EnvironmentBindings) {
   const context = createRequestContext(request);
   const optionsResponse = withOptions(context);
   if (optionsResponse) return optionsResponse;
@@ -903,6 +903,6 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
 
 export default {
   async fetch(request: Request, env?: EnvironmentBindings) {
-    return routeRequest(request, env);
+    return handleApiRequest(request, env);
   }
 };

@@ -1,11 +1,7 @@
 import { batchCollect, collectEvent, debugCollect, identifyUser } from "../../../packages/platform-data/src/index";
 import {
   ensureControlPlane,
-  getSiteCompiledRouting,
-  publishSiteRoutes,
-  rollbackSiteRoutes,
   storeCollectedEvent,
-  ensureControlPlane,
   validateCollectAccess
 } from "../../../packages/runtime/src/control-plane";
 import { getSiteRoutingAccessStatus } from "../../../packages/runtime/src/billing";
@@ -522,24 +518,33 @@ function handleHealth(request: Request) {
   });
 }
 
+export async function handleCollectorScheduled(_controller: unknown, env?: EnvironmentBindings) {
+  await cleanupD1History(env);
+  await cleanupLedgerBucket(env);
+}
+
+export async function handleCollectorRequest(request: Request, env?: EnvironmentBindings) {
+  const segments = pathSegments(createRequestContext(request));
+  const path = `/${segments.join("/")}`;
+
+  if (path === "/tracker.js") {
+    return handleTrackerJs(request);
+  }
+  if (path === "/v1/collect") return handleCollect(request, env);
+  if (path === "/v1/batch") return handleBatch(request, env);
+  if (path === "/v1/identify") return handleIdentify(request, env);
+  if (path === "/v1/debug/collect") return handleDebugCollect(request);
+  if (path === "/health") return handleHealth(request);
+  if (request.method === "OPTIONS") return ok();
+  return notFound(createRequestContext(request), `Unknown collector route: ${path}`);
+}
+
 export default {
   async fetch(request: Request, env?: EnvironmentBindings) {
-    const segments = pathSegments(createRequestContext(request));
-    const path = `/${segments.join("/")}`;
-
-    if (path === "/health") return handleHealth(request);
-    if (path === "/tracker.js") return handleTrackerJs(request);
-    if (path === "/v1/collect") return handleCollect(request, env);
-    if (path === "/v1/batch") return handleBatch(request, env);
-    if (path === "/v1/identify") return handleIdentify(request, env);
-    if (path === "/v1/debug/collect") return handleDebugCollect(request);
-    if (request.method === "OPTIONS") return ok();
-
-    return notFound(createRequestContext(request), `Unknown collector route: ${path}`);
+    return handleCollectorRequest(request, env);
   },
-  async scheduled(_controller: unknown, env?: EnvironmentBindings) {
-    await cleanupD1History(env);
-    await cleanupLedgerBucket(env);
+  async scheduled(controller: unknown, env?: EnvironmentBindings) {
+    await handleCollectorScheduled(controller, env);
   }
 };
 

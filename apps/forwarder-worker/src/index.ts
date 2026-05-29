@@ -23,7 +23,7 @@ function extractSiteId(url: URL) {
   return url.searchParams.get("siteId") ?? "site_alpha";
 }
 
-async function routeRequest(request: Request, env?: EnvironmentBindings) {
+export async function handleForwarderRequest(request: Request, env?: EnvironmentBindings) {
   const context = createRequestContext(request);
   const optionsResponse = withOptions(context);
   if (optionsResponse) return optionsResponse;
@@ -70,25 +70,29 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
 
 export default {
   async fetch(request: Request, env?: EnvironmentBindings) {
-    return routeRequest(request, env);
+    return handleForwarderRequest(request, env);
   },
   async queue(batch: QueueBatch<DeliveryQueueMessage>, env?: EnvironmentBindings) {
-    if (!env?.DB) {
-      return;
-    }
-
-    await ensureControlPlane(env.DB);
-
-    for (const message of batch.messages) {
-      try {
-        await processQueuedDeliveryAttempt(env.DB, {
-          deliveryAttemptId: message.body.delivery_attempt_id,
-          siteId: message.body.site_id
-        }, env);
-        message.ack();
-      } catch {
-        message.retry();
-      }
-    }
+    await handleForwarderQueue(batch, env);
   }
 };
+
+export async function handleForwarderQueue(batch: QueueBatch<DeliveryQueueMessage>, env?: EnvironmentBindings) {
+  if (!env?.DB) {
+    return;
+  }
+
+  await ensureControlPlane(env.DB);
+
+  for (const message of batch.messages) {
+    try {
+      await processQueuedDeliveryAttempt(env.DB, {
+        deliveryAttemptId: message.body.delivery_attempt_id,
+        siteId: message.body.site_id
+      }, env);
+      message.ack();
+    } catch {
+      message.retry();
+    }
+  }
+}
