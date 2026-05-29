@@ -5,9 +5,7 @@ if (calculatorRoot) {
   const exactInput = document.querySelector("#pricing-events-input");
   const selectedNode = document.querySelector("#pricing-selected");
   const totalNode = document.querySelector("#pricing-total");
-  const blocksNode = document.querySelector("#pricing-blocks");
   const includedNode = document.querySelector("#pricing-included");
-  const overageNode = document.querySelector("#pricing-overage");
   const formatter = new Intl.NumberFormat("en-US");
   const currencyFormatter = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -39,14 +37,8 @@ if (calculatorRoot) {
     if (totalNode) {
       totalNode.textContent = currencyFormatter.format(total);
     }
-    if (blocksNode) {
-      blocksNode.textContent = formatter.format(blocks);
-    }
     if (includedNode) {
       includedNode.textContent = formatter.format(included);
-    }
-    if (overageNode) {
-      overageNode.textContent = formatter.format(overage);
     }
   };
 
