@@ -5,23 +5,10 @@ import Container from "../../components/Container.astro";
 import PremiumCard from "../../components/PremiumCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import { integrationsContent } from "../../content/integrations";
-
-const integrationGroups = [
-  {
-    title: "Official Managed Components",
-    description: "Open source managed components published by the official catalog.",
-    items: integrationsContent.items.filter((item) => (item as any).group === "Official Managed Components")
-  },
-  {
-    title: "Community Managed Components",
-    description: "Community-built managed components that expand the same destination model.",
-    items: integrationsContent.items.filter((item) => (item as any).group === "Community Managed Components")
-  }
-];
 ---
 
 <BaseLayout
-  title="Integrations - EventsGateway"
+  title="Integrations - EVENTS Gateway"
   description={integrationsContent.intro}
   canonicalPath="/integrations/"
 >
@@ -31,7 +18,7 @@ const integrationGroups = [
         <span class="eyebrow">{integrationsContent.eyebrow}</span>
         <h1 class="page-title">{integrationsContent.title}</h1>
         <p class="page-copy">{integrationsContent.intro}</p>
-        <p class="page-copy">Browse {integrationsContent.items.length} managed component integrations in one catalog.</p>
+        <p class="page-copy">Browse {integrationsContent.items.length} integrations in one product catalog.</p>
         <div class="button-row">
           <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
           <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
@@ -40,28 +27,24 @@ const integrationGroups = [
     </Container>
   </section>
 
-  {
-    integrationGroups.map((group) => (
-      <section class="section section--tight">
-        <Container>
-          <SectionHeader
-            eyebrow="Available Integrations"
-            title={group.title}
-            description={group.description}
-          />
-          <div class="card-grid">
-            {
-              group.items.map((item) => (
-                <PremiumCard icon="layers" title={item.label} text={item.summary}>
-                  <Button href={`/integrations/${item.slug}/`} variant="secondary" icon="arrow-right">Open integration</Button>
-                </PremiumCard>
-              ))
-            }
-          </div>
-        </Container>
-      </section>
-    ))
-  }
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Available Integrations"
+        title="Choose the destinations that matter for your setup."
+        description="Every integration follows the same goal: cleaner events, less duplicated tracking, and one reusable routing layer across the rest of your stack."
+      />
+      <div class="card-grid">
+        {
+          integrationsContent.items.map((item) => (
+            <PremiumCard icon="layers" title={item.label} text={item.summary}>
+              <Button href={`/integrations/${item.slug}/`} variant="secondary" icon="arrow-right">Open integration</Button>
+            </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
 
   <section class="section">
     <Container>
@@ -70,7 +53,7 @@ const integrationGroups = [
           <span class="eyebrow">Next Step</span>
           <h2 class="section-title">Use one cleaner event stream across every important destination.</h2>
           <p class="section-copy">
-            EventsGateway helps marketers stop rebuilding the same purchase and lead tracking logic for every ad,
+            EVENTS Gateway helps marketers stop rebuilding the same purchase and lead tracking logic for every ad,
             analytics, and reporting tool.
           </p>
           <div class="button-row">

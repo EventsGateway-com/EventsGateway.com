@@ -118,12 +118,31 @@ export type SiteMembersPayload = {
 };
 
 export type SiteDestinationKind =
+  | "bing"
+  | "branch"
   | "meta"
   | "ga4"
   | "google_ads"
   | "webhook"
   | "facebook-pixel"
+  | "floodlight"
+  | "google-analytics"
   | "google-analytics-4"
+  | "google-maps-rwg"
+  | "hubspot"
+  | "ihire"
+  | "impact-radius"
+  | "indeed"
+  | "linkedin"
+  | "mixpanel"
+  | "outbrain"
+  | "pinterest"
+  | "podsights"
+  | "posthog"
+  | "quora"
+  | "reddit"
+  | "twitter"
+  | "counterscale"
   | "tiktok"
   | "segment"
   | "ziprecruiter"
@@ -803,12 +822,31 @@ function toSiteInviteRecord(record: DatabaseRecord): SiteInviteRecord {
 
 function toSiteDestinationKind(value: unknown): SiteDestinationKind {
   switch (asString(value)) {
+    case "bing":
+    case "branch":
     case "meta":
     case "ga4":
     case "google_ads":
     case "webhook":
     case "facebook-pixel":
+    case "floodlight":
+    case "google-analytics":
     case "google-analytics-4":
+    case "google-maps-rwg":
+    case "hubspot":
+    case "ihire":
+    case "impact-radius":
+    case "indeed":
+    case "linkedin":
+    case "mixpanel":
+    case "outbrain":
+    case "pinterest":
+    case "podsights":
+    case "posthog":
+    case "quora":
+    case "reddit":
+    case "twitter":
+    case "counterscale":
     case "tiktok":
     case "segment":
     case "ziprecruiter":

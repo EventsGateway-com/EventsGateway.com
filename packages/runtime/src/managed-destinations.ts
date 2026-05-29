@@ -1,10 +1,29 @@
 import type { EventGatewayEvent } from "../../schemas/src/index";
 
 export type ManagedDestinationKind =
+  | "bing"
+  | "branch"
   | "facebook-pixel"
+  | "floodlight"
+  | "google-analytics"
   | "google-analytics-4"
   | "google-ads"
+  | "google-maps-rwg"
+  | "hubspot"
+  | "ihire"
+  | "impact-radius"
+  | "indeed"
+  | "linkedin"
+  | "mixpanel"
+  | "outbrain"
+  | "pinterest"
+  | "podsights"
+  | "quora"
+  | "reddit"
+  | "twitter"
   | "tiktok"
+  | "posthog"
+  | "counterscale"
   | "segment"
   | "ziprecruiter"
   | "upward"
@@ -13,16 +32,30 @@ export type ManagedDestinationKind =
   | "snapchat";
 
 type ManagedDestinationConfig = {
-  kind?: ManagedDestinationKind | "meta" | "ga4" | "google_ads";
+  kind?: ManagedDestinationKind | "meta" | "ga4" | "google_ads" | "webhook";
+  ti?: string;
+  branch_key?: string;
   pixel_id?: string;
   property?: string;
   access_token?: string;
   test_event_code?: string;
+  advertiser_id?: string;
+  group_tag?: string;
+  activity_tag?: string;
+  base_domain?: string;
   measurement_id?: string;
   api_secret?: string;
   conversion_id?: string;
   conversion_label?: string;
   ga_account?: string;
+  account_id?: string;
+  domain_name?: string;
+  region_prefix?: string;
+  form_id?: string;
+  tracking_domain?: string;
+  campaign_id?: string;
+  partner_id?: string;
+  marketer_id?: string;
   pixel_code?: string;
   write_key?: string;
   hostname?: string;
@@ -30,6 +63,17 @@ type ManagedDestinationConfig = {
   id?: string;
   pid?: string;
   tid?: string;
+  token?: string;
+  api_key?: string;
+  api_url?: string;
+  site_id?: string;
+  method?: string;
+  url?: string;
+  event_id?: string;
+  headers?: Record<string, unknown>;
+  ga_audiences?: boolean;
+  ga_doubleclick?: boolean;
+  is_eu?: boolean;
   domains?: string[];
 };
 
@@ -77,6 +121,34 @@ function asNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function asBoolean(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+  }
+  return undefined;
+}
+
+function pickString(config: ManagedDestinationConfig, ...keys: string[]) {
+  const record = config as Record<string, unknown>;
+  for (const key of keys) {
+    const resolved = asString(record[key]);
+    if (resolved) return resolved;
+  }
+  return undefined;
+}
+
+function pickBoolean(config: ManagedDestinationConfig, ...keys: string[]) {
+  const record = config as Record<string, unknown>;
+  for (const key of keys) {
+    const resolved = asBoolean(record[key]);
+    if (typeof resolved === "boolean") return resolved;
+  }
+  return undefined;
+}
+
 function aliasDestinationKind(input?: string): ManagedDestinationKind | undefined {
   switch (input) {
     case "meta":
@@ -85,10 +157,31 @@ function aliasDestinationKind(input?: string): ManagedDestinationKind | undefine
       return "google-analytics-4";
     case "google_ads":
       return "google-ads";
+    case "webhook":
+      return "webhook";
+    case "bing":
+    case "branch":
     case "facebook-pixel":
+    case "floodlight":
+    case "google-analytics":
     case "google-analytics-4":
     case "google-ads":
+    case "google-maps-rwg":
+    case "hubspot":
+    case "ihire":
+    case "impact-radius":
+    case "indeed":
+    case "linkedin":
+    case "mixpanel":
+    case "outbrain":
+    case "pinterest":
+    case "podsights":
+    case "quora":
+    case "reddit":
+    case "twitter":
     case "tiktok":
+    case "posthog":
+    case "counterscale":
     case "segment":
     case "ziprecruiter":
     case "upward":
@@ -331,6 +424,493 @@ function createGoogleAdsRequest(event: EventGatewayEvent, config: ManagedDestina
     },
     mode: "browser"
   };
+}
+
+function createBingRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const tagId = pickString(config, "ti");
+  if (!tagId) {
+    throw new Error("bing requires ti.");
+  }
+
+  const params = new URLSearchParams({
+    ti: tagId,
+    Ver: "2",
+    mid: getClientId(event),
+    evt: normalizeEventName(event.type) || "custom",
+    ea: titleCaseEventName(event.type),
+    ec: asString(asRecord(event.properties)?.category) ?? "engagement",
+    el: event.page?.path ?? event.page?.url ?? "",
+    ev: `${event.ecommerce?.value ?? 0}`,
+    gv: `${event.ecommerce?.value ?? 0}`,
+    gc: event.ecommerce?.currency ?? "USD",
+    ...(event.page?.url ? { uet_url: event.page.url } : {})
+  });
+
+  return {
+    url: `https://bat.bing.com/action/0?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createBranchRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const branchKey = pickString(config, "branch_key", "branchKey");
+  if (!branchKey) {
+    throw new Error("branch requires branch_key.");
+  }
+
+  const normalizedEvent = normalizeEventName(event.type);
+  const payload = {
+    branch_key: branchKey,
+    name: titleCaseEventName(event.type),
+    custom_data: {
+      event_id: event.event_id,
+      order_id: event.ecommerce?.order_id,
+      value: event.ecommerce?.value,
+      currency: event.ecommerce?.currency,
+      ...asRecord(event.properties)
+    },
+    user_data: {
+      developer_identity: event.canonical_user_id,
+      anonymous_id: event.anonymous_id,
+      session_id: event.session_id,
+      email: event.email_hmac
+    },
+    content_items: event.ecommerce?.items ?? []
+  };
+
+  const endpoint =
+    normalizedEvent === "page_view"
+      ? "https://api2.branch.io/v1/pageview"
+      : normalizedEvent === "identify"
+        ? "https://api2.branch.io/v1/profile"
+        : normalizedEvent === "logout"
+          ? "https://api2.branch.io/v1/logout"
+          : "https://api2.branch.io/v2/event/custom";
+
+  return {
+    url: endpoint,
+    init: {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    },
+    mode: "edge"
+  };
+}
+
+function createFloodlightRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const advertiserId = pickString(config, "advertiser_id", "advertiserId");
+  const groupTag = pickString(config, "group_tag", "groupTag") ?? asString(asRecord(event.properties)?.groupTag);
+  const activityTag = pickString(config, "activity_tag", "activityTag") ?? asString(asRecord(event.properties)?.activityTag);
+  if (!advertiserId || !groupTag || !activityTag) {
+    throw new Error("floodlight requires advertiser_id, group_tag, and activity_tag.");
+  }
+
+  const suffix = new URLSearchParams({
+    ord: event.event_id || `${Date.now()}`,
+    value: `${event.ecommerce?.value ?? 0}`,
+    currency: event.ecommerce?.currency ?? "USD",
+    ...(event.page?.url ? { u1: event.page.url } : {})
+  });
+
+  return {
+    url: `https://ad.doubleclick.net/activity;src=${encodeURIComponent(advertiserId)};type=${encodeURIComponent(groupTag)};cat=${encodeURIComponent(activityTag)};ord=${encodeURIComponent(event.event_id || `${Date.now()}`)}?${suffix.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createGoogleAnalyticsRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest[] {
+  const trackingId = pickString(config, "tid");
+  if (!trackingId) {
+    throw new Error("google-analytics requires tid.");
+  }
+
+  const normalizedEvent = normalizeEventName(event.type);
+  const baseParams = new URLSearchParams({
+    v: "1",
+    tid: trackingId,
+    cid: getClientId(event),
+    uid: event.canonical_user_id ?? "",
+    dl: event.page?.url ?? "",
+    dh: event.page?.url ? new URL(event.page.url).hostname : "",
+    dp: event.page?.path ?? "",
+    dt: event.page?.title ?? "",
+    dr: event.page?.referrer ?? ""
+  });
+
+  if (normalizedEvent === "page_view") {
+    baseParams.set("t", "pageview");
+  } else {
+    baseParams.set("t", "event");
+    baseParams.set("ec", asString(asRecord(event.properties)?.category) ?? "engagement");
+    baseParams.set("ea", titleCaseEventName(event.type));
+    baseParams.set("el", event.page?.path ?? event.page?.url ?? "");
+    baseParams.set("ev", `${Math.round(event.ecommerce?.value ?? 0)}`);
+  }
+
+  const requests: DestinationRequest[] = [
+    {
+      url: `https://www.google-analytics.com/collect?${baseParams.toString()}`,
+      init: { method: "GET" },
+      mode: "browser"
+    }
+  ];
+
+  if (pickBoolean(config, "ga_doubleclick", "gaDoubleclick")) {
+    requests.push({
+      url: `https://stats.g.doubleclick.net/j/collect?${baseParams.toString()}`,
+      init: { method: "GET" },
+      mode: "browser"
+    });
+  }
+
+  if (pickBoolean(config, "ga_audiences", "gaAudiences")) {
+    requests.push({
+      url: `https://www.google.com/ads/ga-audiences?${baseParams.toString()}`,
+      init: { method: "GET" },
+      mode: "browser"
+    });
+  }
+
+  return requests;
+}
+
+function createGoogleMapsRwgRequest(config: ManagedDestinationConfig): DestinationRequest {
+  const baseDomain = pickString(config, "base_domain", "baseDomain");
+  if (!baseDomain) {
+    throw new Error("google-maps-rwg requires base_domain.");
+  }
+
+  return {
+    url: `noop:google-maps-rwg:${baseDomain}`,
+    mode: "browser"
+  };
+}
+
+function normalizeRegionPrefix(value?: string) {
+  if (!value) return "";
+  const normalized = value.trim();
+  if (!normalized) return "";
+  return normalized.startsWith("-") ? normalized : `-${normalized}`;
+}
+
+function createHubspotRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const accountId = pickString(config, "account_id", "accountId");
+  if (!accountId) {
+    throw new Error("hubspot requires account_id.");
+  }
+
+  const region = normalizeRegionPrefix(pickString(config, "region_prefix", "regionPrefix"));
+  const formId = pickString(config, "form_id", "formId");
+  const eventId = pickString(config, "event_id", "eventId") ?? normalizeEventName(event.type);
+
+  if (formId) {
+    const body = {
+      submittedAt: event.timestamp || Date.now(),
+      fields: [
+        { name: "event_name", value: titleCaseEventName(event.type) },
+        { name: "event_id", value: event.event_id },
+        { name: "page_url", value: event.page?.url ?? "" },
+        { name: "order_id", value: event.ecommerce?.order_id ?? "" },
+        { name: "value", value: `${event.ecommerce?.value ?? 0}` }
+      ],
+      context: {
+        pageUri: event.page?.url ?? "",
+        pageName: event.page?.title ?? ""
+      }
+    };
+
+    return {
+      url: `https://api.hsforms.com/submissions/v3/integration/submit/${encodeURIComponent(accountId)}/${encodeURIComponent(formId)}`,
+      init: {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body)
+      },
+      mode: "edge"
+    };
+  }
+
+  const params = new URLSearchParams({
+    a: accountId,
+    k: eventId,
+    n: titleCaseEventName(event.type),
+    u: event.page?.url ?? "",
+    v: `${event.ecommerce?.value ?? 0}`
+  });
+
+  return {
+    url: `https://track${region}.hubspot.com/__ptq.gif?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createIHireRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const id = pickString(config, "id");
+  if (!id) {
+    throw new Error("ihire requires id.");
+  }
+
+  const params = new URLSearchParams({
+    event: normalizeEventName(event.type),
+    value: `${event.ecommerce?.value ?? 0}`,
+    order_id: event.ecommerce?.order_id ?? ""
+  });
+
+  return {
+    url: `https://api.ihire.com/v1/track/apply-${encodeURIComponent(id)}.gif?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createImpactRadiusRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const trackingDomain = pickString(config, "tracking_domain", "td");
+  const campaignId = pickString(config, "campaign_id", "id");
+  const eventId = pickString(config, "event_id", "eventId") ?? normalizeEventName(event.type);
+  if (!trackingDomain || !campaignId) {
+    throw new Error("impact-radius requires tracking_domain and campaign_id.");
+  }
+
+  const params = new URLSearchParams({
+    amount: `${event.ecommerce?.value ?? 0}`,
+    currency: event.ecommerce?.currency ?? "USD",
+    order_id: event.ecommerce?.order_id ?? "",
+    customer_id: event.canonical_user_id ?? event.user_id_hash ?? "",
+    ...(pickString(config, "account_id", "accountId") ? { account_id: pickString(config, "account_id", "accountId") as string } : {}),
+    ...(pickString(config, "iw") ? { iw: pickString(config, "iw") as string } : {})
+  });
+
+  return {
+    url: `${trackingDomain.replace(/\/$/, "")}/xconv/${encodeURIComponent(eventId)}/${encodeURIComponent(campaignId)}?${params.toString()}`,
+    init: { method: "POST" },
+    mode: "edge"
+  };
+}
+
+function createIndeedRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const conversionId = pickString(config, "conversion_id");
+  if (!conversionId) {
+    throw new Error("indeed requires conversion_id.");
+  }
+
+  const params = new URLSearchParams({
+    script: "0",
+    rand: `${Date.now()}`,
+    label: normalizeEventName(event.type),
+    value: `${event.ecommerce?.value ?? 0}`
+  });
+
+  return {
+    url: `https://conv.indeed.com/pagead/conv/${encodeURIComponent(conversionId)}/?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createLinkedInRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const partnerId = pickString(config, "partner_id", "pid");
+  if (!partnerId) {
+    throw new Error("linkedin requires partner_id.");
+  }
+
+  const params = new URLSearchParams({
+    fmt: "js",
+    v: "2",
+    pid: partnerId,
+    time: `${Date.now()}`,
+    url: event.page?.url ?? "",
+    ...(pickString(config, "conversion_id", "conversionId") ? { conversionId: pickString(config, "conversion_id", "conversionId") as string } : {}),
+    ...(event.anonymous_id ? { li_fat_id: event.anonymous_id } : {})
+  });
+
+  return {
+    url: `https://px.ads.linkedin.com/collect/?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createMixpanelRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const token = pickString(config, "token");
+  if (!token) {
+    throw new Error("mixpanel requires token.");
+  }
+
+  const host = pickBoolean(config, "is_eu", "isEU") ? "https://api-eu.mixpanel.com" : "https://api.mixpanel.com";
+  const payload = {
+    event: titleCaseEventName(event.type),
+    properties: {
+      token,
+      distinct_id: event.canonical_user_id || event.anonymous_id || event.session_id,
+      time: Math.floor((event.timestamp || Date.now()) / 1000),
+      $current_url: event.page?.url,
+      $referrer: event.page?.referrer,
+      value: event.ecommerce?.value,
+      currency: event.ecommerce?.currency,
+      order_id: event.ecommerce?.order_id,
+      ...asRecord(event.properties)
+    }
+  };
+
+  return {
+    url: `${host}/track?verbose=1`,
+    init: {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ data: JSON.stringify(payload) }).toString()
+    },
+    mode: "edge"
+  };
+}
+
+function createOutbrainRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const marketerId = pickString(config, "marketer_id", "marketerId");
+  if (!marketerId) {
+    throw new Error("outbrain requires marketer_id.");
+  }
+
+  const params = new URLSearchParams({
+    marketerId,
+    mid: marketerId,
+    name: titleCaseEventName(event.type),
+    orderId: event.ecommerce?.order_id ?? "",
+    orderValue: `${event.ecommerce?.value ?? 0}`,
+    currency: event.ecommerce?.currency ?? "USD",
+    clickId: event.click_ids?.ob_click_id ?? event.click_ids?.gclid ?? ""
+  });
+
+  return {
+    url: `https://tr.outbrain.com/unifiedPixel?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createPinterestRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const tid = pickString(config, "tid");
+  if (!tid) {
+    throw new Error("pinterest requires tid.");
+  }
+
+  const params = new URLSearchParams({
+    tid,
+    event: titleCaseEventName(event.type),
+    value: `${event.ecommerce?.value ?? 0}`,
+    currency: event.ecommerce?.currency ?? "USD",
+    order_id: event.ecommerce?.order_id ?? "",
+    url: event.page?.url ?? ""
+  });
+
+  return {
+    url: `https://ct.pinterest.com/v3/?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createPodsightsRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const key = pickString(config, "key");
+  if (!key) {
+    throw new Error("podsights requires key.");
+  }
+
+  const payload = {
+    key,
+    PDST_name: titleCaseEventName(event.type),
+    event_id: event.event_id,
+    url: event.page?.url,
+    referrer: event.page?.referrer,
+    order_id: event.ecommerce?.order_id,
+    value: event.ecommerce?.value,
+    currency: event.ecommerce?.currency,
+    ...asRecord(event.properties)
+  };
+
+  return {
+    url: "https://us-central1-adaptive-growth.cloudfunctions.net/pdst-events-prod-sink",
+    init: {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    },
+    mode: "edge"
+  };
+}
+
+function createQuoraRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const pixelId = pickString(config, "pixel_id", "pixelId");
+  if (!pixelId) {
+    throw new Error("quora requires pixel_id.");
+  }
+
+  const params = new URLSearchParams({
+    tag: titleCaseEventName(event.type),
+    noscript: "1",
+    value: `${event.ecommerce?.value ?? 0}`,
+    currency: event.ecommerce?.currency ?? "USD",
+    ...(event.email_hmac ? { email: event.email_hmac } : {})
+  });
+
+  return {
+    url: `https://q.quora.com/_/ad/${encodeURIComponent(pixelId)}/pixel?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createRedditRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const id = pickString(config, "id");
+  if (!id) {
+    throw new Error("reddit requires id.");
+  }
+
+  const params = new URLSearchParams({
+    id,
+    evt: normalizeEventName(event.type),
+    value: `${event.ecommerce?.value ?? 0}`,
+    currency: event.ecommerce?.currency ?? "USD",
+    transactionId: event.ecommerce?.order_id ?? "",
+    url: event.page?.url ?? ""
+  });
+
+  return {
+    url: `https://alb.reddit.com/rp.gif?${params.toString()}`,
+    init: { method: "GET" },
+    mode: "browser"
+  };
+}
+
+function createTwitterRequests(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest[] {
+  const txnId = pickString(config, "pixel_id", "txn_id") ?? event.event_id;
+  if (!txnId) {
+    throw new Error("twitter requires pixel_id or txn_id.");
+  }
+
+  const params = new URLSearchParams({
+    txn_id: txnId,
+    p_id: "Twitter",
+    tw_sale_amount: `${event.ecommerce?.value ?? 0}`,
+    tw_order_quantity: `${event.ecommerce?.items?.length ?? 0}`,
+    tw_iframe_status: "0",
+    ...(event.email_hmac ? { email_address: event.email_hmac } : {})
+  });
+
+  return [
+    {
+      url: `https://analytics.twitter.com/i/adsct?${params.toString()}`,
+      init: { method: "GET" },
+      mode: "browser"
+    },
+    {
+      url: `https://t.co/i/adsct?${params.toString()}`,
+      init: { method: "GET" },
+      mode: "browser"
+    }
+  ];
 }
 
 function createTikTokRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
@@ -584,16 +1164,149 @@ function createSnapchatRequests(event: EventGatewayEvent, config: ManagedDestina
   ];
 }
 
+function createPosthogRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const apiKey = pickString(config, "api_key", "POSTHOG_API_KEY");
+  if (!apiKey) {
+    throw new Error("posthog requires api_key.");
+  }
+
+  const apiUrl = pickString(config, "api_url", "POSTHOG_URL") ?? "https://us.i.posthog.com";
+  const payload = {
+    api_key: apiKey,
+    event: titleCaseEventName(event.type),
+    distinct_id: event.canonical_user_id || event.anonymous_id || event.session_id || event.event_id,
+    properties: {
+      $current_url: event.page?.url,
+      $referrer: event.page?.referrer,
+      value: event.ecommerce?.value,
+      currency: event.ecommerce?.currency,
+      order_id: event.ecommerce?.order_id,
+      ...asRecord(event.properties)
+    }
+  };
+
+  return {
+    url: `${apiUrl.replace(/\/$/, "")}/capture/`,
+    init: {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    },
+    mode: "edge"
+  };
+}
+
+function createCounterscaleRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const siteId = pickString(config, "site_id", "siteId");
+  const apiBaseUrl = pickString(config, "api_url", "api_base_url", "apiBaseUrl");
+  if (!siteId || !apiBaseUrl) {
+    throw new Error("counterscale requires site_id and api_url.");
+  }
+
+  const pageUrl = event.page?.url ? new URL(event.page.url) : null;
+  const params = new URLSearchParams({
+    sid: siteId,
+    h: pageUrl?.hostname ?? "",
+    p: event.page?.path ?? pageUrl?.pathname ?? "",
+    r: event.page?.referrer ?? ""
+  });
+
+  return {
+    url: `${apiBaseUrl.replace(/\/$/, "")}/collect?${params.toString()}`,
+    init: { method: "POST" },
+    mode: "edge"
+  };
+}
+
+function createWebhookRequest(event: EventGatewayEvent, config: ManagedDestinationConfig): DestinationRequest {
+  const url = pickString(config, "url");
+  if (!url) {
+    throw new Error("webhook requires url.");
+  }
+
+  const method = (pickString(config, "method") ?? "POST").toUpperCase();
+  const headers = {
+    "content-type": "application/json",
+    ...(asRecord((config as Record<string, unknown>).headers) ?? {})
+  };
+
+  if (method === "GET") {
+    const params = new URLSearchParams({
+      event: normalizeEventName(event.type),
+      event_id: event.event_id,
+      value: `${event.ecommerce?.value ?? 0}`,
+      currency: event.ecommerce?.currency ?? "",
+      order_id: event.ecommerce?.order_id ?? ""
+    });
+    return {
+      url: `${url}${url.includes("?") ? "&" : "?"}${params.toString()}`,
+      init: { method: "GET" },
+      mode: "edge"
+    };
+  }
+
+  return {
+    url,
+    init: {
+      method,
+      headers,
+      body: JSON.stringify({
+        event_name: titleCaseEventName(event.type),
+        event
+      })
+    },
+    mode: "edge"
+  };
+}
+
 function buildRequests(input: DispatchInput, kind: ManagedDestinationKind, config: ManagedDestinationConfig): DestinationRequest[] {
   switch (kind) {
+    case "bing":
+      return [createBingRequest(input.event, config)];
+    case "branch":
+      return [createBranchRequest(input.event, config)];
     case "facebook-pixel":
       return [createFacebookPixelRequest(input.event, config)];
+    case "floodlight":
+      return [createFloodlightRequest(input.event, config)];
+    case "google-analytics":
+      return createGoogleAnalyticsRequest(input.event, config);
     case "google-analytics-4":
       return [createGa4Request(input.event, config)];
     case "google-ads":
       return [createGoogleAdsRequest(input.event, config)];
+    case "google-maps-rwg":
+      return [createGoogleMapsRwgRequest(config)];
+    case "hubspot":
+      return [createHubspotRequest(input.event, config)];
+    case "ihire":
+      return [createIHireRequest(input.event, config)];
+    case "impact-radius":
+      return [createImpactRadiusRequest(input.event, config)];
+    case "indeed":
+      return [createIndeedRequest(input.event, config)];
+    case "linkedin":
+      return [createLinkedInRequest(input.event, config)];
+    case "mixpanel":
+      return [createMixpanelRequest(input.event, config)];
+    case "outbrain":
+      return [createOutbrainRequest(input.event, config)];
+    case "pinterest":
+      return [createPinterestRequest(input.event, config)];
+    case "podsights":
+      return [createPodsightsRequest(input.event, config)];
+    case "quora":
+      return [createQuoraRequest(input.event, config)];
+    case "reddit":
+      return [createRedditRequest(input.event, config)];
+    case "twitter":
+      return createTwitterRequests(input.event, config);
     case "tiktok":
       return [createTikTokRequest(input.event, config)];
+    case "posthog":
+      return [createPosthogRequest(input.event, config)];
+    case "counterscale":
+      return [createCounterscaleRequest(input.event, config)];
     case "segment":
       return [createSegmentRequest(input.event, config)];
     case "ziprecruiter":
@@ -606,6 +1319,8 @@ function buildRequests(input: DispatchInput, kind: ManagedDestinationKind, confi
       return [createTaboolaRequest(input.event, config)];
     case "snapchat":
       return createSnapchatRequests(input.event, config);
+    case "webhook":
+      return [createWebhookRequest(input.event, config)];
   }
 }
 
@@ -623,6 +1338,10 @@ export async function dispatchManagedDestination(input: DispatchInput): Promise<
   const requests = buildRequests(input, resolved.kind, resolved.config);
   let lastStatus: number | undefined;
   for (const request of requests) {
+    if (request.url.startsWith("noop:")) {
+      lastStatus = 204;
+      continue;
+    }
     const response = await fetch(request.url, request.init);
     lastStatus = response.status;
     if (!response.ok) {

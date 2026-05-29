@@ -1,10 +1,10 @@
 export const docsContent = {
-  title: "EventsGateway Documentation",
+  title: "EVENTS Gateway Documentation",
   eyebrow: "Commercial Documentation",
   intro:
-    "Use this documentation to configure EventsGateway on your sites, standardize event naming, improve Meta Event Match Quality (EMQ) inputs, map commercial conversions, and roll out routing cleanly from the hosted product.",
+    "Use this documentation to configure EVENTS Gateway on your sites, standardize event naming, improve Meta Event Match Quality (EMQ) inputs, map commercial conversions, and roll out routing cleanly from the hosted product.",
   quickStart: `window.e_g = function (eventName, payload = {}) {
-  window.EventsGateway?.track({
+  window.EVENTS Gateway?.track({
     type: eventName,
     properties: payload.properties ?? payload,
     ecommerce: payload.ecommerce,
@@ -40,11 +40,11 @@ export const docsContent = {
   }
 });`,
   notes: [
-    "Use one canonical event name in the browser and let EventsGateway route and transform per destination.",
+    "Use one canonical event name in the browser and let EVENTS Gateway route and transform per destination.",
     "Pass value, currency, content IDs, and transaction identifiers whenever they exist.",
     "For Meta advertisers, send the strongest possible identifiers and conversion context so Event Match Quality (EMQ) can stay at the maximum posture supported by your site data.",
     "For Lead events, send both value and currency so downstream ad platforms receive commercial context, not only a generic form completion.",
-    "For Google Ads, EventsGateway maps canonical events to conversion actions and remarketing-friendly payloads because Google Ads does not use one single standard event list across all use cases.",
+    "For Google Ads, EVENTS Gateway maps canonical events to conversion actions and remarketing-friendly payloads because Google Ads does not use one single standard event list across all use cases.",
     "For Meta and TikTok, prefer standard events whenever possible because ad platforms optimize and report better on recognized event names."
   ],
   playbooks: [

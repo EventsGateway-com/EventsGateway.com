@@ -2,7 +2,7 @@ export const homeContent = {
   eyebrow: "Commercial Event Gateway",
   title: "The best-priced event gateway for marketers who want less spend and better performance.",
   description:
-    "EventsGateway is built for advertisers who care about Meta signal quality, Event Match Quality (EMQ), cleaner conversion routing, stronger targeting, and lower tracking cost. Replace scattered pixels and expensive stacks with one event gateway that helps Meta receive the strongest possible data while the same event stream also feeds GA4, Google Ads, TikTok, and custom destinations, with cleaner mobile tracking and far better resilience on iOS devices.",
+    "EVENTS Gateway is built for advertisers who care about Meta signal quality, Event Match Quality (EMQ), cleaner conversion routing, stronger targeting, and lower tracking cost. Replace scattered pixels and expensive stacks with one event gateway that helps Meta receive the strongest possible data while the same event stream also feeds GA4, Google Ads, TikTok, and custom destinations, with cleaner mobile tracking and far better resilience on iOS devices.",
   trustMarks: [
     "Maximum Event Match Quality (EMQ) posture",
     "One setup, many destinations",
@@ -36,7 +36,7 @@ export const homeContent = {
     }
   ],
   pricingFootnote:
-    "EventsGateway is positioned for advertisers who want stronger Meta signal quality and cleaner attribution without accepting the cost of bloated tracking stacks: the first 1,000,000 routed monthly events stay free, each extra started 1,000,000-event block adds $5, and Enterprise starts at $1,995 per month.",
+    "EVENTS Gateway is positioned for advertisers who want stronger Meta signal quality and cleaner attribution without accepting the cost of bloated tracking stacks: the first 1,000,000 routed monthly events stay free, each extra started 1,000,000-event block adds $5, and Enterprise starts at $1,995 per month.",
   problems: [
     {
       icon: "spark",

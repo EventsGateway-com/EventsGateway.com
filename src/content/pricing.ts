@@ -2,7 +2,7 @@ export const pricingContent = {
   eyebrow: "Transparent Pricing",
   title: "Start free, then pay only when routed volume grows.",
   intro:
-    "EventsGateway is priced for performance teams that want stronger Meta signal quality, higher Event Match Quality (EMQ) posture, cleaner mobile and iOS tracking, and lower software cost. The Free plan includes up to 1,000,000 events per month, and every additional 1,000,000-event block is billed at $5.",
+    "EVENTS Gateway is priced for performance teams that want stronger Meta signal quality, higher Event Match Quality (EMQ) posture, cleaner mobile and iOS tracking, and lower software cost. The Free plan includes up to 1,000,000 events per month, and every additional 1,000,000-event block is billed at $5.",
   plans: [
     {
       name: "Free",
@@ -55,8 +55,8 @@ export const pricingContent = {
   footnotes: [
     "The free allowance covers up to 1,000,000 routed events in a calendar month.",
     "Once usage exceeds the included monthly allowance, billing adds $5 for each started extra block of 1,000,000 events.",
-    "EventsGateway is positioned to help performance teams send cleaner identifiers and conversion context to Meta for maximum Event Match Quality (EMQ) posture and more reliable mobile measurement.",
-    "Stripe is used for payment processing and payment-method handling so card data never lives on EventsGateway servers.",
-    "If an invoice remains unpaid for 15 days after due date, EventsGateway can suspend event routing automatically until payment is resolved."
+    "EVENTS Gateway is positioned to help performance teams send cleaner identifiers and conversion context to Meta for maximum Event Match Quality (EMQ) posture and more reliable mobile measurement.",
+    "Stripe is used for payment processing and payment-method handling so card data never lives on EVENTS Gateway servers.",
+    "If an invoice remains unpaid for 15 days after due date, EVENTS Gateway can suspend event routing automatically until payment is resolved."
   ]
 } as const;

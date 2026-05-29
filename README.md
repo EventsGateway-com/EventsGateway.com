@@ -1,8 +1,8 @@
-# EventsGateway.com
+# EVENTS Gateway.com
 
-Official repository for the EventsGateway public site and Cloudflare-hosted application surface.
+Official repository for the EVENTS Gateway public site and Cloudflare-hosted application surface.
 
-EventsGateway is an open source tracking and event routing platform built for teams that want one controlled event flow for collection, normalization, routing, attribution, delivery, replay, and operational visibility.
+EVENTS Gateway is an open source tracking and event routing platform built for teams that want one controlled event flow for collection, normalization, routing, attribution, delivery, replay, and operational visibility.
 
 ## What This Repository Contains
 
@@ -15,18 +15,74 @@ This repository currently includes:
 
 ## Product Scope
 
-EventsGateway is designed for:
+EVENTS Gateway is designed for:
 
-- Meta Conversions API
-- GA4 Measurement Protocol
-- Google Ads conversions
-- TikTok Events API
-- custom webhooks
+- Bing
+- Branch
+- Facebook Pixel
+- Floodlight
+- Google Analytics
+- Google Analytics 4
+- Google Ads
+- Google Maps RWG
+- HubSpot
+- iHire
+- Impact Radius
+- Indeed
+- LinkedIn Insights
+- Mixpanel
+- Outbrain
+- Pinterest
+- Podsights
+- Quora
+- Reddit
+- Segment
+- Snapchat
+- Taboola
+- Tatari
+- TikTok
+- Twitter
+- Upward
+- ZipRecruiter
+- PostHog
+- Counterscale
 - custom webhooks and event pipelines
 - privacy-aware routing and normalization
 - self-hosted, Cloudflare-native deployment
 
 The public site explains the platform. The dashboard and Workers expose the operational product surface.
+
+## Integration Pages
+
+- [Bing](https://eventsgateway.com/integrations/bing/)
+- [Branch](https://eventsgateway.com/integrations/branch/)
+- [Facebook Pixel](https://eventsgateway.com/integrations/facebook-pixel/)
+- [Floodlight](https://eventsgateway.com/integrations/floodlight/)
+- [Google Analytics](https://eventsgateway.com/integrations/google-analytics/)
+- [Google Analytics 4](https://eventsgateway.com/integrations/google-analytics-4/)
+- [Google Ads](https://eventsgateway.com/integrations/google-ads/)
+- [Google Maps RWG](https://eventsgateway.com/integrations/google-maps-rwg/)
+- [HubSpot](https://eventsgateway.com/integrations/hubspot/)
+- [iHire](https://eventsgateway.com/integrations/ihire/)
+- [Impact Radius](https://eventsgateway.com/integrations/impact-radius/)
+- [Indeed](https://eventsgateway.com/integrations/indeed/)
+- [LinkedIn Insights](https://eventsgateway.com/integrations/linkedin-insights/)
+- [Mixpanel](https://eventsgateway.com/integrations/mixpanel/)
+- [Outbrain](https://eventsgateway.com/integrations/outbrain/)
+- [Pinterest](https://eventsgateway.com/integrations/pinterest/)
+- [Podsights](https://eventsgateway.com/integrations/podsights/)
+- [Quora](https://eventsgateway.com/integrations/quora/)
+- [Reddit](https://eventsgateway.com/integrations/reddit/)
+- [Segment](https://eventsgateway.com/integrations/segment/)
+- [Snapchat](https://eventsgateway.com/integrations/snapchat/)
+- [Taboola](https://eventsgateway.com/integrations/taboola/)
+- [Tatari](https://eventsgateway.com/integrations/tatari/)
+- [TikTok](https://eventsgateway.com/integrations/tiktok/)
+- [Twitter](https://eventsgateway.com/integrations/twitter/)
+- [Upward](https://eventsgateway.com/integrations/upward/)
+- [ZipRecruiter](https://eventsgateway.com/integrations/ziprecruiter/)
+- [PostHog](https://eventsgateway.com/integrations/posthog/)
+- [Counterscale](https://eventsgateway.com/integrations/counterscale/)
 
 ## Production Domains
 
@@ -136,7 +192,7 @@ npm run deploy:public
 npm run deploy:hosted
 ```
 
-Deploy the full hosted EventsGateway surface with the unified root Worker:
+Deploy the full hosted EVENTS Gateway surface with the unified root Worker:
 
 ```bash
 npm run deploy:public
@@ -153,12 +209,37 @@ When a deployment platform runs `npx wrangler deploy` from the repository root, 
 
 ## Supported Destinations
 
-EventsGateway currently supports these destination classes in the runtime:
+EVENTS Gateway currently supports these destination classes in the runtime:
 
-- Meta Conversions API
-- GA4 Measurement Protocol
+- Bing
+- Branch
+- Facebook Pixel
+- Floodlight
+- Google Analytics
+- Google Analytics 4
 - Google Ads
-- TikTok Events API
+- Google Maps RWG
+- HubSpot
+- iHire
+- Impact Radius
+- Indeed
+- LinkedIn Insights
+- Mixpanel
+- Outbrain
+- Pinterest
+- Podsights
+- Quora
+- Reddit
+- Segment
+- Snapchat
+- Taboola
+- Tatari
+- TikTok
+- Twitter
+- Upward
+- ZipRecruiter
+- PostHog
+- Counterscale
 - custom webhooks
 
 The repository includes canonical event mapping, routing, and delivery controls for these destination types, and the dashboard exposes destination-aware routing on top of the same event stream.
@@ -199,7 +280,7 @@ For production, use Wrangler secrets instead of committing values into the repos
 
 ### Initial setup
 
-The official repository keeps the active Cloudflare deployment identifiers required by the hosted EventsGateway instance.
+The official repository keeps the active Cloudflare deployment identifiers required by the hosted EVENTS Gateway instance.
 
 Use the install flow at `/install` to prepare:
 
@@ -247,4 +328,4 @@ The Cloudflare production surface currently includes:
 
 ## License And Visibility
 
-EventsGateway is an open source product. The public site, dashboard surface, and event-facing components are intended to be publicly published through Cloudflare-hosted endpoints.
+EVENTS Gateway is an open source product. The public site, dashboard surface, and event-facing components are intended to be publicly published through Cloudflare-hosted endpoints.

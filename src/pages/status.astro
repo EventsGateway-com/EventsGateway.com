@@ -7,12 +7,12 @@ import SectionHeader from "../components/SectionHeader.astro";
 import { siteConfig } from "../config/site";
 
 const pageDescription =
-  "Live public infrastructure board for EventsGateway, showing current KV items, Durable Object snapshots, D1 rows, and R2 ledger items.";
+  "Live public infrastructure board for EVENTS Gateway, showing current KV items, Durable Object snapshots, D1 rows, and R2 ledger items.";
 
 const pageJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  name: "EventsGateway Realtime Infrastructure Status",
+  name: "EVENTS Gateway Realtime Infrastructure Status",
   description: pageDescription
 };
 ---
@@ -29,11 +29,11 @@ const pageJsonLd = {
         <span class="eyebrow">Public Status</span>
         <h1 class="page-title">Realtime infrastructure visibility across the active storage stack.</h1>
         <p class="page-copy">
-          Watch the live footprint of `KV`, `Durable Objects`, `D1`, and `R2` as EventsGateway processes state,
+          Watch the live footprint of `KV`, `Durable Objects`, `D1`, and `R2` as EVENTS Gateway processes state,
           routing, and ledger activity through the Cloudflare runtime.
         </p>
         <div class="button-row">
-          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="/install/" variant="primary" icon="download">Install EVENTS Gateway</Button>
           <Button href={siteConfig.social.github} variant="secondary" icon="arrow-right">Open GitHub</Button>
         </div>
       </div>

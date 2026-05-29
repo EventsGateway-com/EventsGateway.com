@@ -8,12 +8,31 @@ export type DestinationRecord = {
   site_id: string;
   name: string;
   kind:
+    | "bing"
+    | "branch"
     | "meta"
     | "ga4"
     | "google_ads"
     | "webhook"
     | "facebook-pixel"
+    | "floodlight"
+    | "google-analytics"
     | "google-analytics-4"
+    | "google-maps-rwg"
+    | "hubspot"
+    | "ihire"
+    | "impact-radius"
+    | "indeed"
+    | "linkedin"
+    | "mixpanel"
+    | "outbrain"
+    | "pinterest"
+    | "podsights"
+    | "posthog"
+    | "quora"
+    | "reddit"
+    | "twitter"
+    | "counterscale"
     | "tiktok"
     | "segment"
     | "ziprecruiter"
@@ -195,6 +214,177 @@ const state = {
       status: "active",
       secret_preview: "whsec_***33",
       config: { url: "https://crm.example.com/events", auth_mode: "bearer" }
+    },
+    {
+      id: "dst_bing",
+      site_id: siteId,
+      name: "Bing UET",
+      kind: "bing",
+      status: "active",
+      secret_preview: "bing_***21",
+      config: { ti: "bing_uet_tag_id" }
+    },
+    {
+      id: "dst_branch",
+      site_id: siteId,
+      name: "Branch",
+      kind: "branch",
+      status: "active",
+      secret_preview: "branch_***62",
+      config: { branch_key: "key_live_xxxxx" }
+    },
+    {
+      id: "dst_floodlight",
+      site_id: siteId,
+      name: "Floodlight",
+      kind: "floodlight",
+      status: "active",
+      secret_preview: "flood_***18",
+      config: { advertiser_id: "advertiser_id", group_tag: "group_tag", activity_tag: "activity_tag" }
+    },
+    {
+      id: "dst_ga_universal",
+      site_id: siteId,
+      name: "Google Analytics",
+      kind: "google-analytics",
+      status: "active",
+      secret_preview: "ua_***51",
+      config: { tid: "UA-12345678-1" }
+    },
+    {
+      id: "dst_google_maps_rwg",
+      site_id: siteId,
+      name: "Google Maps RWG",
+      kind: "google-maps-rwg",
+      status: "active",
+      secret_preview: "rwg_***08",
+      config: { base_domain: "example.com" }
+    },
+    {
+      id: "dst_hubspot",
+      site_id: siteId,
+      name: "HubSpot",
+      kind: "hubspot",
+      status: "active",
+      secret_preview: "hub_***73",
+      config: { account_id: "123456", region_prefix: "eu1", form_id: "hubspot_form_id" }
+    },
+    {
+      id: "dst_ihire",
+      site_id: siteId,
+      name: "iHire",
+      kind: "ihire",
+      status: "active",
+      secret_preview: "ihire_***55",
+      config: { id: "ihire_account_id" }
+    },
+    {
+      id: "dst_impact_radius",
+      site_id: siteId,
+      name: "Impact Radius",
+      kind: "impact-radius",
+      status: "active",
+      secret_preview: "impact_***47",
+      config: { tracking_domain: "https://example.impact.com", campaign_id: "impact_campaign_id", event_id: "conversion" }
+    },
+    {
+      id: "dst_indeed",
+      site_id: siteId,
+      name: "Indeed",
+      kind: "indeed",
+      status: "active",
+      secret_preview: "indeed_***14",
+      config: { conversion_id: "indeed_conversion_id" }
+    },
+    {
+      id: "dst_linkedin",
+      site_id: siteId,
+      name: "LinkedIn Insights",
+      kind: "linkedin",
+      status: "active",
+      secret_preview: "li_***66",
+      config: { partner_id: "linkedin_partner_id" }
+    },
+    {
+      id: "dst_mixpanel",
+      site_id: siteId,
+      name: "Mixpanel",
+      kind: "mixpanel",
+      status: "active",
+      secret_preview: "mix_***72",
+      config: { token: "mixpanel_project_token" }
+    },
+    {
+      id: "dst_outbrain",
+      site_id: siteId,
+      name: "Outbrain",
+      kind: "outbrain",
+      status: "active",
+      secret_preview: "out_***39",
+      config: { marketer_id: "outbrain_marketer_id" }
+    },
+    {
+      id: "dst_pinterest",
+      site_id: siteId,
+      name: "Pinterest",
+      kind: "pinterest",
+      status: "active",
+      secret_preview: "pin_***81",
+      config: { tid: "pinterest_tag_id" }
+    },
+    {
+      id: "dst_podsights",
+      site_id: siteId,
+      name: "Podsights",
+      kind: "podsights",
+      status: "active",
+      secret_preview: "pod_***44",
+      config: { key: "podsights_pixel_id" }
+    },
+    {
+      id: "dst_quora",
+      site_id: siteId,
+      name: "Quora",
+      kind: "quora",
+      status: "active",
+      secret_preview: "quora_***19",
+      config: { pixel_id: "quora_pixel_id" }
+    },
+    {
+      id: "dst_reddit",
+      site_id: siteId,
+      name: "Reddit",
+      kind: "reddit",
+      status: "active",
+      secret_preview: "reddit_***09",
+      config: { id: "reddit_account_id" }
+    },
+    {
+      id: "dst_twitter",
+      site_id: siteId,
+      name: "Twitter",
+      kind: "twitter",
+      status: "active",
+      secret_preview: "tw_***67",
+      config: { pixel_id: "twitter_pixel_id" }
+    },
+    {
+      id: "dst_posthog",
+      site_id: siteId,
+      name: "PostHog",
+      kind: "posthog",
+      status: "active",
+      secret_preview: "ph_***64",
+      config: { api_key: "posthog_project_api_key", api_url: "https://us.i.posthog.com" }
+    },
+    {
+      id: "dst_counterscale",
+      site_id: siteId,
+      name: "Counterscale",
+      kind: "counterscale",
+      status: "active",
+      secret_preview: "cs_***28",
+      config: { site_id: "counterscale_site_id", api_url: "https://counterscale.example.com" }
     }
   ] as DestinationRecord[],
   transformations: [

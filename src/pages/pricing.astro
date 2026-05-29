@@ -23,7 +23,7 @@ const pricingJsonLd = {
 
 <BaseLayout
   title={`Pricing - ${siteConfig.name}`}
-  description="Transparent EventsGateway pricing with a free 1,000,000 event allowance, $5 per extra 1,000,000 events, and Enterprise plans starting at $1,995 per month."
+  description="Transparent EVENTS Gateway pricing with a free 1,000,000 event allowance, $5 per extra 1,000,000 events, and Enterprise plans starting at $1,995 per month."
   canonicalPath="/pricing/"
   jsonLd={pricingJsonLd}
 >
@@ -55,6 +55,20 @@ const pricingJsonLd = {
             </PremiumCard>
           ))
         }
+      </div>
+      <div class="ml-plan-wrapper">
+        <PremiumCard icon="spark" eyebrow="Add-on" class="ml-plan-card">
+          <div class="ml-plan-content">
+            <div class="ml-plan-info">
+              <h3>Machine Learning</h3>
+              <p>Enriched events for Meta/Google/Tiktok with predicted data</p>
+            </div>
+            <div class="pricing-plan__price">
+              <strong>$299</strong>
+              <span>/ site with unlimited events</span>
+            </div>
+          </div>
+        </PremiumCard>
       </div>
     </Container>
   </section>
@@ -141,6 +155,50 @@ const pricingJsonLd = {
 </BaseLayout>
 
 <style>
+  .ml-plan-wrapper {
+    margin-top: 0.82rem;
+  }
+
+  .ml-plan-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .ml-plan-info h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    letter-spacing: -0.02em;
+  }
+
+  .ml-plan-info p {
+    margin: 0.25rem 0 0;
+    color: var(--color-muted);
+    line-height: 1.65;
+  }
+
+  @media (min-width: 961px) {
+    .ml-plan-card :global(.premium-card__inner) {
+      flex-direction: row;
+      align-items: center;
+      padding: 1.5rem;
+      gap: 2rem;
+    }
+
+    .ml-plan-card :global(.premium-card__header) {
+      flex-shrink: 0;
+    }
+
+    .ml-plan-content {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 2rem;
+    }
+  }
+
   .pricing-plan {
     display: grid;
     gap: 1rem;

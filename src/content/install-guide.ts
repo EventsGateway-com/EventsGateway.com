@@ -1,8 +1,8 @@
 export const installGuideContent = {
-  title: "Install EventsGateway On Your Domain",
+  title: "Install EVENTS Gateway On Your Domain",
   eyebrow: "GitHub To Production",
   intro:
-    "This guide shows the fastest path from the GitHub repository page to a working EventsGateway setup on your own domain. The goal is simple: create the required Cloudflare resources manually using the preset project names, define their real IDs and names in Wrangler, deploy the runtime, connect a collector subdomain, install the tracker on any site you already run, and keep the setup inside free-tier limits whenever your traffic profile allows it.",
+    "This guide shows the fastest path from the GitHub repository page to a working EVENTS Gateway setup on your own domain. The goal is simple: create the required Cloudflare resources manually using the preset project names, define their real IDs and names in Wrangler, deploy the runtime, connect a collector subdomain, install the tracker on any site you already run, and keep the setup inside free-tier limits whenever your traffic profile allows it.",
   preflight: [
     {
       title: "GitHub repository access",
@@ -14,7 +14,7 @@ export const installGuideContent = {
     },
     {
       title: "A target website",
-      text: "Your site can live on any stack. EventsGateway only needs a small tracker install and one collector endpoint."
+      text: "Your site can live on any stack. EVENTS Gateway only needs a small tracker install and one collector endpoint."
     },
     {
       title: "Stripe account",
@@ -25,7 +25,7 @@ export const installGuideContent = {
     {
       step: "01",
       title: "Open the GitHub repository page",
-      text: "Start from GitHub, review the project, and clone or fork it into your own account so you can deploy and maintain your own EventsGateway instance."
+      text: "Start from GitHub, review the project, and clone or fork it into your own account so you can deploy and maintain your own EVENTS Gateway instance."
     },
     {
       step: "02",
@@ -71,7 +71,7 @@ export const installGuideContent = {
   commandBlocks: [
     {
       title: "Clone from GitHub",
-      code: `git clone https://github.com/EventsGateway-com/EventsGateway.com.git
+      code: `git clone https://github.com/EVENTS Gateway-com/EVENTS Gateway.com.git
 cd eventsgateway`
     },
     {

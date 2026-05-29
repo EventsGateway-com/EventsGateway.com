@@ -2,7 +2,7 @@ export const downloadContent = {
   title: "Download",
   status: "Open source distribution",
   intro:
-    "Get the public site package, review the architecture, and prepare self-hosted deployment paths for the full EventsGateway platform.",
+    "Get the public site package, review the architecture, and prepare self-hosted deployment paths for the full EVENTS Gateway platform.",
   version: "Version channel: public foundation release",
   platforms: [
     { name: "Marketing Site", detail: "Static Astro site for eventsgateway.com with Cloudflare deployment flow", status: "Available" },
@@ -10,7 +10,7 @@ export const downloadContent = {
     { name: "Self-hosting Path", detail: "Cloudflare-first deployment model for public site and gateway services", status: "In progress" }
   ],
   releaseNotes: [
-    "The public site positions EventsGateway as an open source tracking and event routing platform.",
+    "The public site positions EVENTS Gateway as an open source tracking and event routing platform.",
     "Download guidance focuses on self-hosting, source review, and architecture visibility rather than closed beta access.",
     "Future releases will expand with dashboard, collector, forwarder, and destination-specific packages."
   ],

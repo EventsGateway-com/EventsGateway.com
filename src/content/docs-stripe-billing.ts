@@ -1,13 +1,13 @@
 export const stripeBillingDocsContent = {
-  title: "Stripe Billing Setup For EventsGateway",
+  title: "Stripe Billing Setup For EVENTS Gateway",
   eyebrow: "Billing Documentation",
   intro:
-    "Use Stripe as the payment processor for EventsGateway subscriptions, payment-method updates, invoices, webhook-driven status sync, reminder scheduling, and routing suspension after overdue billing.",
+    "Use Stripe as the payment processor for EVENTS Gateway subscriptions, payment-method updates, invoices, webhook-driven status sync, reminder scheduling, and routing suspension after overdue billing.",
   overview: [
-    "Stripe Checkout is used to save or update a payment method without storing card data on EventsGateway infrastructure.",
+    "Stripe Checkout is used to save or update a payment method without storing card data on EVENTS Gateway infrastructure.",
     "Stripe Billing Portal is used for customer-managed billing updates and payment method maintenance.",
     "Stripe webhooks keep invoices, transactions, customer billing details, and subscription status in sync with the platform control plane.",
-    "If an invoice stays overdue for 15 days after due date, EventsGateway can suspend routing automatically until payment is resolved."
+    "If an invoice stays overdue for 15 days after due date, EVENTS Gateway can suspend routing automatically until payment is resolved."
   ],
   environmentVariables: [
     { name: "STRIPE_SECRET_KEY", description: "Private Stripe secret key used by the API worker for Checkout, Billing Portal, and Stripe API requests." },

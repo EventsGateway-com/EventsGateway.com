@@ -59,12 +59,12 @@ export const contactContent = {
   ],
   faq: [
     {
-      question: "Can EventsGateway be installed on any site?",
+      question: "Can EVENTS Gateway be installed on any site?",
       answer: "Yes. The platform is designed to work with a lightweight tracker or SDK so installation stays simple across many site stacks."
     },
     {
-      question: "Can EventsGateway improve Meta signal quality?",
-      answer: "Yes. EventsGateway is designed to standardize event naming, send stronger identifiers, and keep conversion context cleaner so Meta can receive the strongest possible matching signal from your site data."
+      question: "Can EVENTS Gateway improve Meta signal quality?",
+      answer: "Yes. EVENTS Gateway is designed to standardize event naming, send stronger identifiers, and keep conversion context cleaner so Meta can receive the strongest possible matching signal from your site data."
     },
     {
       question: "Is the Free plan enough to start?",
@@ -72,7 +72,7 @@ export const contactContent = {
     },
     {
       question: "Can you route events to multiple destinations from one integration?",
-      answer: "Yes. EventsGateway is built to collect once and route to tools such as Meta, GA4, Google Ads, and custom webhooks."
+      answer: "Yes. EVENTS Gateway is built to collect once and route to tools such as Meta, GA4, Google Ads, and custom webhooks."
     }
   ]
 } as const;

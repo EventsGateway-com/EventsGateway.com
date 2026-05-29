@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: "EventsGateway",
+  name: "EVENTS Gateway",
   shortName: "EG",
   domain: "https://eventsgateway.com",
   description:

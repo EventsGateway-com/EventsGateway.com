@@ -19,7 +19,7 @@ const items = [
     title: "Bing integration",
     summary: "Send cleaner conversion signals into Microsoft Ads and keep paid search optimization aligned with one event layer.",
     hero:
-      "Use EventsGateway to route the same clean purchase, lead, and lifecycle events into Bing so Microsoft Ads gets stronger conversion inputs without another tracking stack.",
+      "Use EVENTS Gateway to route the same clean purchase, lead, and lifecycle events into Bing so Microsoft Ads gets stronger conversion inputs without another tracking stack.",
     group: "Official Managed Components",
     repository: "https://github.com/managed-components/bing",
     points: [
@@ -119,7 +119,7 @@ const items = [
     title: "Google Analytics integration",
     summary: "Route clean events into Google Analytics for teams that still rely on classic analytics workflows and reporting.",
     hero:
-      "Use EventsGateway to keep Google Analytics inputs closer to the same clean purchase, lead, and engagement events used everywhere else in your stack.",
+      "Use EVENTS Gateway to keep Google Analytics inputs closer to the same clean purchase, lead, and engagement events used everywhere else in your stack.",
     group: "Official Managed Components",
     repository: "https://github.com/managed-components/google-analytics",
     points: [
@@ -239,7 +239,7 @@ const items = [
     title: "Indeed integration",
     summary: "Push cleaner hiring and application events into Indeed for recruitment campaign measurement.",
     hero:
-      "Use EventsGateway with Indeed so job application milestones and candidate conversion events stay consistent across recruitment landing pages and hiring campaigns.",
+      "Use EVENTS Gateway with Indeed so job application milestones and candidate conversion events stay consistent across recruitment landing pages and hiring campaigns.",
     group: "Official Managed Components",
     repository: "https://github.com/managed-components/indeed",
     points: [
@@ -279,7 +279,7 @@ const items = [
     title: "Mixpanel integration",
     summary: "Pass trusted product and growth events into Mixpanel from the same stream used for marketing decisions.",
     hero:
-      "Use Mixpanel with EventsGateway when product analytics should stay aligned with the same purchase, signup, and lifecycle events that power your acquisition stack.",
+      "Use Mixpanel with EVENTS Gateway when product analytics should stay aligned with the same purchase, signup, and lifecycle events that power your acquisition stack.",
     group: "Official Managed Components",
     repository: "https://github.com/managed-components/mixpanel",
     points: [
@@ -299,7 +299,7 @@ const items = [
     title: "Outbrain integration",
     summary: "Route cleaner conversion signals into Outbrain for content discovery campaigns and native media optimization.",
     hero:
-      "Use EventsGateway to send purchase and lead events into Outbrain so native campaign optimization depends on cleaner signals instead of fragmented page-level tagging.",
+      "Use EVENTS Gateway to send purchase and lead events into Outbrain so native campaign optimization depends on cleaner signals instead of fragmented page-level tagging.",
     group: "Official Managed Components",
     repository: "https://github.com/managed-components/outbrain",
     points: [
@@ -379,7 +379,7 @@ const items = [
     title: "Reddit integration",
     summary: "Send cleaner conversion events into Reddit Ads for community-led acquisition and remarketing workflows.",
     hero:
-      "Use EventsGateway with Reddit so purchase, signup, and lead events stay consistent between community-driven campaigns and the rest of your paid media stack.",
+      "Use EVENTS Gateway with Reddit so purchase, signup, and lead events stay consistent between community-driven campaigns and the rest of your paid media stack.",
     group: "Official Managed Components",
     repository: "https://github.com/managed-components/reddit",
     points: [
@@ -499,7 +499,7 @@ const items = [
     title: "Twitter integration",
     summary: "Send cleaner conversion and audience events into Twitter campaigns from the same trusted event stream.",
     hero:
-      "Use EventsGateway with Twitter so performance campaigns, audience workflows, and downstream reporting stay aligned with one cleaner measurement layer.",
+      "Use EVENTS Gateway with Twitter so performance campaigns, audience workflows, and downstream reporting stay aligned with one cleaner measurement layer.",
     group: "Official Managed Components",
     repository: "https://github.com/managed-components/twitter",
     points: [
@@ -597,9 +597,9 @@ const items = [
 
 export const integrationsContent = {
   eyebrow: "Integrations",
-  title: "Mirror the full awesome-zaraz managed component catalog inside EventsGateway.",
+  title: "Connect the full integration catalog inside EVENTS Gateway.",
   intro:
-    "EventsGateway now lists the full official and community managed component set from awesome-zaraz so teams can evaluate, plan, and connect a much broader destination catalog from one place.",
+    "EVENTS Gateway lists the full integration catalog so teams can evaluate, configure, and connect a broader destination surface from one place.",
   items
 } as const;
 

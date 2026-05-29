@@ -19,14 +19,14 @@ const { item } = Astro.props as {
 ---
 
 <BaseLayout
-  title={`${item.label} - EventsGateway`}
+  title={`${item.label} - EVENTS Gateway`}
   description={item.summary}
   canonicalPath={`/integrations/${Astro.params.slug as IntegrationSlug}/`}
 >
   <section class="section page-hero">
     <Container>
       <div class="stack">
-        <span class="eyebrow">{(item as any).group || "Integration"}</span>
+        <span class="eyebrow">Integration</span>
         <h1 class="page-title">{item.title}</h1>
         <p class="page-copy">{item.hero}</p>
         <div class="button-row">
@@ -44,7 +44,7 @@ const { item } = Astro.props as {
     <Container>
       <SectionHeader
         eyebrow="Why It Matters"
-        title={`Why marketers use EventsGateway for ${item.label}?`}
+        title={`Why marketers use EVENTS Gateway for ${item.label}?`}
         description="The goal is simple: cleaner data, better optimization inputs, and less wasted spend caused by fragmented tracking."
       />
       <div class="card-grid">
@@ -73,7 +73,7 @@ const { item } = Astro.props as {
           <span class="eyebrow">Next Step</span>
           <h2 class="section-title">Connect this integration without rebuilding tracking from scratch.</h2>
           <p class="section-copy">
-            EventsGateway lets your team keep one cleaner event setup while sending the same conversion truth to the
+            EVENTS Gateway lets your team keep one cleaner event setup while sending the same conversion truth to the
             platforms that matter most.
           </p>
           <div class="button-row">

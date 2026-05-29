@@ -1941,12 +1941,31 @@ function TransformationsPage() {
 }
 
 const DESTINATION_KIND_OPTIONS: Array<{ value: DestinationCreateInput["kind"]; label: string }> = [
+  { value: "bing", label: "Bing" },
+  { value: "branch", label: "Branch" },
   { value: "meta", label: "Meta (Legacy)" },
   { value: "facebook-pixel", label: "Facebook Pixel" },
+  { value: "floodlight", label: "Floodlight" },
   { value: "ga4", label: "GA4 (Legacy)" },
+  { value: "google-analytics", label: "Google Analytics" },
   { value: "google-analytics-4", label: "Google Analytics 4" },
   { value: "google_ads", label: "Google Ads" },
+  { value: "google-maps-rwg", label: "Google Maps RWG" },
+  { value: "hubspot", label: "HubSpot" },
+  { value: "ihire", label: "iHire" },
+  { value: "impact-radius", label: "Impact Radius" },
+  { value: "indeed", label: "Indeed" },
+  { value: "linkedin", label: "LinkedIn Insights" },
+  { value: "mixpanel", label: "Mixpanel" },
+  { value: "outbrain", label: "Outbrain" },
+  { value: "pinterest", label: "Pinterest" },
+  { value: "podsights", label: "Podsights" },
+  { value: "quora", label: "Quora" },
+  { value: "reddit", label: "Reddit" },
+  { value: "twitter", label: "Twitter" },
   { value: "tiktok", label: "TikTok" },
+  { value: "posthog", label: "PostHog" },
+  { value: "counterscale", label: "Counterscale" },
   { value: "segment", label: "Segment" },
   { value: "ziprecruiter", label: "ZipRecruiter" },
   { value: "upward", label: "Upward" },
@@ -1962,9 +1981,23 @@ const DESTINATION_FORM_ALIASES: Record<string, string> = {
 };
 
 const DESTINATION_CONFIG_DEFAULTS: Record<string, Record<string, unknown>> = {
+  bing: {
+    ti: "bing_uet_tag_id"
+  },
+  branch: {
+    branch_key: "key_live_xxxxx"
+  },
   "facebook-pixel": {
     pixel_id: "123456789",
     access_token: "meta_access_token"
+  },
+  floodlight: {
+    advertiser_id: "advertiser_id",
+    group_tag: "group_tag",
+    activity_tag: "activity_tag"
+  },
+  "google-analytics": {
+    tid: "UA-12345678-1"
   },
   "google-analytics-4": {
     measurement_id: "G-XXXXXXX",
@@ -1974,9 +2007,60 @@ const DESTINATION_CONFIG_DEFAULTS: Record<string, Record<string, unknown>> = {
     conversion_id: "1234567890",
     conversion_label: "AbCdEfGh"
   },
+  "google-maps-rwg": {
+    base_domain: "example.com"
+  },
+  hubspot: {
+    account_id: "123456",
+    region_prefix: "eu1",
+    form_id: "hubspot_form_id"
+  },
+  ihire: {
+    id: "ihire_account_id"
+  },
+  "impact-radius": {
+    tracking_domain: "https://example.impact.com",
+    campaign_id: "impact_campaign_id",
+    event_id: "conversion"
+  },
+  indeed: {
+    conversion_id: "indeed_conversion_id"
+  },
+  linkedin: {
+    partner_id: "linkedin_partner_id"
+  },
+  mixpanel: {
+    token: "mixpanel_project_token"
+  },
+  outbrain: {
+    marketer_id: "outbrain_marketer_id"
+  },
+  pinterest: {
+    tid: "pinterest_tag_id"
+  },
+  podsights: {
+    key: "podsights_pixel_id"
+  },
+  quora: {
+    pixel_id: "quora_pixel_id"
+  },
+  reddit: {
+    id: "reddit_account_id"
+  },
+  twitter: {
+    pixel_id: "twitter_pixel_id"
+  },
   tiktok: {
     pixel_code: "C123456789",
     access_token: "tiktok_access_token"
+  },
+  posthog: {
+    api_key: "posthog_project_api_key",
+    api_url: "https://us.i.posthog.com"
+  },
+  counterscale: {
+    site_id: "counterscale_site_id",
+    api_url: "https://counterscale.example.com"
   },
   segment: {
     write_key: "segment_write_key",
@@ -2013,10 +2097,26 @@ type DestinationFieldDefinition = {
 };
 
 const DESTINATION_FORM_FIELDS: Record<string, DestinationFieldDefinition[]> = {
+  bing: [
+    { key: "ti", label: "UET Tag ID", placeholder: "bing_uet_tag_id", required: true }
+  ],
+  branch: [
+    { key: "branch_key", label: "Branch key", placeholder: "key_live_xxxxx", required: true, type: "password" }
+  ],
   "facebook-pixel": [
     { key: "pixel_id", label: "Pixel ID", placeholder: "123456789", required: true },
     { key: "access_token", label: "Access token", placeholder: "meta_access_token", required: true, type: "password" },
     { key: "test_event_code", label: "Test event code", placeholder: "TEST1234", help: "Optional Meta test code for validation." }
+  ],
+  floodlight: [
+    { key: "advertiser_id", label: "Advertiser ID", placeholder: "advertiser_id", required: true },
+    { key: "group_tag", label: "Group tag", placeholder: "group_tag", required: true },
+    { key: "activity_tag", label: "Activity tag", placeholder: "activity_tag", required: true }
+  ],
+  "google-analytics": [
+    { key: "tid", label: "Tracking ID", placeholder: "UA-12345678-1", required: true },
+    { key: "ga_audiences", label: "GA audiences", placeholder: "true", help: "Optional. Set true to also trigger ga-audiences." },
+    { key: "ga_doubleclick", label: "GA DoubleClick", placeholder: "true", help: "Optional. Set true to also trigger DoubleClick collection." }
   ],
   "google-analytics-4": [
     { key: "measurement_id", label: "Measurement ID", placeholder: "G-XXXXXXX", required: true },
@@ -2026,10 +2126,63 @@ const DESTINATION_FORM_FIELDS: Record<string, DestinationFieldDefinition[]> = {
     { key: "conversion_id", label: "Conversion ID", placeholder: "1234567890", required: true },
     { key: "conversion_label", label: "Conversion label", placeholder: "AbCdEfGh", required: true }
   ],
+  "google-maps-rwg": [
+    { key: "base_domain", label: "Base domain", placeholder: "example.com", required: true, help: "Used for the RWG token cookie scope." }
+  ],
+  hubspot: [
+    { key: "account_id", label: "Hub ID", placeholder: "123456", required: true },
+    { key: "region_prefix", label: "Region prefix", placeholder: "eu1", help: "Optional. Example: eu1." },
+    { key: "form_id", label: "Form ID", placeholder: "hubspot_form_id", help: "Optional. If set, EVENTS Gateway submits to the HubSpot forms API." }
+  ],
+  ihire: [
+    { key: "id", label: "Account ID", placeholder: "ihire_account_id", required: true }
+  ],
+  "impact-radius": [
+    { key: "tracking_domain", label: "Tracking domain", placeholder: "https://example.impact.com", required: true, type: "url" },
+    { key: "campaign_id", label: "Campaign ID", placeholder: "impact_campaign_id", required: true },
+    { key: "event_id", label: "Event ID", placeholder: "conversion", help: "Optional conversion event identifier for the xconv path." }
+  ],
+  indeed: [
+    { key: "conversion_id", label: "Conversion ID", placeholder: "indeed_conversion_id", required: true }
+  ],
+  linkedin: [
+    { key: "partner_id", label: "Partner ID", placeholder: "linkedin_partner_id", required: true },
+    { key: "conversion_id", label: "Conversion ID", placeholder: "linkedin_conversion_id", help: "Optional LinkedIn conversion identifier." }
+  ],
+  mixpanel: [
+    { key: "token", label: "Project token", placeholder: "mixpanel_project_token", required: true, type: "password" },
+    { key: "is_eu", label: "EU project", placeholder: "true", help: "Optional. Set true if the project uses the EU Mixpanel API host." }
+  ],
+  outbrain: [
+    { key: "marketer_id", label: "Marketer ID", placeholder: "outbrain_marketer_id", required: true }
+  ],
+  pinterest: [
+    { key: "tid", label: "Tag ID", placeholder: "pinterest_tag_id", required: true }
+  ],
+  podsights: [
+    { key: "key", label: "Pixel ID", placeholder: "podsights_pixel_id", required: true, type: "password" }
+  ],
+  quora: [
+    { key: "pixel_id", label: "Pixel ID", placeholder: "quora_pixel_id", required: true }
+  ],
+  reddit: [
+    { key: "id", label: "Account ID", placeholder: "reddit_account_id", required: true }
+  ],
+  twitter: [
+    { key: "pixel_id", label: "Pixel ID", placeholder: "twitter_pixel_id", required: true }
+  ],
   tiktok: [
     { key: "pixel_code", label: "Pixel code", placeholder: "C123456789", required: true },
     { key: "access_token", label: "Access token", placeholder: "tiktok_access_token", required: true, type: "password" },
     { key: "test_event_code", label: "Test event code", placeholder: "TEST1234", help: "Optional TikTok test code for validation." }
+  ],
+  posthog: [
+    { key: "api_key", label: "Project API key", placeholder: "posthog_project_api_key", required: true, type: "password" },
+    { key: "api_url", label: "API URL", placeholder: "https://us.i.posthog.com", help: "Optional. Leave the default unless you self-host PostHog." }
+  ],
+  counterscale: [
+    { key: "site_id", label: "Site ID", placeholder: "counterscale_site_id", required: true },
+    { key: "api_url", label: "API base URL", placeholder: "https://counterscale.example.com", required: true, type: "url" }
   ],
   segment: [
     { key: "write_key", label: "Write key", placeholder: "segment_write_key", required: true, type: "password" },

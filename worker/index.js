@@ -509,7 +509,7 @@ async function handleContactRequest(request, env) {
 
   const senderEmail = env.BREVO_SENDER_EMAIL?.trim() || "no-reply@eventsgateway.com";
   const recipientEmail = "marian@agilemedia.com";
-  const formattedSubject = `[EventsGateway Contact] ${department}: ${subject}`;
+  const formattedSubject = `[EVENTS Gateway Contact] ${department}: ${subject}`;
   const htmlContent = [
     "<p>New contact request from eventsgateway.com</p>",
     `<p><strong>Department:</strong> ${department}</p>`,
@@ -540,7 +540,7 @@ async function handleContactRequest(request, env) {
     body: JSON.stringify({
       sender: {
         email: senderEmail,
-        name: "EventsGateway"
+        name: "EVENTS Gateway"
       },
       replyTo: {
         email,

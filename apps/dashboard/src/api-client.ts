@@ -669,6 +669,26 @@ function buildDefaultTagManager(siteId: string): TagManagerData {
     ],
     templates: [
       {
+        key: "bing",
+        name: "Bing",
+        category: "Ads",
+        description: "Managed Bing destination with UET tag delivery for conversion signals.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["ti", "event_name", "value", "currency"],
+        status: "ready"
+      },
+      {
+        key: "branch",
+        name: "Branch",
+        category: "Attribution",
+        description: "Managed Branch destination for mobile attribution, identify, and custom event delivery.",
+        default_delivery: "edge",
+        default_consent: "marketing",
+        fields: ["branch_key", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
         key: "ga4",
         name: "Google Analytics 4",
         category: "Analytics",
@@ -709,6 +729,26 @@ function buildDefaultTagManager(siteId: string): TagManagerData {
         status: "ready"
       },
       {
+        key: "floodlight",
+        name: "Floodlight",
+        category: "Ads",
+        description: "Managed Floodlight destination for advertiser, group tag, and activity tag based delivery.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["advertiser_id", "group_tag", "activity_tag", "event_name"],
+        status: "ready"
+      },
+      {
+        key: "google-analytics",
+        name: "Google Analytics",
+        category: "Analytics",
+        description: "Managed Universal Analytics relay with optional ga-audiences and DoubleClick support.",
+        default_delivery: "browser",
+        default_consent: "analytics",
+        fields: ["tid", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
         key: "google-ads",
         name: "Google Ads Conversion",
         category: "Ads",
@@ -719,6 +759,136 @@ function buildDefaultTagManager(siteId: string): TagManagerData {
         status: "ready"
       },
       {
+        key: "google-maps-rwg",
+        name: "Google Maps RWG",
+        category: "Attribution",
+        description: "Managed Google Maps RWG helper with base domain token support.",
+        default_delivery: "browser",
+        default_consent: "functional",
+        fields: ["base_domain"],
+        status: "ready"
+      },
+      {
+        key: "hubspot",
+        name: "HubSpot",
+        category: "CRM",
+        description: "Managed HubSpot destination for tracking and forms submission flows.",
+        default_delivery: "hybrid",
+        default_consent: "marketing",
+        fields: ["account_id", "form_id", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
+        key: "ihire",
+        name: "iHire",
+        category: "Ads",
+        description: "Managed iHire apply tracking beacon.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["id", "event_name", "value"],
+        status: "ready"
+      },
+      {
+        key: "impact-radius",
+        name: "Impact Radius",
+        category: "Attribution",
+        description: "Managed Impact Radius conversion relay with tracking domain and campaign ID.",
+        default_delivery: "edge",
+        default_consent: "marketing",
+        fields: ["tracking_domain", "campaign_id", "event_id", "value"],
+        status: "ready"
+      },
+      {
+        key: "indeed",
+        name: "Indeed",
+        category: "Ads",
+        description: "Managed Indeed conversion beacon with conversion ID mapping.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["conversion_id", "event_name", "value"],
+        status: "ready"
+      },
+      {
+        key: "linkedin",
+        name: "LinkedIn Insights",
+        category: "Ads",
+        description: "Managed LinkedIn Insights relay with partner and conversion IDs.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["partner_id", "conversion_id", "event_name"],
+        status: "ready"
+      },
+      {
+        key: "mixpanel",
+        name: "Mixpanel",
+        category: "Analytics",
+        description: "Managed Mixpanel relay with token-based event capture.",
+        default_delivery: "edge",
+        default_consent: "analytics",
+        fields: ["token", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
+        key: "outbrain",
+        name: "Outbrain",
+        category: "Ads",
+        description: "Managed Outbrain unified pixel delivery with marketer and order data mapping.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["marketer_id", "event_name", "value", "order_id"],
+        status: "ready"
+      },
+      {
+        key: "pinterest",
+        name: "Pinterest",
+        category: "Ads",
+        description: "Managed Pinterest tag delivery with revenue and commerce mapping.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["tid", "event_name", "value", "currency"],
+        status: "ready"
+      },
+      {
+        key: "podsights",
+        name: "Podsights",
+        category: "Attribution",
+        description: "Managed Podsights sink delivery with pixel ID style credentials.",
+        default_delivery: "edge",
+        default_consent: "marketing",
+        fields: ["key", "event_name", "value", "currency"],
+        status: "ready"
+      },
+      {
+        key: "quora",
+        name: "Quora",
+        category: "Ads",
+        description: "Managed Quora pixel relay with pixel ID based delivery.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["pixel_id", "event_name", "value"],
+        status: "ready"
+      },
+      {
+        key: "reddit",
+        name: "Reddit",
+        category: "Ads",
+        description: "Managed Reddit pixel relay with commerce parameters.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["id", "event_name", "value", "currency", "order_id"],
+        status: "ready"
+      },
+      {
+        key: "twitter",
+        name: "Twitter",
+        category: "Ads",
+        description: "Managed Twitter dual-pixel conversion delivery.",
+        default_delivery: "browser",
+        default_consent: "marketing",
+        fields: ["pixel_id", "event_name", "value"],
+        status: "ready"
+      },
+      {
         key: "tiktok",
         name: "TikTok Events API",
         category: "Ads",
@@ -726,6 +896,26 @@ function buildDefaultTagManager(siteId: string): TagManagerData {
         default_delivery: "edge",
         default_consent: "marketing",
         fields: ["pixel_code", "access_token", "event_name", "value", "currency"],
+        status: "ready"
+      },
+      {
+        key: "posthog",
+        name: "PostHog",
+        category: "Analytics",
+        description: "Managed PostHog capture relay with configurable API host.",
+        default_delivery: "edge",
+        default_consent: "analytics",
+        fields: ["api_key", "api_url", "event_name", "user_id"],
+        status: "ready"
+      },
+      {
+        key: "counterscale",
+        name: "Counterscale",
+        category: "Analytics",
+        description: "Managed Counterscale collect relay with site ID and API base URL.",
+        default_delivery: "edge",
+        default_consent: "analytics",
+        fields: ["site_id", "api_url"],
         status: "ready"
       },
       {

@@ -94,7 +94,7 @@ window.e_g("SubmitApplication", {
     description:
       "A canonical event model for trials, registration, pricing intent, demo requests, and paid plan conversion.",
     summary:
-      "SaaS tracking should separate acquisition signals from product milestones. EventsGateway lets the marketing site and the product emit a shared canonical event language.",
+      "SaaS tracking should separate acquisition signals from product milestones. EVENTS Gateway lets the marketing site and the product emit a shared canonical event language.",
     events: ["PageView", "ViewContent", "Lead", "CompleteRegistration", "StartTrial", "Subscribe", "Contact"],
     code: `window.e_g("CompleteRegistration", {
   properties: {
