@@ -73,11 +73,8 @@ const { item } = Astro.props as {
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
           <span class="eyebrow">Next Step</span>
-          <h2 class="section-title">Connect {item.label} without multiplying tracking complexity.</h2>
-          <p class="section-copy">
-            Keep {item.label} connected to the same clean lead, purchase, and lifecycle events that power the rest of
-            your stack, without rebuilding tracking for every new destination.
-          </p>
+          <h2 class="section-title">{item.ctaTitle}</h2>
+          <p class="section-copy">{item.ctaText}</p>
           <div class="button-row">
             <Button href="/pricing/" variant="primary" icon="arrow-right">Open pricing</Button>
             <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
