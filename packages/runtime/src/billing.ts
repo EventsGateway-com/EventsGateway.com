@@ -125,6 +125,8 @@ type StripeSessionResult = {
   session_id?: string;
 };
 
+type StripeObject = Record<string, unknown>;
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -143,6 +145,10 @@ function asNullableString(value: unknown) {
 
 function asNumber(value: unknown) {
   return typeof value === "number" ? value : Number(value ?? 0);
+}
+
+function firstStringInArray(value: unknown) {
+  return Array.isArray(value) && typeof value[0] === "string" ? value[0] : null;
 }
 
 function ensureDb(db?: DatabaseBinding) {
@@ -766,6 +772,182 @@ function roundToCents(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+async function getCustomerByStripeCustomerId(db: DatabaseBinding, stripeCustomerId: string) {
+  return firstRecord(db, "SELECT * FROM billing_customers WHERE stripe_customer_id = ? LIMIT 1", stripeCustomerId);
+}
+
+async function getSubscriptionByStripeReference(db: DatabaseBinding, stripeSubscriptionId: string, stripeCustomerId?: string | null) {
+  if (stripeSubscriptionId) {
+    const bySubscriptionId = await firstRecord(
+      db,
+      "SELECT * FROM billing_subscriptions WHERE stripe_subscription_id = ? LIMIT 1",
+      stripeSubscriptionId
+    );
+    if (bySubscriptionId) return bySubscriptionId;
+  }
+
+  if (!stripeCustomerId) return null;
+  return firstRecord(
+    db,
+    `
+      SELECT s.*
+      FROM billing_subscriptions s
+      INNER JOIN billing_customers c ON c.id = s.customer_id
+      WHERE c.stripe_customer_id = ?
+      LIMIT 1
+    `,
+    stripeCustomerId
+  );
+}
+
+async function upsertInvoiceFromStripeObject(db: DatabaseBinding, object: StripeObject) {
+  const stripeInvoiceId = asNullableString(object.id);
+  const stripeCustomerId = asNullableString(object.customer);
+  if (!stripeInvoiceId || !stripeCustomerId) return null;
+
+  const customer = await getCustomerByStripeCustomerId(db, stripeCustomerId);
+  if (!customer) return null;
+
+  const subscription = await getSubscriptionByStripeReference(
+    db,
+    asNullableString(object.subscription) ?? "",
+    stripeCustomerId
+  );
+  if (!subscription) return null;
+
+  const existing = await firstRecord(
+    db,
+    "SELECT id FROM billing_invoices WHERE stripe_invoice_id = ? OR invoice_number = ? LIMIT 1",
+    stripeInvoiceId,
+    asString(object.number)
+  );
+
+  const createdAt = nowIso();
+  const periodStartSeconds = asNumber(object.period_start);
+  const periodEndSeconds = asNumber(object.period_end);
+  const dueDateSeconds = asNumber(object.due_date);
+  const paidAtSeconds = asNumber(object.status_transitions && (object.status_transitions as StripeObject).paid_at);
+  const status = asString(object.status) || "open";
+  const invoiceNumber = asString(object.number) || `STRIPE-${stripeInvoiceId.slice(-10)}`;
+  const totalUsd = roundToCents(asNumber(object.total) / 100);
+  const subtotalUsd = roundToCents(asNumber(object.subtotal || object.amount_due || object.total) / 100);
+  const periodStart = periodStartSeconds ? new Date(periodStartSeconds * 1000).toISOString() : createdAt;
+  const periodEnd = periodEndSeconds ? new Date(periodEndSeconds * 1000).toISOString() : createdAt;
+  const dueAt = dueDateSeconds ? new Date(dueDateSeconds * 1000).toISOString() : null;
+  const paidAt = paidAtSeconds ? new Date(paidAtSeconds * 1000).toISOString() : null;
+
+  if (existing?.id) {
+    await db.prepare(
+      `
+        UPDATE billing_invoices
+        SET stripe_invoice_id = ?, invoice_number = ?, status = ?, subtotal_usd = ?, total_usd = ?,
+            hosted_invoice_url = ?, pdf_url = ?, period_start = ?, period_end = ?, due_at = ?, paid_at = ?, updated_at = ?
+        WHERE id = ?
+      `
+    )
+      .bind(
+        stripeInvoiceId,
+        invoiceNumber,
+        status,
+        subtotalUsd,
+        totalUsd,
+        asNullableString(object.hosted_invoice_url),
+        asNullableString(object.invoice_pdf),
+        periodStart,
+        periodEnd,
+        dueAt,
+        paidAt,
+        nowIso(),
+        asString(existing.id)
+      )
+      .run();
+    return existing.id;
+  }
+
+  const invoiceId = crypto.randomUUID();
+  await db.prepare(
+    `
+      INSERT INTO billing_invoices (
+        id, site_id, customer_id, subscription_id, stripe_invoice_id, invoice_number, status, currency,
+        subtotal_usd, overage_events, overage_blocks, total_usd, hosted_invoice_url, pdf_url,
+        period_start, period_end, due_at, paid_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      invoiceId,
+      asString(customer.site_id),
+      asString(customer.id),
+      asString(subscription.id),
+      stripeInvoiceId,
+      invoiceNumber,
+      status,
+      asString(object.currency || "usd").toUpperCase(),
+      subtotalUsd,
+      0,
+      0,
+      totalUsd,
+      asNullableString(object.hosted_invoice_url),
+      asNullableString(object.invoice_pdf),
+      periodStart,
+      periodEnd,
+      dueAt,
+      paidAt,
+      createdAt,
+      createdAt
+    )
+    .run();
+
+  return invoiceId;
+}
+
+async function insertTransactionIfMissing(
+  db: DatabaseBinding,
+  input: {
+    site_id: string;
+    invoice_id?: string | null;
+    stripe_payment_intent_id?: string | null;
+    stripe_charge_id?: string | null;
+    amount_usd: number;
+    status: BillingTransactionStatus;
+    payment_method_brand?: string | null;
+    payment_method_last4?: string | null;
+    paid_at?: string | null;
+  }
+) {
+  if (input.stripe_charge_id) {
+    const existingCharge = await countRecords(
+      db,
+      "SELECT COUNT(*) AS count FROM billing_transactions WHERE stripe_charge_id = ?",
+      input.stripe_charge_id
+    );
+    if (existingCharge > 0) return;
+  }
+
+  await db.prepare(
+    `
+      INSERT INTO billing_transactions (
+        id, site_id, invoice_id, stripe_payment_intent_id, stripe_charge_id, amount_usd, status,
+        payment_method_brand, payment_method_last4, created_at, paid_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      crypto.randomUUID(),
+      input.site_id,
+      input.invoice_id ?? null,
+      input.stripe_payment_intent_id ?? null,
+      input.stripe_charge_id ?? null,
+      roundToCents(input.amount_usd),
+      input.status,
+      input.payment_method_brand ?? null,
+      input.payment_method_last4 ?? null,
+      nowIso(),
+      input.paid_at ?? null
+    )
+    .run();
+}
+
 export async function updateAdminBillingSubscription(
   dbInput: DatabaseBinding | undefined,
   subscriptionId: string,
@@ -1121,6 +1303,26 @@ export async function processStripeWebhook(
   const stripeSubscriptionId = asNullableString(object.subscription);
   const stripeInvoiceId = asNullableString(object.id);
 
+  if (eventType === "customer.updated" && stripeCustomerId) {
+    const customer = await getCustomerByStripeCustomerId(db, stripeCustomerId);
+    if (customer) {
+      await db.prepare(
+        `
+          UPDATE billing_customers
+          SET billing_name = ?, billing_email = ?, updated_at = ?
+          WHERE id = ?
+        `
+      )
+        .bind(
+          asString(object.name) || asString(customer.billing_name),
+          asString(object.email) || asString(customer.billing_email),
+          nowIso(),
+          asString(customer.id)
+        )
+        .run();
+    }
+  }
+
   if (eventType === "checkout.session.completed" && stripeCustomerId) {
     const customerId = await firstRecord(db, "SELECT id FROM billing_customers WHERE stripe_customer_id = ? LIMIT 1", stripeCustomerId);
     if (customerId) {
@@ -1131,84 +1333,111 @@ export async function processStripeWebhook(
     }
   }
 
+  if (eventType === "invoice.finalized" || eventType === "invoice.created" || eventType === "invoice.updated") {
+    const invoiceId = await upsertInvoiceFromStripeObject(db, object);
+    if (invoiceId) {
+      const invoice = await firstRecord(db, "SELECT * FROM billing_invoices WHERE id = ? LIMIT 1", invoiceId);
+      if (invoice) {
+        await ensureReminderSchedule(db, toBillingInvoice(invoice));
+      }
+    }
+  }
+
   if ((eventType === "invoice.paid" || eventType === "invoice.payment_succeeded") && stripeInvoiceId) {
+    await upsertInvoiceFromStripeObject(db, object);
     const invoice = await firstRecord(db, "SELECT id, site_id, total_usd FROM billing_invoices WHERE stripe_invoice_id = ? OR invoice_number = ? LIMIT 1", stripeInvoiceId, asString(object.number));
     if (invoice) {
       await db.prepare("UPDATE billing_invoices SET status = 'paid', paid_at = ?, updated_at = ? WHERE id = ?")
         .bind(nowIso(), nowIso(), asString(invoice.id))
         .run();
-      await db.prepare(
-        `
-          INSERT INTO billing_transactions (
-            id, site_id, invoice_id, stripe_payment_intent_id, stripe_charge_id, amount_usd, status,
-            payment_method_brand, payment_method_last4, created_at, paid_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `
-      )
-        .bind(
-          crypto.randomUUID(),
-          asString(invoice.site_id),
-          asString(invoice.id),
-          asNullableString(object.payment_intent),
-          asNullableString(object.charge),
-          asNumber(invoice.total_usd),
-          "succeeded",
-          asNullableString(object.payment_method_details?.card?.brand),
-          asNullableString(object.payment_method_details?.card?.last4),
-          nowIso(),
-          nowIso()
-        )
-        .run();
+      await insertTransactionIfMissing(db, {
+        site_id: asString(invoice.site_id),
+        invoice_id: asString(invoice.id),
+        stripe_payment_intent_id: asNullableString(object.payment_intent),
+        stripe_charge_id: asNullableString(object.charge),
+        amount_usd: asNumber(invoice.total_usd),
+        status: "succeeded",
+        payment_method_brand: firstStringInArray((object.payment_settings as StripeObject | undefined)?.payment_method_types),
+        payment_method_last4: null,
+        paid_at: nowIso()
+      });
       await syncInvoiceStatuses(db, asString(invoice.site_id));
     }
   }
 
   if (eventType === "invoice.payment_failed" && stripeInvoiceId) {
+    await upsertInvoiceFromStripeObject(db, object);
     const invoice = await firstRecord(db, "SELECT id, site_id, total_usd FROM billing_invoices WHERE stripe_invoice_id = ? OR invoice_number = ? LIMIT 1", stripeInvoiceId, asString(object.number));
     if (invoice) {
       await db.prepare("UPDATE billing_invoices SET status = 'past_due', updated_at = ? WHERE id = ?")
         .bind(nowIso(), asString(invoice.id))
         .run();
-      await db.prepare(
-        `
-          INSERT INTO billing_transactions (
-            id, site_id, invoice_id, stripe_payment_intent_id, stripe_charge_id, amount_usd, status,
-            payment_method_brand, payment_method_last4, created_at, paid_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `
-      )
-        .bind(
-          crypto.randomUUID(),
-          asString(invoice.site_id),
-          asString(invoice.id),
-          asNullableString(object.payment_intent),
-          asNullableString(object.charge),
-          asNumber(invoice.total_usd),
-          "failed",
-          null,
-          null,
-          nowIso(),
-          null
-        )
-        .run();
+      await insertTransactionIfMissing(db, {
+        site_id: asString(invoice.site_id),
+        invoice_id: asString(invoice.id),
+        stripe_payment_intent_id: asNullableString(object.payment_intent),
+        stripe_charge_id: asNullableString(object.charge),
+        amount_usd: asNumber(invoice.total_usd),
+        status: "failed"
+      });
       await syncInvoiceStatuses(db, asString(invoice.site_id));
     }
   }
 
-  if ((eventType === "customer.subscription.updated" || eventType === "customer.subscription.deleted") && stripeSubscriptionId) {
-    const subscription = await firstRecord(db, "SELECT id, site_id FROM billing_subscriptions WHERE stripe_subscription_id = ? LIMIT 1", stripeSubscriptionId);
+  if (
+    (eventType === "customer.subscription.created" || eventType === "customer.subscription.updated" || eventType === "customer.subscription.deleted") &&
+    (stripeSubscriptionId || stripeCustomerId)
+  ) {
+    const subscription = await getSubscriptionByStripeReference(db, stripeSubscriptionId ?? "", stripeCustomerId);
     if (subscription) {
       const stripeStatus = asString(object.status);
       const nextStatus: BillingSubscriptionStatus =
         stripeStatus === "past_due" ? "past_due"
         : stripeStatus === "canceled" || stripeStatus === "unpaid" ? "canceled"
+        : stripeStatus === "paused" ? "suspended"
         : "active";
+      const currentPeriodStart = asNumber(object.current_period_start)
+        ? new Date(asNumber(object.current_period_start) * 1000).toISOString()
+        : asString(subscription.current_period_start);
+      const currentPeriodEnd = asNumber(object.current_period_end)
+        ? new Date(asNumber(object.current_period_end) * 1000).toISOString()
+        : asString(subscription.current_period_end);
       await db.prepare(
-        "UPDATE billing_subscriptions SET status = ?, updated_at = ? WHERE id = ?"
+        `
+          UPDATE billing_subscriptions
+          SET stripe_subscription_id = ?, status = ?, current_period_start = ?, current_period_end = ?, updated_at = ?
+          WHERE id = ?
+        `
       )
-        .bind(nextStatus, nowIso(), asString(subscription.id))
+        .bind(
+          stripeSubscriptionId ?? asNullableString(subscription.stripe_subscription_id),
+          nextStatus,
+          currentPeriodStart,
+          currentPeriodEnd,
+          nowIso(),
+          asString(subscription.id)
+        )
         .run();
       await syncInvoiceStatuses(db, asString(subscription.site_id));
+    }
+  }
+
+  if (eventType === "charge.succeeded" || eventType === "charge.failed") {
+    const invoice = asNullableString(object.invoice)
+      ? await firstRecord(db, "SELECT id, site_id FROM billing_invoices WHERE stripe_invoice_id = ? LIMIT 1", asString(object.invoice))
+      : null;
+    if (invoice) {
+      await insertTransactionIfMissing(db, {
+        site_id: asString(invoice.site_id),
+        invoice_id: asString(invoice.id),
+        stripe_payment_intent_id: asNullableString(object.payment_intent),
+        stripe_charge_id: asNullableString(object.id),
+        amount_usd: roundToCents(asNumber(object.amount) / 100),
+        status: eventType === "charge.succeeded" ? "succeeded" : "failed",
+        payment_method_brand: asNullableString(((object.payment_method_details as StripeObject | undefined)?.card as StripeObject | undefined)?.brand),
+        payment_method_last4: asNullableString(((object.payment_method_details as StripeObject | undefined)?.card as StripeObject | undefined)?.last4),
+        paid_at: eventType === "charge.succeeded" ? nowIso() : null
+      });
     }
   }
 

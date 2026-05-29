@@ -236,6 +236,10 @@ function AppShell() {
   const location = useLocation();
   const breadcrumb = location.pathname.split("/").filter(Boolean).slice(-2).join(" / ");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const billingStatusQuery = useQuery({
+    queryKey: qk.billing(currentContext.siteId),
+    queryFn: dashboardApi.fetchBilling
+  });
 
   useEffect(() => {
     setIsSidebarOpen(false);
@@ -339,6 +343,11 @@ function AppShell() {
             <div className="eg-pill">{breadcrumb}</div>
             <div className="eg-pill">{currentContext.environment}</div>
             <div className="eg-pill">{formatRelativeWindow("24h")}</div>
+            {billingStatusQuery.data?.subscription ? (
+              <div className={`eg-pill ${billingStatusQuery.data.subscription.status === "suspended" ? "eg-pill--danger" : billingStatusQuery.data.subscription.status === "past_due" ? "eg-pill--warning" : "eg-pill--success"}`}>
+                Billing {billingStatusQuery.data.subscription.status}
+              </div>
+            ) : null}
             {user ? <div className="eg-pill">{user.name}</div> : null}
             {user?.role === "global_admin" ? <div className="eg-pill eg-pill--accent">Global admin</div> : null}
             <div className="eg-health-pill is-success">D1 auth active</div>
@@ -349,6 +358,30 @@ function AppShell() {
         </header>
 
         <main className="eg-content">
+          {billingStatusQuery.data?.subscription.status === "past_due" ? (
+            <div className="eg-shell-banner eg-shell-banner--warning">
+              <div>
+                <strong>Billing recovery in progress</strong>
+                <span>
+                  Payment is overdue. Routing stays active until {formatDateTime(billingStatusQuery.data.suspension.grace_period_ends_at)}, then the site suspends automatically.
+                </span>
+              </div>
+              <NavLink className="eg-button eg-button--compact" to={sitePath("settings/billing")}>
+                Open billing
+              </NavLink>
+            </div>
+          ) : null}
+          {billingStatusQuery.data?.subscription.status === "suspended" ? (
+            <div className="eg-shell-banner eg-shell-banner--danger">
+              <div>
+                <strong>Routing suspended for unpaid billing</strong>
+                <span>{billingStatusQuery.data.suspension.reason || "Resolve the overdue invoice to resume event routing."}</span>
+              </div>
+              <NavLink className="eg-button eg-button--compact" to={sitePath("settings/billing")}>
+                Resolve billing
+              </NavLink>
+            </div>
+          ) : null}
           <Outlet />
         </main>
       </div>
@@ -4002,6 +4035,7 @@ function SettingsPage() {
 }
 
 function BillingPage() {
+  const location = useLocation();
   const billingQuery = useQuery({
     queryKey: qk.billing(currentContext.siteId),
     queryFn: dashboardApi.fetchBilling
@@ -4038,6 +4072,7 @@ function BillingPage() {
 
   const { customer, subscription, suspension } = billingQuery.data;
   const usagePercent = Math.min(100, Math.round((subscription.monthly_events_used / Math.max(subscription.included_events, 1)) * 100));
+  const checkoutState = new URLSearchParams(location.search).get("checkout");
 
   return (
     <div className="eg-page">
@@ -4055,6 +4090,18 @@ function BillingPage() {
           </div>
         }
       />
+      {checkoutState === "success" ? (
+        <div className="eg-alert eg-alert--success">
+          <strong>Stripe setup updated</strong>
+          <p>The payment method flow returned successfully. Refresh the page shortly if Stripe webhook updates are still arriving.</p>
+        </div>
+      ) : null}
+      {checkoutState === "cancelled" ? (
+        <div className="eg-alert eg-alert--warning">
+          <strong>Stripe setup cancelled</strong>
+          <p>The payment method flow was cancelled before completion. You can restart it any time from this page.</p>
+        </div>
+      ) : null}
       {error ? <p className="eg-form-error">{error}</p> : null}
       {suspension.is_suspended ? (
         <div className="eg-alert eg-alert--danger">
@@ -4088,6 +4135,15 @@ function BillingPage() {
             <ActionLine title="Usage percentage" text={`${usagePercent}% of the included monthly allowance`} />
             <ActionLine title="Grace period" text={subscription.grace_period_ends_at ? formatDateTime(subscription.grace_period_ends_at) : "Not active"} />
             <ActionLine title="Suspension reason" text={subscription.suspension_reason || "No active suspension."} />
+            <div className="eg-usage-meter">
+              <div className="eg-usage-meter__meta">
+                <span>Included usage envelope</span>
+                <strong>{usagePercent}%</strong>
+              </div>
+              <div className="eg-usage-meter__track">
+                <span className="eg-usage-meter__fill" style={{ width: `${Math.min(100, usagePercent)}%` }}></span>
+              </div>
+            </div>
           </div>
         </SurfaceCard>
       </section>
@@ -4118,6 +4174,15 @@ function BillingPage() {
                   <span className="eg-table__cell" data-label="Period">
                     {formatDateTime(invoice.period_start)} - {formatDateTime(invoice.period_end)}
                   </span>
+                  <span className="eg-table__cell" data-label="Links">
+                    {invoice.hosted_invoice_url ? (
+                      <a className="eg-inline-link" href={invoice.hosted_invoice_url} rel="noreferrer" target="_blank">Hosted invoice</a>
+                    ) : invoice.pdf_url ? (
+                      <a className="eg-inline-link" href={invoice.pdf_url} rel="noreferrer" target="_blank">Invoice PDF</a>
+                    ) : (
+                      <small>No hosted file yet</small>
+                    )}
+                  </span>
                 </div>
               ))}
             </div>
@@ -4138,6 +4203,66 @@ function BillingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </SurfaceCard>
+      </section>
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Transactions" subtitle="Every payment attempt recorded against this site">
+          {!billingQuery.data.transactions.length ? (
+            <StateCard compact title="No transactions yet" description="Transactions appear after Stripe payment events or manually created zero-dollar invoice settlements." />
+          ) : (
+            <div className="eg-table">
+              <div className="eg-table__head eg-table__row">
+                <span className="eg-table__cell">Status</span>
+                <span className="eg-table__cell">Amount</span>
+                <span className="eg-table__cell">Method</span>
+                <span className="eg-table__cell">Paid</span>
+              </div>
+              {billingQuery.data.transactions.map((transaction) => (
+                <div className="eg-table__row" key={transaction.id}>
+                  <div className="eg-table__cell" data-label="Status">
+                    <StatusBadge status={transaction.status === "succeeded" ? "healthy" : transaction.status === "failed" ? "warning" : "pending"}>
+                      {transaction.status}
+                    </StatusBadge>
+                  </div>
+                  <span className="eg-table__cell" data-label="Amount">${transaction.amount_usd.toFixed(2)}</span>
+                  <span className="eg-table__cell" data-label="Method">
+                    {transaction.payment_method_brand ? `${transaction.payment_method_brand.toUpperCase()} •••• ${transaction.payment_method_last4 || "----"}` : "Stripe-managed"}
+                  </span>
+                  <span className="eg-table__cell" data-label="Paid">
+                    {transaction.paid_at ? formatDateTime(transaction.paid_at) : formatDateTime(transaction.created_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </SurfaceCard>
+        <SurfaceCard title="Commercial policy" subtitle="What happens as usage and billing status change">
+          <div className="eg-list">
+            <div className="eg-list__row">
+              <div>
+                <strong>Free allowance</strong>
+                <span>Up to {subscription.included_events.toLocaleString("en-US")} routed events per monthly period.</span>
+              </div>
+            </div>
+            <div className="eg-list__row">
+              <div>
+                <strong>Overage rule</strong>
+                <span>${subscription.overage_block_price_usd.toFixed(2)} per extra {subscription.overage_block_events.toLocaleString("en-US")} events.</span>
+              </div>
+            </div>
+            <div className="eg-list__row">
+              <div>
+                <strong>Reminder cadence</strong>
+                <span>Automated reminders at 7, 3, 1, and 0 days before due date when payment is still pending.</span>
+              </div>
+            </div>
+            <div className="eg-list__row">
+              <div>
+                <strong>Suspension policy</strong>
+                <span>If payment remains overdue for 15 days after due date, event routing is suspended until billing is resolved.</span>
+              </div>
+            </div>
           </div>
         </SurfaceCard>
       </section>
@@ -4267,6 +4392,52 @@ function AdminBillingPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </SurfaceCard>
+      </section>
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Commercial policy" subtitle="The platform-wide billing guardrails currently enforced">
+          <div className="eg-list">
+            <div className="eg-list__row">
+              <div>
+                <strong>Free entry point</strong>
+                <span>Every site starts with a 1,000,000 routed event allowance per monthly cycle.</span>
+              </div>
+            </div>
+            <div className="eg-list__row">
+              <div>
+                <strong>Linear overage</strong>
+                <span>Each extra started 1,000,000-event block adds $5 without forcing a hard plan cliff.</span>
+              </div>
+            </div>
+            <div className="eg-list__row">
+              <div>
+                <strong>Recovery window</strong>
+                <span>Payment reminders are scheduled automatically and routing suspends after 15 overdue days if payment is not resolved.</span>
+              </div>
+            </div>
+          </div>
+        </SurfaceCard>
+        <SurfaceCard title="Finance operations posture" subtitle="Where to act first when revenue risk grows">
+          <div className="eg-list">
+            <div className="eg-list__row">
+              <div>
+                <strong>Past due accounts</strong>
+                <span>Use the subscriptions table below to reactivate, suspend, or move sites between commercial plans.</span>
+              </div>
+            </div>
+            <div className="eg-list__row">
+              <div>
+                <strong>Invoice pressure</strong>
+                <span>Watch overdue amount and successful payment trends together to understand recovery effectiveness.</span>
+              </div>
+            </div>
+            <div className="eg-list__row">
+              <div>
+                <strong>Manual intervention</strong>
+                <span>Issue manual invoices when the commercial flow needs custom amounts, custom due windows, or offline sales handling.</span>
+              </div>
+            </div>
           </div>
         </SurfaceCard>
       </section>
