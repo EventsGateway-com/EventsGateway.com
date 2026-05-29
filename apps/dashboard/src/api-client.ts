@@ -55,6 +55,7 @@ export type DashboardUser = {
   email: string;
   role: "member" | "global_admin";
   status: "active" | "blocked";
+  phone: string | null;
   created_at: string;
   last_login_at: string | null;
   password_changed_at: string | null;
@@ -96,6 +97,18 @@ export type InstallWizardInput = {
 
 export type DashboardBootstrap = {
   user: DashboardUser;
+  accessible_sites: Array<{
+    id: string;
+    org_id: string;
+    org_name: string;
+    project_id: string;
+    project_name: string;
+    name: string;
+    environment: string;
+    collector_url: string;
+    created_at: string;
+    role: string;
+  }>;
   site: {
     id: string;
     org_id: string;
@@ -1365,9 +1378,16 @@ export function fetchAdminUsers() {
 
 export function updateAdminUserRecord(
   userId: string,
-  input: { role?: "member" | "global_admin"; status?: "active" | "blocked" }
+  input: { name?: string; email?: string; phone?: string; role?: "member" | "global_admin"; status?: "active" | "blocked" }
 ) {
   return requestJson<DashboardUser>(`/v1/admin/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export function updateMyProfile(input: { name?: string; email?: string; phone?: string; password?: string }) {
+  return requestJson<{ success: boolean }>(`/v1/auth/me/profile`, {
     method: "PATCH",
     body: JSON.stringify(input)
   });

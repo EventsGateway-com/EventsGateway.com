@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS dashboard_users (
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'member',
   status TEXT NOT NULL DEFAULT 'active',
+  phone TEXT,
   created_at TEXT NOT NULL,
   last_login_at TEXT,
   password_changed_at TEXT

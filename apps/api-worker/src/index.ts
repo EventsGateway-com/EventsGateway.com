@@ -97,7 +97,8 @@ import {
   deleteSiteTransformation,
   updateSiteDestination,
   updateAdminUser,
-  updateSiteMembershipRole
+  updateSiteMembershipRole,
+  updateMyProfile
 } from "../../../packages/runtime/src/control-plane";
 import {
   createSiteBillingCheckoutSession,
@@ -396,6 +397,25 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
       const bootstrap = await getBootstrap(env.DB, authorization.user.id);
       return json(context, bootstrap);
     }
+
+    if (segments[2] === "me" && segments[3] === "profile" && method === "PATCH") {
+      const authorization = await authorizeRequest(request, env);
+      if (!authorization || authorization.kind !== "session") {
+        return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+      }
+      try {
+        const body = await readJson<{ name?: string; email?: string; phone?: string; password?: string }>(request);
+        const result = await updateMyProfile(env.DB, authorization.user.id, body);
+        return json(context, result);
+      } catch (error) {
+        return errorResponse(
+          context,
+          "profile_update_failed",
+          error instanceof Error ? error.message : "Unable to update profile.",
+          400
+        );
+      }
+    }
   }
 
   if (segments[0] === "v1" && segments[1] === "bootstrap" && method === "GET") {
@@ -655,16 +675,22 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
 
     if (method === "PATCH") {
       const patch = await readJson<Partial<EventRoute>>(request);
-      const route = env?.DB
-        ? await updateSiteRoute(env.DB, siteId, routeId, patch)
-        : updateRoute(siteId, routeId, patch);
+      if (env?.DB) {
+        const route = await updateSiteRoute(env.DB, siteId, routeId, patch);
+        await publishSiteRoutes(env.DB, siteId, env);
+        return route ? json(context, route) : notFound(context, `Route ${routeId} not found`);
+      }
+      const route = updateRoute(siteId, routeId, patch);
       return route ? json(context, route) : notFound(context, `Route ${routeId} not found`);
     }
 
     if (method === "DELETE") {
-      const deleted = env?.DB
-        ? await deleteSiteRoute(env.DB, siteId, routeId)
-        : deleteRoute(siteId, routeId);
+      if (env?.DB) {
+        const deleted = await deleteSiteRoute(env.DB, siteId, routeId);
+        if (deleted) await publishSiteRoutes(env.DB, siteId, env);
+        return deleted ? json(context, { deleted: true }) : notFound(context, `Route ${routeId} not found`);
+      }
+      const deleted = deleteRoute(siteId, routeId);
       return deleted ? json(context, { deleted: true }) : notFound(context, `Route ${routeId} not found`);
     }
   }
@@ -678,7 +704,9 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
       const body = await readJson<Omit<ReturnType<typeof listDestinations>[number], "id" | "site_id" | "secret_preview">>(request);
       if (env?.DB) {
         try {
-          return json(context, await createSiteDestination(env.DB, siteId, body), { status: 201 });
+          const destination = await createSiteDestination(env.DB, siteId, body);
+          await publishSiteRoutes(env.DB, siteId, env);
+          return json(context, destination, { status: 201 });
         } catch (error) {
           return errorResponse(context, "destination_create_failed", error instanceof Error ? error.message : "Unable to create destination.", 400);
         }
@@ -729,7 +757,11 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
     }
     if (method === "POST") {
       const body = await readJson<Omit<ReturnType<typeof listTransformations>[number], "id" | "site_id" | "version">>(request);
-      if (env?.DB) return json(context, await createSiteTransformation(env.DB, siteId, body), { status: 201 });
+      if (env?.DB) {
+        const transformation = await createSiteTransformation(env.DB, siteId, body);
+        await publishSiteRoutes(env.DB, siteId, env);
+        return json(context, transformation, { status: 201 });
+      }
       return json(
         context,
         createTransformation(siteId, body),
@@ -748,18 +780,22 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
     }
     if (method === "PATCH") {
       const patch = await readJson<Record<string, unknown>>(request);
-      const transformation = env?.DB
-        ? await updateSiteTransformation(env.DB, siteId, transformId, patch)
-        : updateTransformation(siteId, transformId, patch);
+      if (env?.DB) {
+        const transformation = await updateSiteTransformation(env.DB, siteId, transformId, patch);
+        await publishSiteRoutes(env.DB, siteId, env);
+        return transformation ? json(context, transformation) : notFound(context, `Transformation ${transformId} not found`);
+      }
+      const transformation = updateTransformation(siteId, transformId, patch);
       return transformation ? json(context, transformation) : notFound(context, `Transformation ${transformId} not found`);
     }
     if (method === "DELETE") {
-      const deleted = env?.DB
-        ? await deleteSiteTransformation(env.DB, siteId, transformId)
-        : deleteTransformation(siteId, transformId);
-      return deleted
-        ? json(context, { deleted: true })
-        : notFound(context, `Transformation ${transformId} not found`);
+      if (env?.DB) {
+        const deleted = await deleteSiteTransformation(env.DB, siteId, transformId);
+        if (deleted) await publishSiteRoutes(env.DB, siteId, env);
+        return deleted ? json(context, { deleted: true }) : notFound(context, `Transformation ${transformId} not found`);
+      }
+      const deleted = deleteTransformation(siteId, transformId);
+      return deleted ? json(context, { deleted: true }) : notFound(context, `Transformation ${transformId} not found`);
     }
   }
 

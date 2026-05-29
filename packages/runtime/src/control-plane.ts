@@ -21,6 +21,7 @@ export type DashboardUser = {
   email: string;
   role: DashboardUserRole;
   status: DashboardUserStatus;
+  phone: string | null;
   created_at: string;
   last_login_at: string | null;
   password_changed_at: string | null;
@@ -703,6 +704,7 @@ function toDashboardUser(record: DatabaseRecord): DashboardUser {
     email: asString(record.email),
     role: toDashboardUserRole(record.role),
     status: toDashboardUserStatus(record.status),
+    phone: asNullableString(record.phone),
     created_at: asString(record.created_at),
     last_login_at: asNullableString(record.last_login_at),
     password_changed_at: asNullableString(record.password_changed_at)
@@ -2111,7 +2113,7 @@ export async function loginUserSession(
   const record = await firstRecord(
     db,
     `
-      SELECT id, name, email, role, status, password_hash, created_at, last_login_at, password_changed_at
+      SELECT id, name, email, role, status, password_hash, created_at, phone, last_login_at, password_changed_at
       FROM dashboard_users
       WHERE email = ?
       LIMIT 1
@@ -2280,7 +2282,7 @@ async function createSession(db: DatabaseBinding, userId: string, existingUser?:
     (await firstRecord(
       db,
       `
-        SELECT id, name, email, role, status, created_at, last_login_at, password_changed_at
+        SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
         FROM dashboard_users
         WHERE id = ?
         LIMIT 1
@@ -2901,7 +2903,7 @@ export async function acceptSiteInvite(
   let userRecord = await firstRecord(
     db,
     `
-      SELECT id, name, email, role, status, password_hash, created_at, last_login_at, password_changed_at
+      SELECT id, name, email, role, status, password_hash, created_at, phone, last_login_at, password_changed_at
       FROM dashboard_users
       WHERE email = ?
       LIMIT 1
@@ -3030,13 +3032,50 @@ export async function acceptSiteInvite(
   return createSession(db, userId, userRecord);
 }
 
+export async function updateMyProfile(
+  dbInput: DatabaseBinding | undefined,
+  userId: string,
+  input: { name?: string; email?: string; phone?: string; password?: string }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const target = await firstRecord(
+    db,
+    "SELECT id, name, email, phone FROM dashboard_users WHERE id = ? LIMIT 1",
+    userId
+  );
+  if (!target) {
+    throw new Error("User not found.");
+  }
+
+  const nextName = input.name?.trim() || asString(target.name);
+  const nextEmail = input.email ? normalizeEmail(input.email) : asString(target.email);
+  const nextPhone = input.phone !== undefined ? input.phone.trim() : asNullableString(target.phone);
+
+  await db.prepare("UPDATE dashboard_users SET name = ?, email = ?, phone = ? WHERE id = ?")
+    .bind(nextName, nextEmail, nextPhone || null, userId)
+    .run();
+
+  if (input.password && input.password.trim().length >= 8) {
+    const passwordChangedAt = nowIso();
+    await db.prepare(
+      "UPDATE dashboard_users SET password_hash = ?, password_changed_at = ? WHERE id = ?"
+    )
+      .bind(await sha256Hex(input.password.trim()), passwordChangedAt, userId)
+      .run();
+    
+    // Invalidate other sessions
+    await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(userId).run();
+  }
+
 export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId: string): Promise<BootstrapPayload> {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
   const user = await firstRecord(
     db,
     `
-      SELECT id, name, email, role, status, created_at, last_login_at, password_changed_at
+      SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
       FROM dashboard_users
       WHERE id = ?
       LIMIT 1
@@ -3047,10 +3086,35 @@ export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId:
     throw new Error("User not found.");
   }
 
+  let accessibleSites: any[] = [];
+  if (user.role === "global_admin") {
+    accessibleSites = await allRecords(
+      db,
+      `
+        SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at, 'admin' as role
+        FROM sites
+        ORDER BY created_at ASC
+      `
+    );
+  } else {
+    accessibleSites = await allRecords(
+      db,
+      `
+        SELECT s.id, s.org_id, s.org_name, s.project_id, s.project_name, s.name, s.environment, s.collector_url, s.created_at, sm.role
+        FROM sites s
+        INNER JOIN site_memberships sm ON sm.site_id = s.id
+        WHERE sm.user_id = ? AND sm.status = 'active'
+        ORDER BY s.created_at ASC
+      `,
+      userId
+    );
+  }
+
   const site = await getDefaultSite(db);
   const domains = await listSiteDomains(db, site.id);
   return {
     user: toDashboardUser(user),
+    accessible_sites: accessibleSites.map(s => ({ ...s, id: asString(s.id) })),
     site,
     domains
   };
@@ -3087,7 +3151,7 @@ export async function getAdminOverview(dbInput: DatabaseBinding | undefined): Pr
     allRecords(
       db,
       `
-        SELECT id, name, email, role, status, created_at, last_login_at, password_changed_at
+        SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
         FROM dashboard_users
         ORDER BY created_at DESC, email DESC
         LIMIT 6
@@ -3200,7 +3264,7 @@ export async function updateAdminUser(
   const updated = await firstRecord(
     db,
     `
-      SELECT id, name, email, role, status, created_at, last_login_at, password_changed_at
+      SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
       FROM dashboard_users
       WHERE id = ?
       LIMIT 1

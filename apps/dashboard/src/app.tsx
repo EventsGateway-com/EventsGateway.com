@@ -10,6 +10,7 @@ import {
   qk
 } from "./mock-data";
 import { useAuth } from "./auth";
+import { SidePane } from "./side-pane";
 import {
   loadCaptchaConfig,
   readCaptchaSiteKey,
@@ -280,18 +281,6 @@ function getNavGroups(isAdmin: boolean): NavGroup[] {
     }
   ];
 
-  if (isAdmin) {
-    groups.push({
-      label: "Admin",
-      items: [
-        { label: "Platform Overview", href: sitePath("admin/overview") },
-        { label: "Billing Admin", href: sitePath("admin/billing") },
-        { label: "Users Admin", href: sitePath("admin/users") },
-        { label: "Sites Admin", href: sitePath("admin/sites") }
-      ]
-    });
-  }
-
   return groups;
 }
 
@@ -383,52 +372,77 @@ function AppShell() {
             </div>
           ))}
 
-          <div className="eg-sidebar__footer">
-            <span>Compiled routing</span>
-            <strong>v3 active</strong>
-            {user ? (
-              <>
-                <span>Signed in as</span>
-                <strong>{user.email}</strong>
-              </>
-            ) : null}
           </div>
-        </div>
       </aside>
 
       <div className="eg-main">
         <header className="eg-topbar">
           <div className="eg-topbar__primary">
             <button
-              aria-controls="dashboard-navigation"
-              aria-expanded={isSidebarOpen}
+              aria-label="Toggle navigation"
               className="eg-mobile-nav-toggle"
-              onClick={() => setIsSidebarOpen((open) => !open)}
+              onClick={() => setIsSidebarOpen(true)}
               type="button"
             >
               Menu
             </button>
             <div>
-              <div className="eyebrow">Org / Project / Site</div>
               <h1>{bootstrap?.site.name ?? currentContext.siteName}</h1>
-              <p>{bootstrap?.site.org_name ?? params.orgId} · {bootstrap?.site.project_name ?? params.projectId} · {bootstrap?.site.environment ?? params.siteId}</p>
             </div>
           </div>
-          <div className="eg-topbar__controls">
-            <div className="eg-pill">{breadcrumb}</div>
-            <div className="eg-pill">{currentContext.environment}</div>
-            <div className="eg-pill">{formatRelativeWindow("24h")}</div>
-            {billingStatusQuery.data?.subscription ? (
-              <div className={`eg-pill ${billingStatusQuery.data.subscription.status === "suspended" ? "eg-pill--danger" : billingStatusQuery.data.subscription.status === "past_due" ? "eg-pill--warning" : "eg-pill--success"}`}>
-                Billing {billingStatusQuery.data.subscription.status}
+          <div className="eg-topbar__controls" style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <select
+              className="eg-input"
+              style={{ minHeight: "2rem", padding: "0.2rem 1.5rem 0.2rem 0.5rem", width: "auto" }}
+              value={bootstrap?.site.id || ""}
+              onChange={(e) => {
+                const s = bootstrap?.accessible_sites.find(x => x.id === e.target.value);
+                if (s) window.location.assign(`/app/orgs/${s.org_id}/projects/${s.project_id}/sites/${s.id}/overview`);
+              }}
+            >
+              {bootstrap?.accessible_sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            <div style={{ position: "relative" }} className="eg-profile-menu-container">
+              <button
+                className="eg-button eg-button--compact"
+                type="button"
+                onClick={() => {
+                  const m = document.getElementById("profile-dropdown");
+                  if(m) m.style.display = m.style.display === "none" ? "block" : "none";
+                }}
+              >
+                {user?.name || user?.email}
+              </button>
+              <div
+                id="profile-dropdown"
+                style={{
+                  display: "none", position: "absolute", top: "100%", right: 0, marginTop: "0.5rem",
+                  background: "var(--eg-bg-elevated)", border: "1px solid var(--eg-border)",
+                  borderRadius: "0.5rem", padding: "0.5rem", minWidth: "150px", zIndex: 100,
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+                }}
+              >
+                <div style={{ padding: "0.5rem", borderBottom: "1px solid var(--eg-border)", marginBottom: "0.5rem" }}>
+                  <strong style={{ display: "block" }}>{user?.name}</strong>
+                  <small style={{ color: "var(--eg-muted)" }}>{user?.email}</small>
+                </div>
+                {user?.role === "global_admin" && (
+                  <NavLink className="eg-nav-link" style={{ display: "block", marginBottom: "0.5rem" }} to="/admin/overview">
+                    Platform Admin
+                  </NavLink>
+                )}
+                <NavLink className="eg-nav-link" style={{ display: "block", marginBottom: "0.5rem" }} to="/app/profile">
+                  My Profile
+                </NavLink>
+                <button
+                  className="eg-button eg-button--compact"
+                  style={{ width: "100%", textAlign: "left", background: "transparent", border: "none" }}
+                  onClick={() => { logout(); window.location.assign("/login"); }}
+                >
+                  Sign out
+                </button>
               </div>
-            ) : null}
-            {user ? <div className="eg-pill">{user.name}</div> : null}
-            {user?.role === "global_admin" ? <div className="eg-pill eg-pill--accent">Global admin</div> : null}
-            <div className="eg-health-pill is-success">D1 auth active</div>
-            <button className="eg-button eg-button--compact" onClick={() => void logout()} type="button">
-              Logout
-            </button>
+            </div>
           </div>
         </header>
 
@@ -749,7 +763,7 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate replace to={sitePath("overview")} />;
+    return <Navigate replace to="/app/sites" />;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -855,7 +869,7 @@ function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate replace to={sitePath("overview")} />;
+    return <Navigate replace to="/app/sites" />;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -975,7 +989,7 @@ function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate replace to={sitePath("overview")} />;
+    return <Navigate replace to="/app/sites" />;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1059,7 +1073,7 @@ function ResetPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate replace to={sitePath("overview")} />;
+    return <Navigate replace to="/app/sites" />;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1150,7 +1164,7 @@ function AcceptInvitePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
-    return <Navigate replace to={sitePath("overview")} />;
+    return <Navigate replace to="/app/sites" />;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1174,7 +1188,7 @@ function AcceptInvitePage() {
         password
       });
       writeSessionToken(result.session.token);
-      window.location.assign(sitePath("overview"));
+      window.location.assign("/app/sites");
     } catch (submitError) {
       setErrors(mapAcceptInviteErrors(submitError instanceof Error ? submitError.message : "Unable to accept invitation."));
     } finally {
@@ -7104,6 +7118,129 @@ function NotFoundPage() {
   );
 }
 
+
+function SiteSelectorPage() {
+  const { bootstrap, user } = useAuth();
+  if (!user || !bootstrap) return <Navigate replace to="/login" />;
+
+  return (
+    <div className="eg-auth-shell" style={{ alignItems: "flex-start", paddingTop: "4rem" }}>
+      <div style={{ width: "min(100%, 800px)", display: "grid", gap: "2rem" }}>
+        <header>
+          <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>Select a site</h1>
+          <p style={{ color: "var(--eg-muted)" }}>Choose a site to access its control plane.</p>
+        </header>
+        <div className="eg-grid eg-grid--two">
+          {bootstrap.accessible_sites.map(site => (
+            <a 
+              key={site.id} 
+              href={`/app/orgs/${site.org_id}/projects/${site.project_id}/sites/${site.id}/overview`}
+              className="eg-card"
+              style={{ display: "block", textDecoration: "none", transition: "transform 0.2s" }}
+            >
+              <h3 style={{ margin: "0 0 0.5rem", color: "var(--eg-accent)" }}>{site.name}</h3>
+              <p style={{ color: "var(--eg-muted)", fontSize: "0.9rem", margin: 0 }}>{site.org_name} · {site.project_name}</p>
+              <div style={{ marginTop: "1rem", fontSize: "0.8rem", color: "var(--eg-subtle)" }}>
+                Role: {site.role}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MyProfilePage() {
+  const { user, bootstrap } = useAuth();
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setMessage("");
+    try {
+      await dashboardApi.updateMyProfile({ name, email, phone, password });
+      setMessage("Profile updated successfully.");
+      if (password) {
+        window.location.assign("/login");
+      }
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Failed to update profile.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="eg-page">
+      <PageIntro title="My Profile" description="Manage your personal account details." />
+      <SurfaceCard title="Personal Information">
+        <form onSubmit={handleSubmit} className="eg-stack" style={{ maxWidth: "400px" }}>
+          <label className="eg-field">
+            <span>Name</span>
+            <input className="eg-input" type="text" value={name} onChange={e => setName(e.target.value)} required />
+          </label>
+          <label className="eg-field">
+            <span>Email</span>
+            <input className="eg-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+          </label>
+          <label className="eg-field">
+            <span>Phone</span>
+            <input className="eg-input" type="text" value={phone} onChange={e => setPhone(e.target.value)} />
+          </label>
+          <label className="eg-field">
+            <span>New Password (optional)</span>
+            <input className="eg-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Leave blank to keep current" />
+          </label>
+          {message && <p className={message.includes("success") ? "eg-form-success" : "eg-form-error"}>{message}</p>}
+          <button className="eg-button eg-button--primary" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save changes"}
+          </button>
+        </form>
+      </SurfaceCard>
+    </div>
+  );
+}
+
+function ProtectedAdminShell() {
+  const { user } = useAuth();
+  if (!user || user.role !== "global_admin") return <Navigate replace to="/app/sites" />;
+  
+  return (
+    <div className="eg-shell">
+      <aside className="eg-sidebar is-open" style={{ transform: "none", position: "sticky", top: 0, height: "100dvh", float: "left" }}>
+        <div className="eg-brand">
+          <div className="eg-brand__mark">EG</div>
+          <div><strong>Platform Admin</strong></div>
+        </div>
+        <div className="eg-sidebar__content">
+          <nav style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <NavLink className={({ isActive }) => `eg-nav-link${isActive ? " is-active" : ""}`} to="/admin/overview">Overview</NavLink>
+            <NavLink className={({ isActive }) => `eg-nav-link${isActive ? " is-active" : ""}`} to="/admin/billing">Billing</NavLink>
+            <NavLink className={({ isActive }) => `eg-nav-link${isActive ? " is-active" : ""}`} to="/admin/users">Users</NavLink>
+            <NavLink className={({ isActive }) => `eg-nav-link${isActive ? " is-active" : ""}`} to="/admin/sites">Sites</NavLink>
+            <div style={{ marginTop: "2rem" }}>
+              <NavLink className="eg-nav-link" to="/app/sites">← Back to Sites</NavLink>
+            </div>
+          </nav>
+        </div>
+      </aside>
+      <div className="eg-main">
+        <header className="eg-topbar">
+          <div className="eg-topbar__primary"><h1>Global Administration</h1></div>
+        </header>
+        <Outlet />
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { isReady, user } = useAuth();
 
@@ -7117,13 +7254,22 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate replace to={user ? sitePath("overview") : "/login"} />} />
+      <Route path="/" element={<Navigate replace to={user ? "/app/sites" : "/login"} />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/accept-invite" element={<AcceptInvitePage />} />
+      <Route path="/app/sites" element={<SiteSelectorPage />} />
+      <Route path="/admin" element={<ProtectedAdminShell />}>
+        <Route index element={<Navigate replace to="overview" />} />
+        <Route path="overview" element={<AdminOverviewPage />} />
+        <Route path="billing" element={<AdminBillingPage />} />
+        <Route path="users" element={<AdminUsersPage />} />
+        <Route path="sites" element={<AdminSitesPage />} />
+      </Route>
       <Route path="/app/orgs/:orgId/projects/:projectId/sites/:siteId" element={<ProtectedAppShell />}>
+        <Route path="profile" element={<MyProfilePage />} />
         <Route index element={<Navigate replace to="overview" />} />
         <Route path="overview" element={<OverviewPage />} />
         <Route path="realtime" element={<RealtimePage />} />
@@ -7157,15 +7303,10 @@ export default function App() {
         <Route path="settings/api-keys" element={<ApiKeysPage />} />
         <Route path="settings/members" element={<MembersPage />} />
         <Route path="settings/general" element={<SettingsPage />} />
-        <Route element={<ProtectedAdminOutlet />}>
-          <Route path="admin/overview" element={<AdminOverviewPage />} />
-          <Route path="admin/billing" element={<AdminBillingPage />} />
-          <Route path="admin/users" element={<AdminUsersPage />} />
-          <Route path="admin/sites" element={<AdminSitesPage />} />
-        </Route>
+        
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-      <Route path="*" element={<Navigate replace to={user ? sitePath("overview") : "/login"} />} />
+      <Route path="*" element={<Navigate replace to={user ? "/app/sites" : "/login"} />} />
     </Routes>
   );
 }
