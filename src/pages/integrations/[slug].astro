@@ -29,6 +29,7 @@ const { item } = Astro.props as {
         <span class="eyebrow">Integration</span>
         <img class="integration-hero-logo" src={`/integrations/logos/${item.slug}.svg`} alt={`${item.label} logo`} loading="eager" />
         <h1 class="page-title">{item.title}</h1>
+        <p class="page-copy page-copy--lead">{item.summary}</p>
         <p class="page-copy">{item.hero}</p>
         <div class="button-row">
           <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
@@ -46,7 +47,7 @@ const { item } = Astro.props as {
       <SectionHeader
         eyebrow="Why It Matters"
         title={`Why teams connect ${item.label} through EVENTS Gateway`}
-        description="The value is practical: cleaner data, fewer mismatched numbers, and better optimization inputs without rebuilding tracking from scratch."
+        description={item.summary}
       />
       <div class="card-grid">
         {item.points.map((point) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={item.label} text={point} />)}
@@ -59,7 +60,7 @@ const { item } = Astro.props as {
       <SectionHeader
         eyebrow="Use Cases"
         title="Where this integration creates the biggest lift"
-        description="These are the situations where one shared event model usually saves the most time and prevents the most reporting drift."
+        description={item.hero}
       />
       <div class="card-grid">
         {item.useCases.map((point) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={item.label} text={point} />)}
@@ -72,10 +73,10 @@ const { item } = Astro.props as {
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
           <span class="eyebrow">Next Step</span>
-          <h2 class="section-title">Connect this destination without multiplying tracking complexity.</h2>
+          <h2 class="section-title">Connect {item.label} without multiplying tracking complexity.</h2>
           <p class="section-copy">
-            EVENTS Gateway lets your team keep one cleaner event setup while sending the same lead, purchase, and
-            lifecycle truth to the platforms that matter most.
+            Keep {item.label} connected to the same clean lead, purchase, and lifecycle events that power the rest of
+            your stack, without rebuilding tracking for every new destination.
           </p>
           <div class="button-row">
             <Button href="/pricing/" variant="primary" icon="arrow-right">Open pricing</Button>
@@ -93,5 +94,11 @@ const { item } = Astro.props as {
     height: 4.75rem;
     border-radius: 1.15rem;
     display: block;
+  }
+
+  .page-copy--lead {
+    color: var(--color-text);
+    font-size: 1.1rem;
+    max-width: 58rem;
   }
 </style>

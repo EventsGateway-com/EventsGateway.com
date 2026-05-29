@@ -297,7 +297,7 @@ function AppShell() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const billingStatusQuery = useQuery({
     queryKey: qk.billing(currentContext.siteId),
-    queryFn: dashboardApi.fetchBilling
+    queryFn: () => dashboardApi.fetchBilling(currentContext.siteId)
   });
 
   useEffect(() => {
@@ -3888,47 +3888,50 @@ function MembersPage() {
         </SurfaceCard>
       </section>
 
-      {showInviteForm ? (
-        <SurfaceCard title="Add user" subtitle="Send a secure invitation and choose the site role before access is activated">
-          <form className="eg-auth-form" onSubmit={handleInviteSubmit}>
-            <label className="eg-field">
-              <span>Name</span>
-              <input
-                className="eg-input"
-                onChange={(event) => setInviteDraft((current) => ({ ...current, invited_name: event.target.value }))}
-                placeholder="Teammate name"
-                type="text"
-                value={inviteDraft.invited_name}
-              />
-            </label>
-            <label className="eg-field">
-              <span>Email</span>
-              <input
-                className="eg-input"
-                onChange={(event) => setInviteDraft((current) => ({ ...current, email: event.target.value }))}
-                placeholder="teammate@company.com"
-                required
-                type="email"
-                value={inviteDraft.email}
-              />
-            </label>
-            <label className="eg-field">
-              <span>Role</span>
-              <select
-                className="eg-input"
-                onChange={(event) => setInviteDraft((current) => ({ ...current, role: event.target.value as SiteMemberRole }))}
-                value={inviteDraft.role}
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
-            </label>
-            <button className="eg-button eg-button--primary" disabled={inviteMutation.isPending} type="submit">
-              {inviteMutation.isPending ? "Sending invite..." : "Send invite"}
-            </button>
-          </form>
-        </SurfaceCard>
-      ) : null}
+      <SidePane
+        isOpen={showInviteForm}
+        onClose={() => setShowInviteForm(false)}
+        title="Add user"
+        subtitle="Send a secure invitation and choose the site role before access is activated"
+      >
+        <form className="eg-stack" onSubmit={handleInviteSubmit}>
+          <label className="eg-field">
+            <input
+              className="eg-input"
+              onChange={(event) => setInviteDraft((current) => ({ ...current, invited_name: event.target.value }))}
+              placeholder="Teammate name"
+              type="text"
+              value={inviteDraft.invited_name}
+            />
+            <span>Name</span>
+          </label>
+          <label className="eg-field">
+            <input
+              className="eg-input"
+              onChange={(event) => setInviteDraft((current) => ({ ...current, email: event.target.value }))}
+              placeholder="teammate@company.com"
+              required
+              type="email"
+              value={inviteDraft.email}
+            />
+            <span>Email</span>
+          </label>
+          <label className="eg-field">
+            <select
+              className="eg-input"
+              onChange={(event) => setInviteDraft((current) => ({ ...current, role: event.target.value as SiteMemberRole }))}
+              value={inviteDraft.role}
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+            <span>Role</span>
+          </label>
+          <button className="eg-button eg-button--primary" disabled={inviteMutation.isPending} type="submit">
+            {inviteMutation.isPending ? "Sending invite..." : "Send invite"}
+          </button>
+        </form>
+      </SidePane>
 
       {!membersQuery.data ? (
         <StateCard title="Loading members" description="Collecting active members and pending invitations for this site." />
@@ -5062,11 +5065,11 @@ function BillingPage() {
   const location = useLocation();
   const billingQuery = useQuery({
     queryKey: qk.billing(currentContext.siteId),
-    queryFn: dashboardApi.fetchBilling
+    queryFn: () => dashboardApi.fetchBilling(currentContext.siteId)
   });
   const invoicesQuery = useQuery({
     queryKey: qk.billingInvoices(currentContext.siteId),
-    queryFn: dashboardApi.fetchBillingInvoices
+    queryFn: () => dashboardApi.fetchBillingInvoices(currentContext.siteId)
   });
   const [error, setError] = useState("");
   const checkoutMutation = useMutation({
@@ -5450,15 +5453,15 @@ function AdminBillingPage() {
   });
   const overviewQuery = useQuery({
     queryKey: qk.adminBillingOverview(),
-    queryFn: dashboardApi.fetchAdminBillingOverview
+    queryFn: () => dashboardApi.fetchAdminBillingOverview()
   });
   const subscriptionsQuery = useQuery({
     queryKey: qk.adminBillingSubscriptions(),
-    queryFn: dashboardApi.fetchAdminBillingSubscriptions
+    queryFn: () => dashboardApi.fetchAdminBillingSubscriptions()
   });
   const transactionsQuery = useQuery({
     queryKey: qk.adminBillingTransactions(),
-    queryFn: dashboardApi.fetchAdminBillingTransactions
+    queryFn: () => dashboardApi.fetchAdminBillingTransactions()
   });
 
   const refreshBilling = async () => {
