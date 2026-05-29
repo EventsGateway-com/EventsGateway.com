@@ -4,8 +4,8 @@ export const siteConfig = {
   domain: "https://eventsgateway.com",
   description:
     "Open source tracking and event routing platform for Meta, GA4, Google Ads, and custom event pipelines.",
-  tagline: "Open source tracking and event routing with a Cloudflare-native delivery path.",
-  footerStatus: "Open source event infrastructure for collection, routing, delivery, and observability.",
+  tagline: "Open source event routing for cleaner conversions, stronger targeting, and higher Event Match Score.",
+  footerStatus: "Open source event routing for cleaner signals, better attribution, and stronger campaign performance.",
   nav: [
     { label: "Home", href: "/" },
     { label: "Pricing", href: "/pricing/" },
