@@ -13,9 +13,9 @@ import { siteConfig } from "../config/site";
 const heroTelemetry = homeContent.stats;
 
 const heroSignals = [
-  "Cloudflare-native runtime",
-  "Free-tier-friendly for small sites",
-  "One collector, many destinations"
+  "Best-priced commercial model",
+  "One setup, many destinations",
+  "Clear cost from day one"
 ];
 
 const softwareJsonLd = {
@@ -28,8 +28,8 @@ const softwareJsonLd = {
 ---
 
 <BaseLayout
-  title={`${siteConfig.name} — Cloudflare-Native Event Tracking`}
-  description={siteConfig.description}
+  title={`${siteConfig.name} — Lower-Cost Event Routing`}
+  description={homeContent.description}
   canonicalPath="/"
   jsonLd={softwareJsonLd}
 >
@@ -48,11 +48,11 @@ const softwareJsonLd = {
           <h1 class="hero-title">{homeContent.title}</h1>
           <p class="hero-copy">{homeContent.description}</p>
           <div class="hero-actions">
-            <Button href={siteConfig.cta.primary.href} variant="primary" icon="download">
-              {siteConfig.cta.primary.label}
+            <Button href={siteConfig.auth.register.href} variant="primary" icon="arrow-right">
+              Start Free
             </Button>
-            <Button href={siteConfig.cta.secondary.href} variant="secondary" icon="mail">
-              {siteConfig.cta.secondary.label}
+            <Button href="/contact/" variant="secondary" icon="mail">
+              Contact
             </Button>
           </div>
           <div class="pill-row">
@@ -83,17 +83,17 @@ const softwareJsonLd = {
           <SurfaceGlow class="hero-visual__glow hero-visual__glow--secondary" />
           <div class="hero-orbit hero-orbit--outer"></div>
           <div class="hero-orbit hero-orbit--inner"></div>
-          <div class="hero-visual__badge hero-visual__badge--top">Cloudflare-native runtime</div>
-          <div class="hero-visual__badge hero-visual__badge--bottom">Free-tier-friendly start</div>
+          <div class="hero-visual__badge hero-visual__badge--top">One setup, many destinations</div>
+          <div class="hero-visual__badge hero-visual__badge--bottom">Predictable commercial pricing</div>
           <div class="hero-side-panel hero-side-panel--left">
-            <span class="hero-side-panel__label">Tracking posture</span>
+            <span class="hero-side-panel__label">Commercial posture</span>
             <strong>Collect once</strong>
             <small>Send clean events to multiple destinations from one control layer</small>
           </div>
           <div class="hero-side-panel hero-side-panel--right">
             <span class="hero-side-panel__label">Cost posture</span>
-            <strong>Small-site friendly</strong>
-            <small>Many low-volume sites can stay inside Cloudflare free-tier limits</small>
+            <strong>Lower-cost by design</strong>
+            <small>Replace heavier vendor stacks with one pricing model that stays easy to understand</small>
           </div>
           <CommandCenterMockup instanceId="hero" />
         </div>
@@ -122,8 +122,8 @@ const softwareJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Capability Grid"
-        title="One Cloudflare-native layer for collection, routing, and delivery."
-        description="Every capability is designed to reduce vendor sprawl, simplify installs, and keep event operations readable."
+        title="One commercial layer for collection, routing, and delivery."
+        description="Every capability is designed to reduce vendor sprawl, simplify installs, and keep performance marketing operations readable."
       />
       <div class="capability-grid">
         {
@@ -170,7 +170,7 @@ const softwareJsonLd = {
           <SectionHeader
             eyebrow="Workflow"
             title="A direct path from tracker install to live event routing."
-            description="Start with one lightweight integration, route through Cloudflare, and expand destinations only when your stack needs them."
+            description="Start with one lightweight integration, route once, and expand destinations only when your stack needs them."
           />
           <ul class="info-list">
             <li>Built for founders, growth teams, ecommerce operators, and product teams.</li>
@@ -194,7 +194,7 @@ const softwareJsonLd = {
       <SectionHeader
         eyebrow="Control Center"
         title="A product-looking interface for a real event pipeline."
-        description="The visual layer reinforces what matters: one collector, clear routing, operational visibility, and a deployment footprint that stays friendly to small sites."
+        description="The visual layer reinforces what matters: one collector, clear routing, operational visibility, and a cost model that stays legible as volume grows."
       />
       <CommandCenterMockup instanceId="proof" />
     </Container>
@@ -203,9 +203,9 @@ const softwareJsonLd = {
   <section class="section section--tight">
     <Container>
       <SectionHeader
-        eyebrow="Cloudflare Stack"
-        title="Built for edge delivery without traditional backend overhead."
-        description="The platform story is simple: lightweight tracker, Cloudflare-native runtime, centralized routing, and a cost profile that scales with actual usage."
+        eyebrow="Commercial Advantage"
+        title="Why teams choose EventsGateway over heavier alternatives."
+        description="The product story is simple: one setup, lower total cost, cleaner routing, and stronger commercial clarity."
       />
       <div class="triple-grid">
         {

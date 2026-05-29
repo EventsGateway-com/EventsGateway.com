@@ -29,6 +29,7 @@ const compareLinks = [
 const communityLinks = [
   { label: "Open Source", href: "/open-source/" },
   { label: "Install", href: "/install/" },
+  { label: "Status", href: "/status/" },
   { label: "GitHub", href: siteConfig.social.github, external: true }
 ];
 const contactLinks = [
@@ -41,7 +42,7 @@ function isActivePath(href: string) {
     return pathname === "/";
   }
   if (href === "/docs/") {
-    return pathname.startsWith("/docs/") || pathname.startsWith("/install/") || pathname.startsWith("/status/");
+    return pathname.startsWith("/docs/");
   }
   if (href === "/compare/") {
     return pathname.startsWith("/compare/") || pathname === "/why-not-direct-pixels/";
@@ -49,9 +50,9 @@ function isActivePath(href: string) {
   return pathname === href || pathname.startsWith(href);
 }
 
-const docsActive = pathname.startsWith("/docs/") || pathname.startsWith("/install/") || pathname.startsWith("/status/");
+const docsActive = pathname.startsWith("/docs/");
 const compareActive = pathname.startsWith("/compare/") || pathname === "/why-not-direct-pixels/";
-const communityActive = pathname.startsWith("/open-source/") || pathname.startsWith("/install/");
+const communityActive = pathname.startsWith("/open-source/") || pathname.startsWith("/install/") || pathname.startsWith("/status/");
 const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/founder/");
 ---
 

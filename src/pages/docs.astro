@@ -28,7 +28,7 @@ const docsJsonLd = {
         <p class="page-copy">{docsContent.intro}</p>
         <div class="button-row">
           <Button href="/docs/playbooks/" variant="primary" icon="arrow-right">Browse Playbooks</Button>
-          <Button href="/compare/" variant="secondary" icon="arrow-right">Compare Tools</Button>
+          <Button href="/docs/stripe-billing/" variant="secondary" icon="arrow-right">Billing Guide</Button>
         </div>
       </div>
     </Container>
@@ -38,8 +38,8 @@ const docsJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Docs Map"
-        title="Documentation with clear subpages."
-        description="Use Docs as the hub for install guidance, live status, implementation playbooks, and comparison research."
+        title="Commercial documentation for teams using EventsGateway."
+        description="Use Docs for event setup, rollout guidance, billing operations, and comparison research."
       />
       <div class="card-grid">
         {
@@ -47,6 +47,23 @@ const docsJsonLd = {
             <PremiumCard icon="layers" title={item.title} text={item.text}>
               <Button href={item.href} variant="secondary" icon="arrow-right">{item.action}</Button>
             </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Community"
+        title={docsContent.communityResources.title}
+        description={docsContent.communityResources.text}
+      />
+      <div class="button-row button-row--center">
+        {
+          docsContent.communityResources.links.map((item, index) => (
+            <Button href={item.href} variant={index === 0 ? "primary" : "secondary"} icon="arrow-right">{item.label}</Button>
           ))
         }
       </div>
@@ -216,7 +233,7 @@ const docsJsonLd = {
             platform handles routing, platform naming, payload enrichment, and destination-specific delivery logic.
           </p>
           <div class="button-row">
-            <Button href="/install/" variant="primary" icon="download">Install Guide</Button>
+            <Button href="/pricing/" variant="primary" icon="arrow-right">Open Pricing</Button>
             <Button href="/compare/" variant="secondary" icon="arrow-right">Compare Pages</Button>
           </div>
         </div>

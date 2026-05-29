@@ -1,8 +1,8 @@
 export const docsContent = {
-  title: "EventsGateway Event Documentation",
-  eyebrow: "Tracking Documentation",
+  title: "EventsGateway Documentation",
+  eyebrow: "Commercial Documentation",
   intro:
-    "Use EventsGateway as a canonical event layer for Meta, Google Ads, TikTok, and custom pipelines. The examples below use a simple `e_g` function so teams can standardize event names once and route them everywhere from the dashboard.",
+    "Use this documentation to configure EventsGateway on your sites, standardize event naming, map commercial conversions, and roll out routing cleanly from the hosted product.",
   quickStart: `window.e_g = function (eventName, payload = {}) {
   window.EventsGateway?.track({
     type: eventName,
@@ -76,28 +76,22 @@ export const docsContent = {
   billingGuides: [
     {
       slug: "stripe-billing",
-      title: "Stripe Billing Setup",
-      text: "Configure Checkout, Billing Portal, webhooks, reminder flow, and automatic routing suspension."
+      title: "Billing Operations",
+      text: "Configure Checkout, Billing Portal, invoice flow, reminders, and suspension behavior for commercial rollout."
     }
   ],
   sections: [
-    {
-      title: "Install",
-      text: "Start from the hosted guide, generate the required values, and deploy the stack on Cloudflare.",
-      href: "/install/",
-      action: "Open install guide"
-    },
-    {
-      title: "Status",
-      text: "Inspect the public infrastructure board for KV, Durable Objects, D1, and R2 activity.",
-      href: "/status/",
-      action: "Open status board"
-    },
     {
       title: "Playbooks",
       text: "See concrete event modeling patterns for ecommerce, lead generation, SaaS, courses, and donations.",
       href: "/docs/playbooks/",
       action: "Browse playbooks"
+    },
+    {
+      title: "Billing",
+      text: "Read the commercial billing guide for subscriptions, invoices, reminders, and account protection flows.",
+      href: "/docs/stripe-billing/",
+      action: "Open billing guide"
     },
     {
       title: "Compare",
@@ -106,6 +100,15 @@ export const docsContent = {
       action: "Open compare pages"
     }
   ],
+  communityResources: {
+    title: "Open source and self-hosted resources live in Community.",
+    text: "Use Community for GitHub, self-hosted installation, and the public runtime status board.",
+    links: [
+      { label: "Open Source", href: "/open-source/" },
+      { label: "Install", href: "/install/" },
+      { label: "Status", href: "/status/" }
+    ]
+  },
   eventFields: [
     {
       name: "value",

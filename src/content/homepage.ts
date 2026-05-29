@@ -1,17 +1,17 @@
 export const homeContent = {
-  eyebrow: "Cloudflare-Native Event Gateway",
-  title: "Premium event routing and tracking that installs fast and stays lean on Cloudflare.",
+  eyebrow: "Commercial Event Gateway",
+  title: "The best-priced event gateway for teams that want more signal and less spend.",
   description:
-    "EventsGateway is a Cloudflare-native event gateway for Meta, GA4, Google Ads, and custom pipelines. Add one lightweight tracker to any website, send events to one endpoint, and control routing, delivery, retries, and observability from a single dashboard. For many small sites, the runtime can stay inside Cloudflare free-tier limits before the paid plan is even needed.",
+    "EventsGateway replaces scattered pixels, server-side workarounds, and expensive tracking stacks with one lower-cost control layer for Meta, GA4, Google Ads, TikTok, and custom destinations. Install once, route everywhere, and keep pricing predictable from startup volume to enterprise scale.",
   trustMarks: [
-    "Built on Cloudflare Workers",
-    "Small-site free-tier friendly",
-    "One event stream, many destinations"
+    "Lower-cost commercial model",
+    "One setup, many destinations",
+    "Clear pricing from day one"
   ],
   stats: [
-    { label: "Workers Free", value: "100K/day", detail: "Requests included before the paid plan becomes relevant" },
-    { label: "Queues Free", value: "10K/day", detail: "Daily operations included for lightweight delivery pipelines" },
-    { label: "R2 Free", value: "10 GB", detail: "Standard storage included with free operations every month" }
+    { label: "Starts free", value: "1,000,000", detail: "Monthly routed events included before usage billing begins" },
+    { label: "Linear overage", value: "$5 / 1M", detail: "No pricing cliff when routed volume grows" },
+    { label: "Enterprise from", value: "$1,995+", detail: "Commercial support for high-volume programs and complex delivery needs" }
   ],
   pricingHighlights: [
     {
@@ -36,7 +36,7 @@ export const homeContent = {
     }
   ],
   pricingFootnote:
-    "EventsGateway uses a transparent commercial rule set on top of Cloudflare: the product starts free for the first 1,000,000 routed monthly events, then adds $5 for each extra started 1,000,000-event block, with Enterprise plans starting at $1,995 per month.",
+    "EventsGateway keeps pricing legible: the first 1,000,000 routed monthly events stay free, each extra started 1,000,000-event block adds $5, and Enterprise starts at $1,995 per month.",
   problems: [
     {
       icon: "spark",
@@ -57,33 +57,33 @@ export const homeContent = {
   capabilities: [
     {
       icon: "terminal",
-      title: "Simple tracker install",
-      text: "Add EventsGateway with a small script or SDK integration and start sending events from any website."
+      title: "Fast install",
+      text: "Add one tracker or SDK once and stop repeating separate setup work for every destination."
     },
     {
       icon: "bolt",
-      title: "Cloudflare Workers ingestion",
-      text: "Receive and process events at the edge with a lightweight runtime built for fast request handling."
+      title: "One event stream",
+      text: "Collect events once, standardize naming once, and avoid fragmented vendor-by-vendor tracking logic."
     },
     {
       icon: "cloud",
-      title: "Event routing engine",
-      text: "Match rules, respect consent, generate route plans, and fan out to multiple destinations from one event stream."
+      title: "Multi-destination routing",
+      text: "Route one clean event stream to Meta, GA4, Google Ads, TikTok, webhooks, and custom pipelines."
     },
     {
       icon: "check",
-      title: "Destination delivery control",
-      text: "Send events to Meta, GA4, Google Ads, or custom webhooks with observable delivery status and retries."
+      title: "Lower operating cost",
+      text: "Replace bloated stacks and duplicate integrations with one commercial model that stays easy to understand."
     },
     {
       icon: "spark",
-      title: "Dashboard visibility",
-      text: "Inspect recent events, routes, schemas, destinations, queues, and operational health from one dashboard."
+      title: "Commercial visibility",
+      text: "See routed volume, delivery health, and operational behavior from one dashboard instead of across multiple tools."
     },
     {
       icon: "layers",
-      title: "Reusable on any site",
-      text: "Use the same collector and routing model across marketing sites, stores, landing pages, and product apps."
+      title: "Built for growth teams",
+      text: "Use the same setup across stores, lead-gen funnels, landing pages, product apps, and multi-site programs."
     }
   ],
   workflow: [
@@ -94,8 +94,8 @@ export const homeContent = {
     },
     {
       step: "02",
-      title: "Collect normalized events",
-      text: "Send page views, leads, purchases, and custom events into one Cloudflare Workers-based ingestion layer."
+      title: "Collect clean events",
+      text: "Send page views, leads, purchases, and custom events into one normalized collection layer."
     },
     {
       step: "03",
@@ -111,21 +111,21 @@ export const homeContent = {
   controlColumns: [
     {
       icon: "shield",
-      title: "Built on Cloudflare services",
-      text: "Workers, Durable Objects, D1, Queues, and R2 give the platform an edge-native stack without traditional server overhead."
+      title: "Lower total cost",
+      text: "Pay for one event gateway instead of stacking separate tools, plugins, and duplicated tracking setups."
     },
     {
       icon: "terminal",
-      title: "Small-site cost advantage",
-      text: "Many low-volume sites can keep event collection and routing inside Cloudflare free-tier limits instead of paying for a separate tracking backend."
+      title: "Cleaner commercial signal",
+      text: "Keep routing, naming, and conversion logic centralized so ad platforms and analytics tools receive better input."
     },
     {
       icon: "cloud",
       title: "One control center",
-      text: "Routes, deliveries, schemas, retry paths, and operations stay visible in one place instead of being spread across vendors."
+      text: "Routes, deliveries, retry logic, and operational visibility stay in one product instead of being spread across vendors."
     }
   ],
-  finalCtaTitle: "Ready to launch Cloudflare-native tracking on your site?",
+  finalCtaTitle: "Ready to cut tracking cost without losing control?",
   finalCtaText:
-    "Start with the hosted dashboard, collect events once, and keep delivery to analytics, ads, and custom endpoints under one control layer with a cost model that stays friendly to small sites."
+    "Start with the hosted dashboard, collect once, route everywhere, and keep a commercial model that stays clearer and cheaper than heavier alternatives."
 } as const;
