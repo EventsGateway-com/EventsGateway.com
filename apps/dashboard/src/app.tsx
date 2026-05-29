@@ -1380,6 +1380,20 @@ function OverviewPage() {
   };
 
   const closePanel = (panelId: string) => {
+    // Save current layout sizes before closing so we can restore exactly
+    setLayouts((currentLayouts: any) => {
+      let newHeights = { ...originalHeights };
+      if (currentLayouts.lg) {
+        const item = currentLayouts.lg.find((l: any) => l.i === panelId);
+        if (item) {
+          newHeights[panelId] = item.h;
+        }
+      }
+      setOriginalHeights(newHeights);
+      saveState({ originalHeights: newHeights });
+      return currentLayouts;
+    });
+
     setClosedPanels(prev => {
       const newState = { ...prev, [panelId]: true };
       saveState({ closedPanels: newState });
@@ -1392,13 +1406,13 @@ function OverviewPage() {
       const newState = { ...prev, [panelId]: false };
       saveState({ closedPanels: newState });
       
-      // Also restore the layout height if it was crushed
       setLayouts((currentLayouts: any) => {
         const newLayouts = { ...currentLayouts };
         Object.keys(newLayouts).forEach(breakpoint => {
           newLayouts[breakpoint] = newLayouts[breakpoint].map((l: any) => {
             if (l.i === panelId) {
-              return { ...l, h: originalHeights[panelId] || 5 };
+              const defaultHeight = (panelId === 'panel1' || panelId === 'panel2') ? 8 : 5;
+              return { ...l, h: originalHeights[panelId] || defaultHeight };
             }
             return l;
           });

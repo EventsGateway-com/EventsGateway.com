@@ -1434,3 +1434,15 @@ p {
 
 .react-resizable-handle { opacity: 1; }
 .react-grid-item.react-draggable-dragging { user-select: none; }
+
+.eg-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+.eg-sidebar__content {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  min-height: 0 !important;
+}
