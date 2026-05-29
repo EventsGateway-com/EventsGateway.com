@@ -49,6 +49,12 @@ async function minifyHtmlFile(filePath) {
 async function main() {
   const htmlFiles = await collectHtmlFiles(distDir);
   await Promise.all(htmlFiles.map(minifyHtmlFile));
+
+  const sitemapIndexPath = path.join(distDir, "sitemap-index.xml");
+  const sitemapPath = path.join(distDir, "sitemap.xml");
+  try {
+    await fs.copyFile(sitemapIndexPath, sitemapPath);
+  } catch {}
 }
 
 main().catch((error) => {

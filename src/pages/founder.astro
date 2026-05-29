@@ -1,0 +1,54 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+---
+
+<BaseLayout
+  title="Founder"
+  description="Founder profile for Marian Vasile, the developer behind EventsGateway."
+  canonicalPath="/founder/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">Founder</span>
+        <h1 class="page-title">Marian Vasile</h1>
+        <p class="page-copy">
+          Marian Vasile is the founder behind EventsGateway and an AI-focused SaaS architect with more than 20 years in digital leadership across aviation, ecommerce, and AI-driven products.
+        </p>
+        <div class="button-row">
+          <Button href="https://marianvasile.com/en" variant="primary" icon="arrow-right">Visit profile</Button>
+          <Button href="/contact/" variant="secondary" icon="mail">Contact form</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Profile"
+        title="Product, growth, and AI leadership."
+        description="The public profile highlights a mix of SaaS architecture, AI innovation, search growth, PPC execution, and cross-functional product leadership."
+      />
+      <div class="card-grid">
+        <PremiumCard icon="spark" title="SaaS Architect" text="Builds SaaS products and digital systems with an emphasis on AI, growth, and operational clarity." />
+        <PremiumCard icon="layers" title="20+ years experience" text="Long-term leadership experience across digital strategy, product delivery, and technical execution." />
+        <PremiumCard icon="check" title="13+ startups mentored" text="Supports startup operators with product thinking, growth systems, and execution structure." />
+        <PremiumCard icon="terminal" title="100K+ websites using his tech" text="Technology shaped by real distribution and large-scale usage across production websites." />
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="card-grid">
+        <PremiumCard title="Based in Bucharest, Romania" text="Public founder profile information lists Bucharest as the operating base for direct contact and collaboration." />
+        <PremiumCard title="Direct contact" text="The public profile lists contact@marianvasile.com and a public contact page for direct founder outreach." />
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

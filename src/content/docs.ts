@@ -80,6 +80,32 @@ export const docsContent = {
       text: "Configure Checkout, Billing Portal, webhooks, reminder flow, and automatic routing suspension."
     }
   ],
+  sections: [
+    {
+      title: "Install",
+      text: "Start from the hosted guide, generate the required values, and deploy the stack on Cloudflare.",
+      href: "/install/",
+      action: "Open install guide"
+    },
+    {
+      title: "Status",
+      text: "Inspect the public infrastructure board for KV, Durable Objects, D1, and R2 activity.",
+      href: "/status/",
+      action: "Open status board"
+    },
+    {
+      title: "Playbooks",
+      text: "See concrete event modeling patterns for ecommerce, lead generation, SaaS, courses, and donations.",
+      href: "/docs/playbooks/",
+      action: "Browse playbooks"
+    },
+    {
+      title: "Compare",
+      text: "Review side-by-side evaluations against analytics, CDP, tag-manager, ad-pixel, and privacy tools.",
+      href: "/compare/",
+      action: "Open compare pages"
+    }
+  ],
   eventFields: [
     {
       name: "value",

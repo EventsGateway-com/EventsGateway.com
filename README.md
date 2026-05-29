@@ -10,9 +10,7 @@ This repository currently includes:
 
 - the public marketing site for `eventsgateway.com`
 - the public dashboard shell for `dash.eventsgateway.com`
-- the management API Worker for `api.eventsgateway.com`
-- the collector Worker for `e.eventsgateway.com`
-- the forwarder Worker used for asynchronous destination delivery
+- the unified Cloudflare Worker that serves `eventsgateway.com`, `dash.eventsgateway.com`, `api.eventsgateway.com`, and `e.eventsgateway.com`
 - shared TypeScript packages used across the dashboard and Workers
 
 ## Product Scope
@@ -22,6 +20,8 @@ EventsGateway is designed for:
 - Meta Conversions API
 - GA4 Measurement Protocol
 - Google Ads conversions
+- TikTok Events API
+- custom webhooks
 - custom webhooks and event pipelines
 - privacy-aware routing and normalization
 - self-hosted, Cloudflare-native deployment
@@ -34,11 +34,11 @@ The current Cloudflare production map is:
 
 - `eventsgateway.com` -> public marketing site
 - `www.eventsgateway.com` -> redirect to `eventsgateway.com` handled by the root Worker
-- `dash.eventsgateway.com` -> dashboard
-- `api.eventsgateway.com` -> API Worker
-- `e.eventsgateway.com` -> collector Worker
+- `dash.eventsgateway.com` -> dashboard served by the unified root Worker
+- `api.eventsgateway.com` -> API surface served by the unified root Worker
+- `e.eventsgateway.com` -> collector surface served by the unified root Worker
 
-The forwarder Worker is currently deployed without a dedicated public custom domain.
+All public domains are now routed through one Cloudflare Worker script with shared queue, cron, Durable Object, D1, KV, and R2 bindings.
 
 ## Repository Layout
 
@@ -66,13 +66,11 @@ The forwarder Worker is currently deployed without a dedicated public custom dom
 
 ## Canonical Deploy Targets
 
-The canonical production targets are:
+The canonical production target is the repository root:
 
-- root app `./` -> canonical marketing site
-- `apps/dashboard` -> canonical dashboard deploy target
-- `apps/api-worker` -> canonical API deploy target
-- `apps/collector-worker` -> canonical collector deploy target
-- `apps/forwarder-worker` -> canonical forwarder deploy target
+- root app `./` -> unified marketing, dashboard, API, collector, queue consumer, cron, and Durable Object entrypoint
+
+The `apps/*` folders remain as source modules reused by the single production Worker.
 
 ## Core Stack
 
@@ -105,33 +103,12 @@ npm install
 npm run dev
 ```
 
-### Dashboard
+### Dashboard source
 
-```bash
+
 npm --prefix apps/dashboard install
 npm --prefix apps/dashboard run dev
-```
-
-### API Worker
-
-```bash
-npm --prefix apps/api-worker install
-npm --prefix apps/api-worker run dev
-```
-
-### Collector Worker
-
-```bash
-npm --prefix apps/collector-worker install
-npm --prefix apps/collector-worker run dev
-```
-
-### Forwarder Worker
-
-```bash
-npm --prefix apps/forwarder-worker install
 npm --prefix apps/forwarder-worker run dev
-```
 
 ## Build And Validation
 
@@ -149,14 +126,6 @@ npm --prefix apps/dashboard run check
 npm --prefix apps/dashboard run build
 ```
 
-### Workers
-
-```bash
-npm --prefix apps/api-worker run check
-npm --prefix apps/collector-worker run check
-npm --prefix apps/forwarder-worker run check
-```
-
 ## Deployment
 
 Run from the repository root:
@@ -165,26 +134,34 @@ Run from the repository root:
 npm run deploy
 npm run deploy:public
 npm run deploy:hosted
-npm run deploy:dashboard
-npm run deploy:api
-npm run deploy:collector
-npm run deploy:forwarder
 ```
 
-Deploy the full hosted EventsGateway surface with root site, dashboard, API, collector, and forwarder:
+Deploy the full hosted EventsGateway surface with the unified root Worker:
 
 ```bash
 npm run deploy:public
 npm run deploy:hosted
 ```
 
-Both commands currently map to the full deploy sequence:
+Both commands currently map to the same unified deploy sequence:
 
 ```bash
 npm run deploy:all
 ```
 
-When a deployment platform runs `npx wrangler deploy` from the repository root, the repository installs a local Wrangler wrapper during `postinstall`. The default root deploy now publishes only the root Worker connected to that build. Use `npm run deploy:hosted` when you explicitly want the full hosted deploy sequence for root, dashboard, API, collector, and forwarder.
+When a deployment platform runs `npx wrangler deploy` from the repository root, the repository installs a local Wrangler wrapper during `postinstall`. The default deploy publishes the unified root Worker and all configured custom domains in `wrangler.jsonc`.
+
+## Supported Destinations
+
+EventsGateway currently supports these destination classes in the runtime:
+
+- Meta Conversions API
+- GA4 Measurement Protocol
+- Google Ads
+- TikTok Events API
+- custom webhooks
+
+The repository includes canonical event mapping, routing, and delivery controls for these destination types, and the dashboard exposes destination-aware routing on top of the same event stream.
 
 ## Environment And Secrets
 
@@ -241,10 +218,10 @@ If you self-host, create Cloudflare `KV`, `Durable Objects`, `D1`, `R2`, and `Qu
 
 ## Current Behavior Notes
 
-- the public site is intentionally static
-- contact flows currently use email links instead of a backend form
-- the dashboard currently consumes the API base URL from build-time configuration
-- the homepage mockup is interactive, but it now loads from an external script to respect CSP
+- the public site is static-first, but the unified Worker also exposes same-origin APIs used by the site
+- the public contact form delivers through Brevo
+- the dashboard consumes the API base URL from build-time configuration
+- the homepage mockup and pricing calculator load from external scripts to respect CSP
 
 ## Security Notes
 
@@ -265,9 +242,9 @@ The Cloudflare production surface currently includes:
 
 - working marketing site deployment
 - working dashboard deployment
-- working API Worker deployment
-- working collector Worker deployment
-- working forwarder Worker deployment
+- working API deployment through the unified Worker
+- working collector deployment through the unified Worker
+- working queue consumer and cron through the unified Worker
 
 ## License And Visibility
 

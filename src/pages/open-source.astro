@@ -1,0 +1,46 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { siteConfig } from "../config/site";
+---
+
+<BaseLayout
+  title={`Why ${siteConfig.name} Is Open Source`}
+  description="Why EventsGateway is open source, what that unlocks for operators, and why the project is published publicly."
+  canonicalPath="/open-source/"
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">Community</span>
+        <h1 class="page-title">Why EventsGateway is open source.</h1>
+        <p class="page-copy">
+          EventsGateway is open source because event collection, routing, and delivery should stay auditable, portable, and easy to extend. Teams should be able to inspect the runtime, deploy it on Cloudflare, and understand exactly how the platform moves data.
+        </p>
+        <div class="button-row">
+          <Button href={siteConfig.social.github} variant="primary" icon="arrow-right">Open GitHub</Button>
+          <Button href="/install/" variant="secondary" icon="download">Install guide</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Principles"
+        title="Open source is a product decision, not only a license choice."
+        description="The public repository is meant to make the platform legible for builders, operators, agencies, and teams evaluating edge-native tracking."
+      />
+      <div class="card-grid">
+        <PremiumCard icon="check" title="Auditability" text="You can inspect the runtime, deployment shape, routing logic, and product surface without black boxes." />
+        <PremiumCard icon="layers" title="Portability" text="Teams can self-host, adapt the runtime, and keep the stack aligned with their own Cloudflare account and policies." />
+        <PremiumCard icon="terminal" title="Extensibility" text="Developers can add destinations, transforms, and workflows instead of waiting for a closed vendor roadmap." />
+        <PremiumCard icon="spark" title="Trust" text="Open implementation details make event handling and delivery behavior easier to validate in production." />
+      </div>
+    </Container>
+  </section>
+</BaseLayout>

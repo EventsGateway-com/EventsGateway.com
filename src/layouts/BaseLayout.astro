@@ -52,5 +52,93 @@ const ogImageUrl = new URL(ogImage, siteConfig.domain).toString();
       </main>
       <Footer />
     </div>
+    <div class="cookie-bar" data-cookie-bar hidden>
+      <div class="cookie-bar__copy">
+        <strong>Cookies and tracking</strong>
+        <p>EventsGateway uses essential storage for site behavior and optional analytics cookies for product measurement.</p>
+      </div>
+      <div class="cookie-bar__actions">
+        <button class="cookie-bar__button cookie-bar__button--ghost" type="button" data-cookie-action="essential">Essential only</button>
+        <button class="cookie-bar__button" type="button" data-cookie-action="accept">Accept all</button>
+      </div>
+    </div>
+    <script src="/scripts/cookie-consent.js" defer></script>
+    <script src="/scripts/site-tracking.js" defer></script>
+    <script src="/scripts/card-drag.js" defer></script>
   </body>
 </html>
+
+<style>
+  .cookie-bar {
+    position: fixed;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(125, 211, 252, 0.16);
+    border-radius: 1rem;
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.08), rgba(255, 255, 255, 0.02)),
+      rgba(7, 11, 20, 0.95);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(20px);
+  }
+
+  .cookie-bar__copy {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .cookie-bar__copy strong {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .cookie-bar__copy p {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.55;
+  }
+
+  .cookie-bar__actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .cookie-bar__button {
+    min-height: 2.7rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid rgba(125, 211, 252, 0.22);
+    border-radius: 0.9rem;
+    background: rgba(125, 211, 252, 0.12);
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  .cookie-bar__button--ghost {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-muted);
+  }
+
+  @media (max-width: 720px) {
+    .cookie-bar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .cookie-bar__actions {
+      width: 100%;
+    }
+
+    .cookie-bar__button {
+      flex: 1 1 0;
+    }
+  }
+</style>

@@ -23,7 +23,7 @@ const pricingJsonLd = {
 
 <BaseLayout
   title={`Pricing - ${siteConfig.name}`}
-  description="Transparent EventsGateway pricing with a free 1,000,000 event allowance and $5 per extra 1,000,000 events."
+  description="Transparent EventsGateway pricing with a free 1,000,000 event allowance, $5 per extra 1,000,000 events, and Enterprise plans starting at $1,995 per month."
   canonicalPath="/pricing/"
   jsonLd={pricingJsonLd}
 >
@@ -34,7 +34,7 @@ const pricingJsonLd = {
         <h1 class="page-title">{pricingContent.title}</h1>
         <p class="page-copy">{pricingContent.intro}</p>
         <div class="button-row">
-          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
           <Button href="https://dash.eventsgateway.com/login" variant="secondary" icon="arrow-right">Open Dashboard</Button>
           <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
         </div>
@@ -47,7 +47,7 @@ const pricingJsonLd = {
       <SectionHeader
         eyebrow="Plans"
         title="Clear commercial structure from the first million events."
-        description="The commercial logic is intentionally simple: free up to the included allowance, then linear $5 blocks as monthly routed usage grows."
+        description="Free starts inside the hosted dashboard, usage expansion stays linear, and Enterprise starts at $1,995 per month."
       />
       <div class="card-grid">
         {
@@ -120,7 +120,7 @@ const pricingJsonLd = {
           <div class="card-grid">
             {
               pricingContent.included.map((item) => (
-                <PremiumCard icon="check" title={item} text="Included in the product and commercial model from the first install." />
+                <PremiumCard icon="check" title={item} text="Included in the product and commercial model from the first signup." />
               ))
             }
           </div>
@@ -144,7 +144,7 @@ const pricingJsonLd = {
         }
       </div>
       <div class="button-row button-row--center">
-        <Button href="/install/" variant="primary" icon="download">Install with Stripe</Button>
+        <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Create free account</Button>
         <Button href="/docs/stripe-billing/" variant="secondary" icon="arrow-right">Stripe Billing Docs</Button>
         <Button href="https://dash.eventsgateway.com/login" variant="secondary" icon="arrow-right">Go to Billing Dashboard</Button>
       </div>
@@ -254,40 +254,4 @@ const pricingJsonLd = {
   }
 </style>
 
-<script is:inline>
-  const calculatorRoot = document.querySelector("[data-pricing-calculator]");
-
-  if (calculatorRoot) {
-    const rangeInput = document.querySelector("#pricing-events");
-    const exactInput = document.querySelector("#pricing-events-input");
-    const totalNode = document.querySelector("#pricing-total");
-    const blocksNode = document.querySelector("#pricing-blocks");
-    const includedNode = document.querySelector("#pricing-included");
-    const overageNode = document.querySelector("#pricing-overage");
-    const formatter = new Intl.NumberFormat("en-US");
-    const currencyFormatter = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0
-    });
-
-    const syncPricing = (rawValue) => {
-      const events = Math.max(0, Number(rawValue) || 0);
-      const included = 1000000;
-      const overage = Math.max(0, events - included);
-      const blocks = overage === 0 ? 0 : Math.ceil(overage / 1000000);
-      const total = blocks * 5;
-
-      if (rangeInput && String(rangeInput.value) !== String(events)) rangeInput.value = String(events);
-      if (exactInput && String(exactInput.value) !== String(events)) exactInput.value = String(events);
-      if (totalNode) totalNode.textContent = currencyFormatter.format(total);
-      if (blocksNode) blocksNode.textContent = formatter.format(blocks);
-      if (includedNode) includedNode.textContent = formatter.format(included);
-      if (overageNode) overageNode.textContent = formatter.format(overage);
-    };
-
-    rangeInput?.addEventListener("input", (event) => syncPricing(event.target.value));
-    exactInput?.addEventListener("input", (event) => syncPricing(event.target.value));
-    syncPricing(1000000);
-  }
-</script>
+<script src="/scripts/pricing-calculator.js" defer></script>

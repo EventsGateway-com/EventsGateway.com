@@ -2,7 +2,7 @@ export const pricingContent = {
   eyebrow: "Transparent Pricing",
   title: "Start free, then pay only when routed volume grows.",
   intro:
-    "EventsGateway starts with a clear commercial rule set: the Free plan includes up to 1,000,000 events per month, and every additional 1,000,000-event block is billed at $5. The page below explains the limits, what is included, and how monthly overage works without hidden wording.",
+    "EventsGateway starts with a clear commercial rule set: the Free plan includes up to 1,000,000 events per month, and every additional 1,000,000-event block is billed at $5. Create an account, log in, and start without a separate install step on the hosted product.",
   plans: [
     {
       name: "Free",
@@ -11,10 +11,10 @@ export const pricingContent = {
       highlight: "Up to 1,000,000 events every month",
       features: [
         "Up to 1,000,000 routed events per month",
-        "Collector, API, forwarder, routing engine, dashboard, and install flow",
+        "Register, log in, and start from the hosted dashboard",
+        "Collector, API, forwarder, routing engine, and dashboard included",
         "Meta, GA4, Google Ads, TikTok, webhooks, and custom pipelines",
-        "Operational visibility, retries, queues, and delivery logs",
-        "Stripe-ready billing foundation for future paid growth"
+        "Operational visibility, retries, queues, and delivery logs"
       ]
     },
     {
@@ -30,13 +30,13 @@ export const pricingContent = {
       ]
     },
     {
-      name: "Commercial",
-      price: "Custom",
-      cadence: "",
+      name: "Enterprise",
+      price: "$1,995+",
+      cadence: "/ month",
       highlight: "For large-volume, multi-team, or custom support needs",
       features: [
-        "Custom billing support and invoice workflows",
-        "Advanced payment recovery and account controls",
+        "Enterprise onboarding and architecture support",
+        "Advanced billing support and invoice workflows",
         "Multi-user administration and operational policies",
         "Priority support for complex event routing programs"
       ]
@@ -45,7 +45,7 @@ export const pricingContent = {
   included: [
     "One event collection layer that can fan out to multiple destinations",
     "Routing rules, transformations, consent-aware delivery, and retries",
-    "Install guidance for Cloudflare Workers, dashboard, and collector domains",
+    "Hosted dashboard access without a separate install step on the Free plan",
     "Commercial billing model that starts free and scales linearly",
     "Stripe Checkout, Stripe webhooks, invoices, reminders, and routing suspension controls"
   ],

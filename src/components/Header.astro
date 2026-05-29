@@ -6,6 +6,31 @@ import { primaryNav } from "../config/nav";
 import { siteConfig } from "../config/site";
 
 const pathname = Astro.url.pathname;
+const communityLinks = [
+  { label: "Open Source", href: "/open-source/" },
+  { label: "Install", href: "/install/" },
+  { label: "GitHub", href: siteConfig.social.github, external: true }
+];
+const contactLinks = [
+  { label: "Contact", href: "/contact/" },
+  { label: "Founder", href: "/founder/" }
+];
+
+function isActivePath(href: string) {
+  if (href === "/") {
+    return pathname === "/";
+  }
+  if (href === "/docs/") {
+    return pathname.startsWith("/docs/") || pathname.startsWith("/install/") || pathname.startsWith("/status/");
+  }
+  if (href === "/compare/") {
+    return pathname.startsWith("/compare/") || pathname === "/why-not-direct-pixels/";
+  }
+  return pathname === href || pathname.startsWith(href);
+}
+
+const communityActive = pathname.startsWith("/open-source/") || pathname.startsWith("/install/");
+const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/founder/");
 ---
 
 <header class="site-header">
@@ -16,27 +41,45 @@ const pathname = Astro.url.pathname;
         <nav class="desktop-nav" aria-label="Primary">
           {
             primaryNav.map((item) => (
-              <a class:list={["nav-link", pathname === item.href && "is-active"]} href={item.href}>
+              <a class:list={["nav-link", isActivePath(item.href) && "is-active"]} href={item.href}>
                 <span class="nav-link__dot"></span>
                 {item.label}
               </a>
             ))
           }
+          <details class:list={["nav-dropdown", communityActive && "is-active"]}>
+            <summary class="nav-link">
+              <span class="nav-link__dot"></span>
+              Community
+            </summary>
+            <div class="nav-dropdown__panel">
+              {
+                communityLinks.map((item) => (
+                  <a href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noreferrer" : undefined}>
+                    {item.label}
+                  </a>
+                ))
+              }
+            </div>
+          </details>
+          <details class:list={["nav-dropdown", contactActive && "is-active"]}>
+            <summary class="nav-link">
+              <span class="nav-link__dot"></span>
+              Contact
+            </summary>
+            <div class="nav-dropdown__panel">
+              {
+                contactLinks.map((item) => (
+                  <a href={item.href}>{item.label}</a>
+                ))
+              }
+            </div>
+          </details>
         </nav>
       </div>
       <div class="desktop-cta">
-        <span class="header-status">Open source</span>
-        <Button href={siteConfig.auth.login.href} variant="ghost">
-          {siteConfig.auth.login.label}
-        </Button>
-        <Button href={siteConfig.auth.register.href} variant="secondary">
-          {siteConfig.auth.register.label}
-        </Button>
-        <Button href={siteConfig.social.github} variant="ghost" icon="arrow-right">
-          GitHub
-        </Button>
-        <Button href={siteConfig.cta.primary.href} variant="secondary" icon="download">
-          {siteConfig.cta.primary.label}
+        <Button href={siteConfig.auth.login.href} variant="secondary" icon="arrow-right">
+          Dashboard
         </Button>
       </div>
     <details class="mobile-nav">
@@ -49,24 +92,37 @@ const pathname = Astro.url.pathname;
         <nav aria-label="Mobile">
           {
             primaryNav.map((item) => (
-              <a class:list={["mobile-link", pathname === item.href && "is-active"]} href={item.href}>
+              <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
                 <span class="nav-link__dot"></span>
                 {item.label}
               </a>
             ))
           }
+          <div class="mobile-nav__group">
+            <span class="mobile-nav__label">Community</span>
+            {
+              communityLinks.map((item) => (
+                <a class="mobile-link" href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noreferrer" : undefined}>
+                  <span class="nav-link__dot"></span>
+                  {item.label}
+                </a>
+              ))
+            }
+          </div>
+          <div class="mobile-nav__group">
+            <span class="mobile-nav__label">Contact</span>
+            {
+              contactLinks.map((item) => (
+                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
+                  <span class="nav-link__dot"></span>
+                  {item.label}
+                </a>
+              ))
+            }
+          </div>
         </nav>
-        <Button href={siteConfig.auth.login.href} variant="ghost">
-          {siteConfig.auth.login.label}
-        </Button>
-        <Button href={siteConfig.auth.register.href} variant="secondary">
-          {siteConfig.auth.register.label}
-        </Button>
-        <Button href={siteConfig.social.github} variant="secondary" icon="arrow-right">
-          GitHub
-        </Button>
-        <Button href={siteConfig.cta.secondary.href} variant="primary" icon="mail">
-          {siteConfig.cta.secondary.label}
+        <Button href={siteConfig.auth.login.href} variant="secondary" icon="arrow-right">
+          Dashboard
         </Button>
       </div>
     </details>
@@ -227,25 +283,79 @@ const pathname = Astro.url.pathname;
     gap: 0.35rem;
   }
 
+  .nav-dropdown {
+    position: relative;
+  }
+
+  .nav-dropdown summary {
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .nav-dropdown summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .nav-dropdown__panel {
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    left: 0;
+    display: grid;
+    min-width: 12rem;
+    gap: 0.25rem;
+    padding: 0.65rem;
+    border: 1px solid rgba(125, 211, 252, 0.14);
+    border-radius: 1rem;
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.06), rgba(255, 255, 255, 0.02)),
+      rgba(7, 11, 20, 0.96);
+    box-shadow: var(--shadow-card);
+  }
+
+  .nav-dropdown__panel a,
+  .mobile-nav__label {
+    color: var(--color-muted);
+  }
+
+  .nav-dropdown__panel a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 0.75rem;
+  }
+
+  .nav-dropdown__panel a:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-text);
+  }
+
+  .nav-dropdown.is-active > summary {
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.12), rgba(255, 255, 255, 0.03)),
+      rgba(255, 255, 255, 0.03);
+    color: var(--color-text);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 0 0 1px rgba(125, 211, 252, 0.14);
+  }
+
+  .mobile-nav__group {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+  }
+
+  .mobile-nav__label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
   .desktop-cta {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-  }
-
-  .header-status {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.05rem;
-    padding: 0.34rem 0.64rem;
-    border: 1px solid rgba(52, 211, 153, 0.14);
-    border-radius: 999px;
-    background: rgba(52, 211, 153, 0.07);
-    color: #a5f3c6;
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    white-space: nowrap;
   }
 
   @media (max-width: 900px) {

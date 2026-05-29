@@ -24,9 +24,9 @@ import { siteConfig } from "../config/site";
         </div>
         <div class="surface-panel cta-panel">
           <div class="surface-panel__inner stack">
-            <span class="kicker">How to engage</span>
+            <span class="kicker">Departments</span>
             <ul class="simple-list">
-              {contactContent.inquiryTypes.map((item) => <li>{item}</li>)}
+              {contactContent.departments.map((item) => <li><strong>{item.label}</strong> - {item.detail}</li>)}
             </ul>
             <p class="small-note">{contactContent.confidentialityNote}</p>
           </div>
@@ -38,20 +38,64 @@ import { siteConfig } from "../config/site";
   <section class="section section--tight">
     <Container>
       <SectionHeader
-        eyebrow="Contact methods"
-        title="Choose the path that matches the conversation you want to have."
-        description="Each route is static and honest. No fake submission states, no hidden workflow, and no unnecessary friction."
+        eyebrow="Contact form"
+        title="Send the request to the right department."
+        description="This form sends the inquiry through Brevo so the team receives structured contact requests without exposing direct inbox handling in the UI."
       />
-      <div class="contact-grid">
-        {
-          contactContent.methods.map((item) => (
-            <PremiumCard icon={item.icon} title={item.title} text={item.text}>
-              <Button href={item.href} variant="secondary" icon="arrow-right">
-                {item.actionLabel}
-              </Button>
-            </PremiumCard>
-          ))
-        }
+      <div class="two-column contact-form-layout">
+        <form class="surface-panel contact-form-panel" data-contact-form>
+          <div class="surface-panel__inner contact-form">
+            <label class="contact-field">
+              <span>Department</span>
+              <select name="department" required>
+                {
+                  contactContent.departments.map((item) => (
+                    <option value={item.value}>{item.label}</option>
+                  ))
+                }
+              </select>
+            </label>
+            <label class="contact-field">
+              <span>Name</span>
+              <input name="name" type="text" required />
+            </label>
+            <label class="contact-field">
+              <span>Email</span>
+              <input name="email" type="email" required />
+            </label>
+            <label class="contact-field">
+              <span>Company</span>
+              <input name="company" type="text" />
+            </label>
+            <label class="contact-field">
+              <span>Website</span>
+              <input name="website" type="url" placeholder="https://example.com" />
+            </label>
+            <label class="contact-field">
+              <span>Subject</span>
+              <input name="subject" type="text" required />
+            </label>
+            <label class="contact-field contact-field--full">
+              <span>Message</span>
+              <textarea name="message" rows="7" required></textarea>
+            </label>
+            <div class="contact-form__actions">
+              <Button element="button" type="submit" variant="primary" icon="mail">Send message</Button>
+              <p class="small-note" data-contact-status>Messages are delivered through Brevo.</p>
+            </div>
+          </div>
+        </form>
+        <div class="contact-grid">
+          {
+            contactContent.methods.map((item) => (
+              <PremiumCard icon={item.icon} title={item.title} text={item.text}>
+                <Button href={item.href} variant="secondary" icon="arrow-right">
+                  {item.actionLabel}
+                </Button>
+              </PremiumCard>
+            ))
+          }
+        </div>
       </div>
     </Container>
   </section>
@@ -63,7 +107,7 @@ import { siteConfig } from "../config/site";
           <SectionHeader
             eyebrow="Response expectations"
             title="Designed to feel like an enterprise inquiry flow."
-            description="The page gives enough structure to support serious outreach even before a backend contact endpoint exists."
+            description="The page gives enough structure to support serious outreach through a live backend delivery path."
           />
           <div class="surface-panel cta-panel">
             <div class="surface-panel__inner stack">
@@ -121,4 +165,61 @@ import { siteConfig } from "../config/site";
     font-size: clamp(1.4rem, 3vw, 2.15rem);
     letter-spacing: -0.03em;
   }
+
+  .contact-form-layout {
+    align-items: start;
+  }
+
+  .contact-form-panel {
+    height: 100%;
+  }
+
+  .contact-form {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .contact-field {
+    display: grid;
+    gap: 0.45rem;
+    color: var(--color-muted);
+  }
+
+  .contact-field--full {
+    grid-column: 1 / -1;
+  }
+
+  .contact-field input,
+  .contact-field select,
+  .contact-field textarea {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.82rem 0.92rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(8, 12, 22, 0.9);
+    color: var(--color-text);
+  }
+
+  .contact-field textarea {
+    min-height: 10rem;
+    resize: vertical;
+  }
+
+  .contact-form__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  @media (max-width: 720px) {
+    .contact-form {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
+
+<script src="/scripts/contact-form.js" defer></script>

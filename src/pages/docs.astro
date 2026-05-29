@@ -27,9 +27,28 @@ const docsJsonLd = {
         <h1 class="page-title">{docsContent.title}</h1>
         <p class="page-copy">{docsContent.intro}</p>
         <div class="button-row">
-          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
-          <Button href="/compare/" variant="secondary" icon="arrow-right">Compare Trackers</Button>
+          <Button href="/docs/playbooks/" variant="primary" icon="arrow-right">Browse Playbooks</Button>
+          <Button href="/compare/" variant="secondary" icon="arrow-right">Compare Tools</Button>
         </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Docs Map"
+        title="Documentation with clear subpages."
+        description="Use Docs as the hub for install guidance, live status, implementation playbooks, and comparison research."
+      />
+      <div class="card-grid">
+        {
+          docsContent.sections.map((item) => (
+            <PremiumCard icon="layers" title={item.title} text={item.text}>
+              <Button href={item.href} variant="secondary" icon="arrow-right">{item.action}</Button>
+            </PremiumCard>
+          ))
+        }
       </div>
     </Container>
   </section>
@@ -198,7 +217,7 @@ const docsJsonLd = {
           </p>
           <div class="button-row">
             <Button href="/install/" variant="primary" icon="download">Install Guide</Button>
-            <Button href="/compare/" variant="secondary" icon="arrow-right">Comparison Pages</Button>
+            <Button href="/compare/" variant="secondary" icon="arrow-right">Compare Pages</Button>
           </div>
         </div>
       </div>

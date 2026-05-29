@@ -10,12 +10,8 @@ export const siteConfig = {
   nav: [
     { label: "Home", href: "/" },
     { label: "Pricing", href: "/pricing/" },
-    { label: "Status", href: "/status/" },
-    { label: "Install", href: "/install/" },
     { label: "Docs", href: "/docs/" },
-    { label: "Playbooks", href: "/docs/playbooks/" },
-    { label: "Comparisons", href: "/compare/" },
-    { label: "Contact", href: "/contact/" }
+    { label: "Compare", href: "/compare/" }
   ],
   cta: {
     primary: { label: "Install", href: "/install/" },

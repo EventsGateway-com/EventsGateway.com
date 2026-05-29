@@ -424,6 +424,142 @@ async function handleInfrastructureStatus(env) {
   }
 }
 
+async function resolvePublicSiteTracking(env, hostname) {
+  if (!env.DB) {
+    return null;
+  }
+
+  const row = await env.DB.prepare(
+    `
+      SELECT
+        sd.site_id AS site_id,
+        sk.public_key AS api_key
+      FROM site_domains sd
+      INNER JOIN site_keys sk
+        ON sk.site_id = sd.site_id
+       AND sk.status = 'active'
+      WHERE sd.domain = ?
+      ORDER BY sk.created_at ASC
+      LIMIT 1
+    `
+  ).bind(hostname).first();
+
+  if (!row?.site_id || !row?.api_key) {
+    return null;
+  }
+
+  return {
+    enabled: true,
+    site_id: row.site_id,
+    api_key: row.api_key,
+    endpoint: "/v1/collect"
+  };
+}
+
+async function handlePublicSiteTracking(request, env) {
+  const hostname = new URL(request.url).hostname.toLowerCase();
+
+  try {
+    const config = await resolvePublicSiteTracking(env, hostname);
+    return json(config ?? { enabled: false });
+  } catch {
+    return json({ enabled: false }, { status: 200 });
+  }
+}
+
+async function handleContactRequest(request, env) {
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "POST,OPTIONS",
+        "access-control-allow-headers": "content-type"
+      }
+    });
+  }
+
+  if (request.method !== "POST") {
+    return json({ error: { message: "Method not allowed." } }, { status: 405 });
+  }
+
+  const apiKey = env.BREVO_API_KEY?.trim();
+  if (!apiKey) {
+    return json({ error: { message: "Contact email is not configured." } }, { status: 500 });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: { message: "Invalid contact payload." } }, { status: 400 });
+  }
+
+  const name = String(body?.name || "").trim();
+  const email = String(body?.email || "").trim();
+  const department = String(body?.department || "").trim();
+  const subject = String(body?.subject || "").trim();
+  const company = String(body?.company || "").trim();
+  const website = String(body?.website || "").trim();
+  const message = String(body?.message || "").trim();
+
+  if (!name || !email || !department || !subject || !message) {
+    return json({ error: { message: "Complete all required contact fields." } }, { status: 400 });
+  }
+
+  const senderEmail = env.BREVO_SENDER_EMAIL?.trim() || "no-reply@eventsgateway.com";
+  const recipientEmail = "marian@agilemedia.com";
+  const formattedSubject = `[EventsGateway Contact] ${department}: ${subject}`;
+  const htmlContent = [
+    "<p>New contact request from eventsgateway.com</p>",
+    `<p><strong>Department:</strong> ${department}</p>`,
+    `<p><strong>Name:</strong> ${name}</p>`,
+    `<p><strong>Email:</strong> ${email}</p>`,
+    `<p><strong>Company:</strong> ${company || "-"}</p>`,
+    `<p><strong>Website:</strong> ${website || "-"}</p>`,
+    `<p><strong>Message:</strong></p>`,
+    `<p>${message.replace(/\n/g, "<br />")}</p>`
+  ].join("");
+  const textContent = [
+    "New contact request from eventsgateway.com",
+    `Department: ${department}`,
+    `Name: ${name}`,
+    `Email: ${email}`,
+    `Company: ${company || "-"}`,
+    `Website: ${website || "-"}`,
+    "Message:",
+    message
+  ].join("\n");
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "api-key": apiKey
+    },
+    body: JSON.stringify({
+      sender: {
+        email: senderEmail,
+        name: "EventsGateway"
+      },
+      replyTo: {
+        email,
+        name
+      },
+      to: [{ email: recipientEmail, name: "Marian Vasile" }],
+      subject: formattedSubject,
+      htmlContent,
+      textContent
+    })
+  });
+
+  if (!response.ok) {
+    return json({ error: { message: "Unable to deliver the contact email right now." } }, { status: 502 });
+  }
+
+  return json({ success: true });
+}
+
 function createAssetRequest(request, pathname) {
   const url = new URL(request.url);
   url.pathname = pathname;
@@ -475,6 +611,18 @@ export default {
 
     if (hostname === "dash.eventsgateway.com") {
       return handleDashboardRequest(request, env);
+    }
+
+    if (url.pathname === "/api/public-site-tracking") {
+      return handlePublicSiteTracking(request, env);
+    }
+
+    if (url.pathname === "/api/contact") {
+      return handleContactRequest(request, env);
+    }
+
+    if (url.pathname === "/tracker.js" || url.pathname === "/v1/collect" || url.pathname === "/v1/batch" || url.pathname === "/v1/identify") {
+      return handleCollectorRequest(request, env);
     }
 
     if (url.pathname === "/api/live-stats") {

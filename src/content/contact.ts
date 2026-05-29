@@ -1,24 +1,46 @@
 export const contactContent = {
   title: "Contact",
   intro:
-    "Tell us what kind of site you run, which event destinations you need, and how you want to deploy EventsGateway on Cloudflare Workers.",
-  responseTime: "Typical response window: within two business days for technical and installation inquiries.",
+    "Tell us what kind of site you run, which destinations you need, and which department should handle the conversation.",
+  responseTime: "Typical response window: within two business days for product, commercial, and technical inquiries.",
   confidentialityNote:
     "Share only the technical context needed for the first conversation, such as site stack, expected event volume, and required destinations.",
+  departments: [
+    {
+      value: "sales",
+      label: "Sales",
+      detail: "Commercial questions, Enterprise plans, and buying process."
+    },
+    {
+      value: "support",
+      label: "Support",
+      detail: "Hosted product help, dashboard questions, and account issues."
+    },
+    {
+      value: "technical",
+      label: "Technical",
+      detail: "Collector, routing, API, and integration requirements."
+    },
+    {
+      value: "partnerships",
+      label: "Partnerships",
+      detail: "Agencies, resellers, implementation partners, and collaborations."
+    }
+  ],
   methods: [
     {
       icon: "mail",
-      title: "Installation help",
-      text: "Questions about tracker setup, collector deployment, or installing EventsGateway on your site.",
-      actionLabel: "Contact by email",
-      href: "mailto:contact@eventsgateway.com?subject=EventsGateway%20installation%20help"
+      title: "Sales and plans",
+      text: "Questions about Free, usage expansion, Enterprise scope, or commercial fit.",
+      actionLabel: "Contact sales",
+      href: "mailto:contact@eventsgateway.com?subject=EventsGateway%20sales"
     },
     {
       icon: "spark",
-      title: "Cloudflare Workers deployment",
+      title: "Cloudflare deployment",
       text: "Discuss edge deployment, routing architecture, and how the platform fits into your Cloudflare setup.",
       actionLabel: "Discuss deployment",
-      href: "mailto:contact@eventsgateway.com?subject=EventsGateway%20Cloudflare%20deployment"
+      href: "mailto:contact@eventsgateway.com?subject=EventsGateway%20deployment"
     },
     {
       icon: "terminal",
@@ -29,10 +51,11 @@ export const contactContent = {
     }
   ],
   inquiryTypes: [
-    "Tracker installation",
+    "Hosted product onboarding",
     "Cloudflare Workers deployment",
     "Destination routing setup",
-    "Technical integration"
+    "Technical integration",
+    "Enterprise planning"
   ],
   faq: [
     {

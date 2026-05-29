@@ -30,13 +30,13 @@ export const homeContent = {
       detail: "There is no hard pricing cliff. Costs scale in simple 1,000,000-event blocks."
     },
     {
-      label: "Commercial runtime",
-      value: "Stripe-ready",
-      detail: "Billing, invoices, reminders, and payment flows are designed to plug into Stripe cleanly."
+      label: "Enterprise",
+      value: "$1,995+",
+      detail: "Enterprise plans start at $1,995 per month for high-volume and custom support needs."
     }
   ],
   pricingFootnote:
-    "EventsGateway uses a transparent commercial rule set on top of Cloudflare: the product starts free for the first 1,000,000 routed monthly events, then adds $5 for each extra started 1,000,000-event block while Stripe handles payment processing and invoicing flows.",
+    "EventsGateway uses a transparent commercial rule set on top of Cloudflare: the product starts free for the first 1,000,000 routed monthly events, then adds $5 for each extra started 1,000,000-event block, with Enterprise plans starting at $1,995 per month.",
   problems: [
     {
       icon: "spark",
@@ -127,5 +127,5 @@ export const homeContent = {
   ],
   finalCtaTitle: "Ready to launch Cloudflare-native tracking on your site?",
   finalCtaText:
-    "Install EventsGateway quickly, collect events once, and keep delivery to analytics, ads, and custom endpoints under one control layer with a cost model that stays friendly to small sites."
+    "Start with the hosted dashboard, collect events once, and keep delivery to analytics, ads, and custom endpoints under one control layer with a cost model that stays friendly to small sites."
 } as const;
