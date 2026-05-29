@@ -150,7 +150,7 @@ const installJsonLd = {
       <SectionHeader
         eyebrow="Install Wizard"
         title="Generate the private setup values before deployment."
-        description="This initial install flow lives on the public root domain and prepares the private Cloudflare and captcha values that must stay out of the public repository."
+        description="This initial install flow lives on the public root domain and helps self-hosted users replace the default official Cloudflare and captcha values with their own deployment settings."
       />
       <div class="wizard-grid" data-install-wizard>
         <div class="surface-panel wizard-panel">
@@ -213,7 +213,7 @@ const installJsonLd = {
               <input id="install-captcha-secret-key" type="password" value="" />
             </label>
             <div class="wizard-note">
-              The site key is public at runtime, but it should still be injected during install instead of being committed.
+              The official repository ships with deployment defaults for the hosted EventsGateway instance. Replace them in your own copy during install.
             </div>
             <div class="wizard-note">
               The secret key must stay only in private local files, CI secrets, or Cloudflare secret storage.

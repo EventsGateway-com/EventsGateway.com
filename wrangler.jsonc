@@ -13,20 +13,42 @@
 	"observability": {
 		"enabled": true
 	},
-	"account_id": "__CLOUDFLARE_ACCOUNT_ID__",
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "eventsgateway-control-plane",
+			"database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
+			"remote": true
+		}
+	],
+	"vars": {
+		"PUBLIC_STATS_SITE_ID": "site_alpha"
+	},
+	"account_id": "63e37d6abff509f43d4d9a722361d03a",
 	"workers_dev": false,
 	"env": {
 		"production": {
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "eventsgateway-control-plane",
+					"database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
+					"remote": true
+				}
+			],
+			"vars": {
+				"PUBLIC_STATS_SITE_ID": "site_alpha"
+			},
 			"routes": [
 				{
 					"pattern": "eventsgateway.com",
 					"custom_domain": true,
-					"zone_id": "__CLOUDFLARE_ZONE_ID__"
+					"zone_id": "dc8513a03681904c320e4ab0517f312e"
 				},
 				{
 					"pattern": "www.eventsgateway.com",
 					"custom_domain": true,
-					"zone_id": "__CLOUDFLARE_ZONE_ID__"
+					"zone_id": "dc8513a03681904c320e4ab0517f312e"
 				}
 			]
 		}

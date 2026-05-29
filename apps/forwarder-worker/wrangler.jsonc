@@ -3,7 +3,7 @@
   "name": "eventsgateway-forwarder-worker",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-28",
-  "account_id": "__CLOUDFLARE_ACCOUNT_ID__",
+  "account_id": "63e37d6abff509f43d4d9a722361d03a",
   "workers_dev": true,
   "vars": {
     "CORS_ORIGIN": "*"
@@ -11,15 +11,15 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "__CONTROL_PLANE_DATABASE_NAME__",
-      "database_id": "__CONTROL_PLANE_DATABASE_ID__",
+      "database_name": "eventsgateway-control-plane",
+      "database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
       "remote": true
     }
   ],
   "queues": {
     "consumers": [
       {
-        "queue": "__EVENTS_QUEUE_NAME__",
+        "queue": "eventsgateway-ingest-production",
         "max_batch_size": 10,
         "max_batch_timeout": 5,
         "max_retries": 3,
@@ -32,15 +32,15 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "__CONTROL_PLANE_DATABASE_NAME__",
-          "database_id": "__CONTROL_PLANE_DATABASE_ID__",
+          "database_name": "eventsgateway-control-plane",
+          "database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
           "remote": true
         }
       ],
       "queues": {
         "consumers": [
           {
-            "queue": "__EVENTS_QUEUE_NAME__",
+            "queue": "eventsgateway-ingest-production",
             "max_batch_size": 10,
             "max_batch_timeout": 5,
             "max_retries": 3,

@@ -6,13 +6,13 @@
   "vars": {
     "CORS_ORIGIN": "*"
   },
-  "account_id": "__CLOUDFLARE_ACCOUNT_ID__",
+  "account_id": "63e37d6abff509f43d4d9a722361d03a",
   "workers_dev": false,
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "__CONTROL_PLANE_DATABASE_NAME__",
-      "database_id": "__CONTROL_PLANE_DATABASE_ID__",
+      "database_name": "eventsgateway-control-plane",
+      "database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
       "remote": true
     }
   ],
@@ -20,7 +20,7 @@
     "producers": [
       {
         "binding": "EVENTS_QUEUE",
-        "queue": "__EVENTS_QUEUE_NAME__"
+        "queue": "eventsgateway-ingest-production"
       }
     ]
   },
@@ -29,8 +29,8 @@
       "d1_databases": [
         {
           "binding": "DB",
-          "database_name": "__CONTROL_PLANE_DATABASE_NAME__",
-          "database_id": "__CONTROL_PLANE_DATABASE_ID__",
+          "database_name": "eventsgateway-control-plane",
+          "database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
           "remote": true
         }
       ],
@@ -38,7 +38,7 @@
         "producers": [
           {
             "binding": "EVENTS_QUEUE",
-            "queue": "__EVENTS_QUEUE_NAME__"
+            "queue": "eventsgateway-ingest-production"
           }
         ]
       },
@@ -49,7 +49,7 @@
         {
           "pattern": "e.eventsgateway.com",
           "custom_domain": true,
-          "zone_id": "__CLOUDFLARE_ZONE_ID__"
+          "zone_id": "dc8513a03681904c320e4ab0517f312e"
         }
       ]
     }
