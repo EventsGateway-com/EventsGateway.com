@@ -673,7 +673,7 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
 </style>
 
 <script>
-  const handleOutsideClick = (event) => {
+  const handleOutsideClick = (event: Event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
 
