@@ -1529,6 +1529,121 @@ select.eg-input option {
 .react-resizable-handle { opacity: 1; }
 .react-grid-item.react-draggable-dragging { user-select: none; }
 
+.eg-window-layout {
+  margin: 0 -10px;
+}
+
+.eg-window-resize-handle {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 10;
+  color: var(--eg-muted);
+  cursor: nwse-resize;
+}
+
+.eg-draggable-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--eg-border);
+  border-radius: var(--eg-radius-lg);
+  background: var(--eg-bg-elevated);
+}
+
+.eg-draggable-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(0.75rem - 3px) 1rem;
+  border-bottom: 1px solid var(--eg-border);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: grab;
+  user-select: none;
+}
+
+.eg-draggable-panel__header.is-collapsed {
+  border-bottom: none;
+}
+
+.eg-draggable-panel__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.eg-draggable-panel__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.eg-draggable-panel__icon {
+  border: none;
+  background: transparent;
+  color: var(--eg-muted);
+  cursor: pointer;
+}
+
+.eg-draggable-panel__content {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.eg-draggable-panel__content > .eg-card,
+.eg-draggable-panel__content > .eg-metric-card,
+.eg-draggable-panel__content > .eg-state-card {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.eg-draggable-panel__content > .eg-card > .eg-card__header {
+  display: none;
+}
+
+.eg-window-taskbar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--eg-border);
+  background: var(--eg-bg-elevated);
+}
+
+.eg-window-taskbar__label {
+  margin-right: 1rem;
+  font-size: 0.85rem;
+  color: var(--eg-muted);
+}
+
+.eg-window-metric {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.eg-window-metric__value {
+  margin-bottom: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.eg-window-metric__detail {
+  color: var(--eg-muted);
+}
+
 .eg-sidebar {
   width: 250px;
   flex-shrink: 0;
