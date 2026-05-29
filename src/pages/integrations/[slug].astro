@@ -16,6 +16,58 @@ export function getStaticPaths() {
 const { item } = Astro.props as {
   item: (typeof integrationsContent.items)[number];
 };
+
+const accentPhrases = [
+  "same conversion truth",
+  "same trusted event stream",
+  "same event system",
+  "same event model",
+  "one shared event layer",
+  "one cleaner event source",
+  "one event model",
+  "one event layer",
+  "cleaner Reserve with Google signals",
+  "cleaner conversion actions",
+  "cleaner downstream data",
+  "cleaner conversion truth",
+  "stronger purchase and lead signals",
+  "purchase and lead signals",
+  "purchase and lead events",
+  "lead capture, CRM updates, automations, and revenue events",
+  "bookings, reservations, and local leads",
+  "business outcomes",
+  "signal quality",
+  "local discovery",
+  "revenue events",
+  "pipeline signals",
+  "EMQ",
+  "Meta EMQ"
+];
+
+const escapeHtml = (value: string) =>
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+const emphasizeText = (value: string) => {
+  const escaped = escapeHtml(value);
+
+  for (const phrase of accentPhrases) {
+    const escapedPhrase = escapeHtml(phrase);
+    const lower = escaped.toLowerCase();
+    const target = escapedPhrase.toLowerCase();
+    const index = lower.indexOf(target);
+
+    if (index !== -1) {
+      return `${escaped.slice(0, index)}<span class="copy-accent">${escaped.slice(index, index + escapedPhrase.length)}</span>${escaped.slice(index + escapedPhrase.length)}`;
+    }
+  }
+
+  return escaped;
+};
 ---
 
 <BaseLayout
@@ -28,9 +80,9 @@ const { item } = Astro.props as {
       <div class="stack">
         <span class="eyebrow">Integration</span>
         <img class="integration-hero-logo" src={`/integrations/logos/${item.slug}.svg`} alt={`${item.label} logo`} loading="eager" />
-        <h1 class="page-title">{item.title}</h1>
-        <p class="page-copy page-copy--lead">{item.summary}</p>
-        <p class="page-copy">{item.hero}</p>
+        <h1 class="page-title" set:html={emphasizeText(item.title)} />
+        <p class="page-copy page-copy--lead" set:html={emphasizeText(item.summary)} />
+        <p class="page-copy" set:html={emphasizeText(item.hero)} />
         <div class="button-row">
           <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
           {(item as any).repository && (
@@ -47,10 +99,12 @@ const { item } = Astro.props as {
       <SectionHeader
         eyebrow="Why It Matters"
         title={item.whyTitle}
+        titleHtml={emphasizeText(item.whyTitle)}
         description={item.whyDescription}
+        descriptionHtml={emphasizeText(item.whyDescription)}
       />
       <div class="card-grid">
-        {item.reasons.map((reason) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={reason.title} text={reason.text} />)}
+        {item.reasons.map((reason) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={reason.title} titleHtml={emphasizeText(reason.title)} text={reason.text} textHtml={emphasizeText(reason.text)} />)}
       </div>
     </Container>
   </section>
@@ -60,10 +114,12 @@ const { item } = Astro.props as {
       <SectionHeader
         eyebrow="Use Cases"
         title={item.useCasesTitle}
+        titleHtml={emphasizeText(item.useCasesTitle)}
         description={item.useCasesDescription}
+        descriptionHtml={emphasizeText(item.useCasesDescription)}
       />
       <div class="card-grid">
-        {item.useCases.map((useCase) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={useCase.title} text={useCase.text} />)}
+        {item.useCases.map((useCase) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={useCase.title} titleHtml={emphasizeText(useCase.title)} text={useCase.text} textHtml={emphasizeText(useCase.text)} />)}
       </div>
     </Container>
   </section>
@@ -73,8 +129,8 @@ const { item } = Astro.props as {
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
           <span class="eyebrow">Next Step</span>
-          <h2 class="section-title">{item.ctaTitle}</h2>
-          <p class="section-copy">{item.ctaText}</p>
+          <h2 class="section-title" set:html={emphasizeText(item.ctaTitle)} />
+          <p class="section-copy" set:html={emphasizeText(item.ctaText)} />
           <div class="button-row">
             <Button href="/pricing/" variant="primary" icon="arrow-right">Open pricing</Button>
             <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
@@ -97,5 +153,9 @@ const { item } = Astro.props as {
     color: var(--color-text);
     font-size: 1.1rem;
     max-width: 58rem;
+  }
+
+  :global(.copy-accent) {
+    color: var(--color-accent);
   }
 </style>

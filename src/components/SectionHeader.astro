@@ -3,12 +3,16 @@ const {
   eyebrow,
   title,
   description,
+  titleHtml,
+  descriptionHtml,
   align = "left",
   class: className = ""
 } = Astro.props as {
   eyebrow?: string;
   title: string;
   description?: string;
+  titleHtml?: string;
+  descriptionHtml?: string;
   align?: "left" | "center";
   class?: string;
 };
@@ -16,8 +20,8 @@ const {
 
 <div class:list={["content-lead", align === "center" && "content-lead--center", className]}>
   {eyebrow && <span class="eyebrow">{eyebrow}</span>}
-  <h2 class="section-title">{title}</h2>
-  {description && <p class="section-copy">{description}</p>}
+  {titleHtml ? <h2 class="section-title" set:html={titleHtml} /> : <h2 class="section-title">{title}</h2>}
+  {descriptionHtml ? <p class="section-copy" set:html={descriptionHtml} /> : description && <p class="section-copy">{description}</p>}
 </div>
 
 <style>

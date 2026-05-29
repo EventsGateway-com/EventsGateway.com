@@ -18,7 +18,9 @@ const {
   imageSrc,
   imageAlt,
   title,
+  titleHtml,
   text,
+  textHtml,
   eyebrow,
   href,
   step,
@@ -29,7 +31,9 @@ const {
   imageSrc?: string;
   imageAlt?: string;
   title?: string;
+  titleHtml?: string;
   text?: string;
+  textHtml?: string;
   eyebrow?: string;
   href?: string;
   step?: string;
@@ -59,8 +63,8 @@ const Tag = href && !disabled ? "a" : "div";
       )}
       {eyebrow && <span class="premium-card__eyebrow">{eyebrow}</span>}
     </div>
-    {title && <h3 class="premium-card__title">{title}</h3>}
-    {text && <p class="premium-card__text">{text}</p>}
+    {titleHtml ? <h3 class="premium-card__title" set:html={titleHtml} /> : title && <h3 class="premium-card__title">{title}</h3>}
+    {textHtml ? <p class="premium-card__text" set:html={textHtml} /> : text && <p class="premium-card__text">{text}</p>}
     <slot />
   </div>
 </Tag>
