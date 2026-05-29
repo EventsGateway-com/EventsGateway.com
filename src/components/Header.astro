@@ -22,7 +22,7 @@ const compareLinks = [
   { label: "Compare Home", href: "/compare/" },
   { label: "Why Not Direct Pixels", href: "/why-not-direct-pixels/" },
   ...Object.entries(comparePages).map(([slug, page]) => ({
-    label: page.title.replace("EventsGateway vs ", ""),
+    label: slug === "cloudflare-zaraz" ? "Zaraz" : page.title.replace("EventsGateway vs ", ""),
     href: `/compare/${slug}/`
   }))
 ] as Array<{ label: string; href: string }>;
