@@ -51,13 +51,18 @@ const pricingJsonLd = {
                 <ul class="simple-list">
                   {plan.features.map((feature) => <li>{feature}</li>)}
                 </ul>
+                {plan.name === "Enterprise" && (
+                  <div style="margin-top: auto; padding-top: 1rem;">
+                    <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
+                  </div>
+                )}
               </div>
             </PremiumCard>
           ))
         }
       </div>
       <div class="ml-plan-wrapper">
-        <PremiumCard icon="spark" eyebrow="Add-on" class="ml-plan-card">
+        <PremiumCard icon="spark" eyebrow="Add-on" class="ml-plan-card" href="https://dash.eventsgateway.com/register">
           <div class="ml-plan-content">
             <div class="ml-plan-info">
               <h3>Machine Learning</h3>

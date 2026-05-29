@@ -376,8 +376,7 @@ function AppShell() {
               </nav>
             </div>
           ))}
-
-          </div>
+        </div>
       </aside>
 
       <div className="eg-main">
@@ -436,9 +435,7 @@ function AppShell() {
                     Platform Admin
                   </NavLink>
                 )}
-                <NavLink className="eg-nav-link" style={{ display: "block", marginBottom: "0.5rem" }} to="/app/profile">
-                  My Profile
-                </NavLink>
+                {bootstrap?.accessible_sites?.[0] ? <NavLink className="eg-nav-link" style={{ display: "block", marginBottom: "0.5rem" }} to={`/app/orgs/${bootstrap.accessible_sites[0].org_id}/projects/${bootstrap.accessible_sites[0].project_id}/sites/${bootstrap.accessible_sites[0].id}/profile`}>My Profile</NavLink> : null}
                 <button
                   className="eg-button eg-button--compact"
                   style={{ width: "100%", textAlign: "left", background: "transparent", border: "none" }}
@@ -1265,19 +1262,18 @@ function AcceptInvitePage() {
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-function DraggablePanel({ title, children, onRemove }: { title: string; children: React.ReactNode; onRemove?: () => void }) {
-  const [minimized, setMinimized] = useState(false);
+function DraggablePanel({ title, children, isMinimized, onToggleMinimize }: { title: string; children: React.ReactNode; isMinimized: boolean; onToggleMinimize: () => void }) {
   const [maximized, setMaximized] = useState(false);
   
   return (
-    <div className={`eg-draggable-panel ${maximized ? 'is-maximized' : ''} ${minimized ? 'is-minimized' : ''}`} style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--eg-bg-elevated)', border: '1px solid var(--eg-border)', borderRadius: 'var(--eg-radius-lg)', overflow: maximized ? 'auto' : 'hidden', zIndex: maximized ? 1000 : 1, position: maximized ? 'fixed' : 'relative', top: maximized ? '2rem' : 'auto', left: maximized ? '2rem' : 'auto', right: maximized ? '2rem' : 'auto', bottom: maximized ? '2rem' : 'auto' }}>
-      <div className="eg-draggable-panel__header drag-handle" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: minimized ? 'none' : '1px solid var(--eg-border)', cursor: 'move', background: 'rgba(255,255,255,0.02)' }}>
+    <div className={`eg-draggable-panel ${maximized ? 'is-maximized' : ''} ${isMinimized ? 'is-minimized' : ''}`} style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--eg-bg-elevated)', border: '1px solid var(--eg-border)', borderRadius: 'var(--eg-radius-lg)', overflow: maximized ? 'auto' : 'hidden', zIndex: maximized ? 1000 : 1, position: maximized ? 'fixed' : 'relative', top: maximized ? '2rem' : 'auto', left: maximized ? '2rem' : 'auto', right: maximized ? '2rem' : 'auto', bottom: maximized ? '2rem' : 'auto' }}>
+      <div className="eg-draggable-panel__header drag-handle" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: isMinimized ? 'none' : '1px solid var(--eg-border)', cursor: 'move', background: 'rgba(255,255,255,0.02)' }}>
         <strong style={{ fontSize: '0.95rem', fontWeight: 600 }}>{title}</strong>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button type="button" onClick={() => setMinimized(!minimized)} style={{ background: 'transparent', border: 'none', color: 'var(--eg-muted)', cursor: 'pointer' }}>
+          <button type="button" onClick={onToggleMinimize} style={{ background: 'transparent', border: 'none', color: 'var(--eg-muted)', cursor: 'pointer' }}>
             <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
-          {!minimized && (
+          {!isMinimized && (
             <button type="button" onClick={() => setMaximized(!maximized)} style={{ background: 'transparent', border: 'none', color: 'var(--eg-muted)', cursor: 'pointer' }}>
               {maximized ? (
                 <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
@@ -1288,7 +1284,7 @@ function DraggablePanel({ title, children, onRemove }: { title: string; children
           )}
         </div>
       </div>
-      {!minimized && (
+      {!isMinimized && (
         <div className="eg-draggable-panel__content" style={{ padding: '1rem', flex: 1, overflow: 'auto' }}>
           {children}
         </div>
@@ -1303,16 +1299,41 @@ function OverviewPage() {
     queryFn: dashboardApi.fetchOverview
   });
 
-  const [layouts, setLayouts] = useState<any>({
+  const defaultLayouts = {
     lg: [
-      { i: 'metric1', x: 0, y: 0, w: 3, h: 4 },
-      { i: 'metric2', x: 3, y: 0, w: 3, h: 4 },
-      { i: 'metric3', x: 6, y: 0, w: 3, h: 4 },
-      { i: 'metric4', x: 9, y: 0, w: 3, h: 4 },
-      { i: 'panel1', x: 0, y: 4, w: 6, h: 8 },
-      { i: 'panel2', x: 6, y: 4, w: 6, h: 8 }
+      { i: 'metric1', x: 0, y: 0, w: 3, h: 5 },
+      { i: 'metric2', x: 3, y: 0, w: 3, h: 5 },
+      { i: 'metric3', x: 6, y: 0, w: 3, h: 5 },
+      { i: 'metric4', x: 9, y: 0, w: 3, h: 5 },
+      { i: 'panel1', x: 0, y: 5, w: 6, h: 8 },
+      { i: 'panel2', x: 6, y: 5, w: 6, h: 8 }
     ]
-  });
+  };
+  
+  const [layouts, setLayouts] = useState<any>(defaultLayouts);
+  const [minimizedPanels, setMinimizedPanels] = useState<Record<string, boolean>>({});
+
+  const toggleMinimize = (panelId: string, originalHeight: number) => {
+    setMinimizedPanels(prev => {
+      const isCurrentlyMinimized = !!prev[panelId];
+      const newMinimizedState = { ...prev, [panelId]: !isCurrentlyMinimized };
+      
+      setLayouts((currentLayouts: any) => {
+        const newLayouts = { ...currentLayouts };
+        Object.keys(newLayouts).forEach(breakpoint => {
+          newLayouts[breakpoint] = newLayouts[breakpoint].map((l: any) => {
+            if (l.i === panelId) {
+              return { ...l, h: !isCurrentlyMinimized ? 2 : originalHeight };
+            }
+            return l;
+          });
+        });
+        return newLayouts;
+      });
+      
+      return newMinimizedState;
+    });
+  };
 
   if (!overviewQuery.data) return <StateCard title="Loading overview" description="Building the latest metrics snapshot." />;
 
@@ -1328,45 +1349,45 @@ function OverviewPage() {
           layouts={layouts}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
           cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-          rowHeight={30}
+          rowHeight={25}
           draggableHandle=".drag-handle"
           onLayoutChange={(currentLayout, allLayouts) => setLayouts(allLayouts)}
         >
           <div key="metric1">
-            <DraggablePanel title="Events per minute">
+            <DraggablePanel title="Events per minute" isMinimized={!!minimizedPanels['metric1']} onToggleMinimize={() => toggleMinimize('metric1', 5)}>
               <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.ingestPerMinute}</div>
               <div style={{ color: 'var(--eg-muted)' }}>Current ingest lane</div>
             </DraggablePanel>
           </div>
           <div key="metric2">
-            <DraggablePanel title="Matched rate">
+            <DraggablePanel title="Matched rate" isMinimized={!!minimizedPanels['metric2']} onToggleMinimize={() => toggleMinimize('metric2', 5)}>
               <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.matchedRate}%</div>
               <div style={{ color: 'var(--eg-muted)' }}>Events that resolve into at least one route</div>
             </DraggablePanel>
           </div>
           <div key="metric3">
-            <DraggablePanel title="Delivery success">
+            <DraggablePanel title="Delivery success" isMinimized={!!minimizedPanels['metric3']} onToggleMinimize={() => toggleMinimize('metric3', 5)}>
               <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.deliverySuccess}%</div>
               <div style={{ color: 'var(--eg-muted)' }}>Last 24h delivery performance</div>
             </DraggablePanel>
           </div>
           <div key="metric4">
-            <DraggablePanel title="Queue depth">
+            <DraggablePanel title="Queue depth" isMinimized={!!minimizedPanels['metric4']} onToggleMinimize={() => toggleMinimize('metric4', 5)}>
               <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.queueDepth}</div>
               <div style={{ color: 'var(--eg-muted)' }}>Forwarder backlog</div>
             </DraggablePanel>
           </div>
           
           <div key="panel1">
-            <DraggablePanel title="Top signals">
+            <DraggablePanel title="Top signals" isMinimized={!!minimizedPanels['panel1']} onToggleMinimize={() => toggleMinimize('panel1', 8)}>
               <div className="eg-list">
                 {overviewQuery.data.topSignals.map((signal) => (
                   <div className="eg-list__row" key={signal.label}>
                     <div>
                       <strong>{signal.label}</strong>
-                      <span>{signal.value.toLocaleString()} events</span>      
+                      <span>{signal.value.toLocaleString()} events</span>     
                     </div>
-                    <StatusBadge status="healthy">{signal.delta}</StatusBadge> 
+                    <StatusBadge status="healthy">{signal.delta}</StatusBadge>
                   </div>
                 ))}
               </div>
@@ -1374,11 +1395,11 @@ function OverviewPage() {
           </div>
 
           <div key="panel2">
-            <DraggablePanel title="Routing state">
+            <DraggablePanel title="Routing state" isMinimized={!!minimizedPanels['panel2']} onToggleMinimize={() => toggleMinimize('panel2', 8)}>
               <div className="eg-stack">
                 <div className="eg-stat-line">
                   <span>Compiled version</span>
-                  <strong>v{overviewQuery.data.compiledVersion}</strong>       
+                  <strong>v{overviewQuery.data.compiledVersion}</strong>      
                 </div>
                 <div className="eg-stat-line">
                   <span>Active routes</span>

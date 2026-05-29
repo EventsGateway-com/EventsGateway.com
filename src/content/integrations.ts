@@ -52,7 +52,7 @@ const items = [
     slug: "facebook-pixel",
     label: "Facebook Pixel",
     title: "Facebook Pixel integration",
-    summary: "Improve Meta matching and optimization with cleaner browser and server-side conversion signals.",
+    summary: "Improve Meta attribution and optimization with cleaner browser and server-side conversion signals.",
     hero:
       "Use the Facebook Pixel managed component to send stronger purchase, lead, and identity data into Meta without rebuilding separate event logic for every funnel.",
     repository: "https://github.com/managed-components/facebook-pixel",
@@ -90,7 +90,7 @@ const items = [
     slug: "google-ads",
     label: "Google Ads",
     title: "Google Ads integration",
-    summary: "Send cleaner conversion actions into Google Ads without rebuilding tracking for every funnel.",
+    summary: "Send cleaner conversion actions into Google Ads and improve attribution without rebuilding tracking for every funnel.",
     hero:
       "Use one cleaner event layer for Google Ads so conversion actions, remarketing inputs, and campaign optimization data stay consistent across funnels.",
     repository: "https://github.com/managed-components/google-ads",
@@ -451,7 +451,7 @@ const items = [
     slug: "tiktok",
     label: "TikTok",
     title: "TikTok integration",
-    summary: "Send cleaner events to TikTok without relying on a separate tracking setup just for one channel.",
+    summary: "Send cleaner events to TikTok and improve attribution without relying on a separate tracking setup just for one channel.",
     hero:
       "Use the same clean event stream for TikTok so your team can improve signal consistency, conversion quality, and campaign learning without multiplying browser-side tracking.",
     repository: "https://github.com/managed-components/tiktok",

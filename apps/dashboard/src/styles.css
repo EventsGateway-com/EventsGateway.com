@@ -429,11 +429,10 @@ p {
   flex: 1;
   flex-direction: column;
   gap: 0.8rem;
-  min-height: 0;
   overflow-y: auto;
-  padding-bottom: 0.8rem;
+  overflow-x: hidden;
+  padding-bottom: 2rem;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
 }
 
 .eg-brand {
@@ -514,6 +513,7 @@ p {
   align-items: center;
   justify-content: center;
   width: 1.25rem;
+  height: 1.25rem;
   color: var(--eg-subtle);
   transition: color 0.18s ease;
 }
@@ -521,6 +521,10 @@ p {
 .eg-nav-link.is-active .eg-nav-link__icon,
 .eg-nav-link:hover .eg-nav-link__icon {
   color: var(--eg-accent);
+}
+.eg-nav-link__icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .eg-nav-link.is-active {
@@ -1308,7 +1312,7 @@ p {
   .eg-sidebar__content {
     gap: 1rem;
     overflow-y: auto;
-    padding-bottom: 0;
+    padding-bottom: 2rem;
   }
 
   .eg-brand {
