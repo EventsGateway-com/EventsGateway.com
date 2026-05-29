@@ -2,7 +2,7 @@ export const docsContent = {
   title: "EventsGateway Documentation",
   eyebrow: "Commercial Documentation",
   intro:
-    "Use this documentation to configure EventsGateway on your sites, standardize event naming, map commercial conversions, and roll out routing cleanly from the hosted product.",
+    "Use this documentation to configure EventsGateway on your sites, standardize event naming, improve Meta Event Match Score inputs, map commercial conversions, and roll out routing cleanly from the hosted product.",
   quickStart: `window.e_g = function (eventName, payload = {}) {
   window.EventsGateway?.track({
     type: eventName,
@@ -42,6 +42,7 @@ export const docsContent = {
   notes: [
     "Use one canonical event name in the browser and let EventsGateway route and transform per destination.",
     "Pass value, currency, content IDs, and transaction identifiers whenever they exist.",
+    "For Meta advertisers, send the strongest possible identifiers and conversion context so Event Match Score can stay at the maximum posture supported by your site data.",
     "For Lead events, send both value and currency so downstream ad platforms receive commercial context, not only a generic form completion.",
     "For Google Ads, EventsGateway maps canonical events to conversion actions and remarketing-friendly payloads because Google Ads does not use one single standard event list across all use cases.",
     "For Meta and TikTok, prefer standard events whenever possible because ad platforms optimize and report better on recognized event names."
@@ -102,7 +103,7 @@ export const docsContent = {
   ],
   communityResources: {
     title: "Open source and self-hosted resources live in Community.",
-    text: "Use Community for GitHub, self-hosted installation, and the public runtime status board.",
+    text: "Use Community for GitHub, self-hosted installation, and the public status board.",
     links: [
       { label: "Open Source", href: "/open-source/" },
       { label: "Install", href: "/install/" },

@@ -2,6 +2,8 @@ import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+process.noDeprecation = true;
+
 const rootDir = path.resolve(".");
 const rootDistDir = path.join(rootDir, "dist");
 const dashboardDir = path.join(rootDir, "apps", "dashboard");
@@ -50,6 +52,7 @@ async function mergeDashboardIntoRootDist() {
   await cleanDashboardOutput();
   await fs.mkdir(dashboardTargetDir, { recursive: true });
   await fs.copyFile(path.join(dashboardDistDir, "index.html"), path.join(dashboardTargetDir, "index.html"));
+  await fs.copyFile(path.join(dashboardDistDir, "index.html"), path.join(dashboardTargetDir, "dashboard-shell.txt"));
 
   const dashboardAssetsDir = path.join(dashboardDistDir, "assets");
   try {

@@ -2,7 +2,7 @@ export const compareContent = {
   title: "EventsGateway Comparisons",
   eyebrow: "Tracker Comparisons",
   intro:
-    "Compare EventsGateway with Cloudflare Zaraz, RudderStack, Segment, GTM server-side setups, PostHog, JENTIS, Stape-based setups, Plausible, Matomo, GA4 plus GTM, Mixpanel, Amplitude, Heap, Snowplow, Adobe Analytics, Simple Analytics, Fathom, Piwik PRO, direct Meta Pixel setups, and direct TikTok Pixel setups. The goal is not generic feature parity. The goal is to explain where EventsGateway fits best: canonical event collection, Cloudflare-native runtime, low-friction install, and small-site-friendly cost control.",
+    "Compare EventsGateway with Cloudflare Zaraz, RudderStack, Segment, GTM server-side setups, PostHog, JENTIS, Stape-based setups, Plausible, Matomo, GA4 plus GTM, Mixpanel, Amplitude, Heap, Snowplow, Adobe Analytics, Simple Analytics, Fathom, Piwik PRO, direct Meta Pixel setups, and direct TikTok Pixel setups. These pages are written for performance teams that care about Meta signal quality, Event Match Score posture, cost clarity, and one clean event stream that can feed every channel.",
   cards: [
     {
       slug: "cloudflare-zaraz",
@@ -14,7 +14,7 @@ export const compareContent = {
     {
       slug: "rudderstack",
       title: "EventsGateway vs RudderStack",
-      text: "Compare a Cloudflare-native event gateway against a broader customer data pipeline platform.",
+      text: "Compare a lean event-routing product against a broader customer data pipeline platform.",
       eyebrow: "CDP comparison",
       category: "CDP"
     },
@@ -35,21 +35,21 @@ export const compareContent = {
     {
       slug: "gtm-server-side",
       title: "EventsGateway vs GTM Server-Side",
-      text: "Compare UI-driven tag containers with a dedicated routing-first event layer on Cloudflare.",
+      text: "Compare container-heavy tagging with a dedicated routing-first event layer built for cleaner ad signal.",
       eyebrow: "Tagging comparison",
       category: "Tag Manager"
     },
     {
       slug: "jentis",
       title: "EventsGateway vs JENTIS",
-      text: "Compare a privacy-heavy server-side data collection platform with a lean Cloudflare-native event gateway.",
+      text: "Compare a privacy-heavy server-side data collection platform with a lean event gateway built for ad and analytics routing.",
       eyebrow: "Server-side comparison",
       category: "Privacy Analytics"
     },
     {
       slug: "stape-gtm-ss",
       title: "EventsGateway vs Stape + GTM Server-Side",
-      text: "Compare managed hosting for GTM server-side against a dedicated Cloudflare-native tracking product.",
+      text: "Compare managed GTM server-side hosting against a dedicated tracking product with one event contract.",
       eyebrow: "Hosting comparison",
       category: "Tag Manager"
     },
@@ -84,7 +84,7 @@ export const compareContent = {
     {
       slug: "amplitude",
       title: "EventsGateway vs Amplitude",
-      text: "Compare behavioral analytics depth with a lean Cloudflare-native event gateway.",
+      text: "Compare behavioral analytics depth with a lean event gateway focused on routing and signal quality.",
       eyebrow: "Product analytics comparison",
       category: "Analytics"
     },
@@ -105,7 +105,7 @@ export const compareContent = {
     {
       slug: "adobe-analytics",
       title: "EventsGateway vs Adobe Analytics",
-      text: "Compare enterprise analytics depth with an open-source Cloudflare-native routing layer.",
+      text: "Compare enterprise analytics depth with an open-source routing layer focused on collection, routing, and delivery.",
       eyebrow: "Enterprise analytics comparison",
       category: "Analytics"
     },
@@ -126,7 +126,7 @@ export const compareContent = {
     {
       slug: "piwik-pro",
       title: "EventsGateway vs Piwik PRO",
-      text: "Compare privacy and governance-heavy analytics against a lighter Cloudflare-native routing platform.",
+      text: "Compare privacy and governance-heavy analytics against a lighter routing platform for performance teams.",
       eyebrow: "Privacy analytics comparison",
       category: "Privacy Analytics"
     },
@@ -168,9 +168,9 @@ export const compareContent = {
     }
   ],
   summary: [
-    "EventsGateway is strongest when you want one browser-side event contract and flexible downstream routing.",
-    "Cloudflare-native deployment matters if you want a small operational footprint and a free-tier-friendly starting point.",
-    "Broader CDPs often win on warehouse activation and identity graphs, while EventsGateway wins on directness, install simplicity, and event gateway control.",
-    "Analytics tools can be excellent for reporting, but EventsGateway becomes more compelling when you need routing, retry logic, transformations, and multi-destination delivery from one canonical source."
+    "EventsGateway is strongest when you want one browser-side event contract and stronger downstream routing for Meta, Google, TikTok, and analytics tools.",
+    "The biggest commercial advantage is signal quality plus cost clarity: one implementation, one event model, and one lower-cost routing layer.",
+    "Broader CDPs often win on warehouse activation and identity graphs, while EventsGateway wins on directness, launch speed, and routing control for advertisers.",
+    "Analytics tools can be excellent for reporting, but EventsGateway becomes more compelling when you need better Event Match Score posture, retries, transformations, and multi-destination delivery from one canonical source."
   ]
 } as const;

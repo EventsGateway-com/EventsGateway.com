@@ -68,15 +68,6 @@ function spawnCommand(command, commandArgs, cwd) {
   });
 }
 
-function npmExecutable() {
-  return process.platform === "win32" ? "npm.cmd" : "npm";
-}
-
-async function installAppDependencies(relativePath) {
-  console.log(`[eventsgateway] Installing dependencies for ${relativePath}`);
-  await spawnCommand(npmExecutable(), ["--prefix", relativePath, "clean-install", "--progress=false"], rootDir);
-}
-
 async function runRealWrangler(commandArgs, cwd) {
   if (!existsSync(realWranglerCli)) {
     throw new Error(`Wrangler CLI not found at ${realWranglerCli}`);

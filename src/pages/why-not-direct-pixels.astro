@@ -21,8 +21,9 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
         <h1 class="page-title">{whyNotDirectPixelsContent.title}</h1>
         <p class="page-copy">{whyNotDirectPixelsContent.intro}</p>
         <div class="button-row">
-          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="/compare/meta-pixel-direct/" variant="primary" icon="arrow-right">Read Meta comparison</Button>
           <Button href="/compare/" variant="secondary" icon="arrow-right">Browse comparisons</Button>
+          <Button href="/docs/" variant="secondary" icon="arrow-right">Open playbooks</Button>
         </div>
       </div>
     </Container>
@@ -50,7 +51,7 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
       <SectionHeader
         eyebrow="Scorecard"
         title="Direct pixels versus a real event gateway."
-        description="This is the commercial and technical trade-off in one glance."
+        description="This is the performance-marketing trade-off in one glance."
       />
       <div class="card-grid">
         {
@@ -117,8 +118,8 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
           <h2 class="section-title">{whyNotDirectPixelsContent.ctaTitle}</h2>
           <p class="section-copy">{whyNotDirectPixelsContent.ctaText}</p>
           <div class="button-row">
-            <Button href="/install/" variant="primary" icon="download">Install guide</Button>
-            <Button href="/docs/" variant="secondary" icon="arrow-right">Read docs</Button>
+            <Button href="/docs/" variant="primary" icon="arrow-right">Open playbooks</Button>
+            <Button href="/install/" variant="secondary" icon="download">Self-hosted install</Button>
             <Button href="/compare/meta-pixel-direct/" variant="secondary" icon="arrow-right">Read Meta comparison</Button>
           </div>
         </div>

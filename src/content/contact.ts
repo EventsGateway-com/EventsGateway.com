@@ -2,9 +2,9 @@ export const contactContent = {
   title: "Contact",
   intro:
     "Tell us what kind of site you run, which destinations you need, and which department should handle the conversation.",
-  responseTime: "Typical response window: within two business days for product, commercial, and technical inquiries.",
+  responseTime: "Typical response window: within two business days for product, commercial, and growth inquiries.",
   confidentialityNote:
-    "Share only the technical context needed for the first conversation, such as site stack, expected event volume, and required destinations.",
+    "Share only the business context needed for the first conversation, such as funnel type, expected event volume, main ad platforms, and required destinations.",
   departments: [
     {
       value: "sales",
@@ -18,8 +18,8 @@ export const contactContent = {
     },
     {
       value: "technical",
-      label: "Technical",
-      detail: "Collector, routing, API, and integration requirements."
+      label: "Integration",
+      detail: "Tracking rollout, destinations, event mapping, and implementation requirements."
     },
     {
       value: "partnerships",
@@ -37,8 +37,8 @@ export const contactContent = {
     },
     {
       icon: "spark",
-      title: "Cloudflare deployment",
-      text: "Discuss edge deployment, routing architecture, and how the platform fits into your Cloudflare setup.",
+      title: "Signal strategy",
+      text: "Discuss Meta signal quality, Event Match Score posture, conversion modeling, and multi-destination rollout.",
       actionLabel: "Use contact form",
       href: "#contact-form"
     },
@@ -52,7 +52,7 @@ export const contactContent = {
   ],
   inquiryTypes: [
     "Hosted product onboarding",
-    "Cloudflare Workers deployment",
+    "Signal quality review",
     "Destination routing setup",
     "Technical integration",
     "Enterprise planning"
@@ -63,12 +63,12 @@ export const contactContent = {
       answer: "Yes. The platform is designed to work with a lightweight tracker or SDK so installation stays simple across many site stacks."
     },
     {
-      question: "Is the event gateway built on Cloudflare Workers?",
-      answer: "Yes. The collector and routing runtime are designed around Cloudflare Workers for edge deployment."
+      question: "Can EventsGateway improve Meta signal quality?",
+      answer: "Yes. EventsGateway is designed to standardize event naming, send stronger identifiers, and keep conversion context cleaner so Meta can receive the strongest possible matching signal from your site data."
     },
     {
-      question: "Can small sites run EventsGateway for free?",
-      answer: "Often, yes. Many small sites can stay within Cloudflare free-tier limits for Workers, Queues, and storage, so the runtime cost can remain at zero until traffic or storage grows."
+      question: "Is the Free plan enough to start?",
+      answer: "Yes. The Free plan is designed to let teams register, log in, launch tracking quickly, and route up to 1,000,000 events per month before overage begins."
     },
     {
       question: "Can you route events to multiple destinations from one integration?",

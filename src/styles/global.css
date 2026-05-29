@@ -262,6 +262,57 @@ main {
   pointer-events: none;
 }
 
+.floating-field {
+  position: relative;
+}
+
+.floating-field > input,
+.floating-field > select,
+.floating-field > textarea {
+  width: 100%;
+}
+
+.floating-field > input::placeholder,
+.floating-field > textarea::placeholder {
+  color: transparent;
+}
+
+.floating-label {
+  position: absolute;
+  top: 50%;
+  left: 0.95rem;
+  z-index: 1;
+  padding: 0 0.25rem;
+  background: linear-gradient(180deg, rgba(8, 12, 22, 0.98), rgba(8, 12, 22, 0.98));
+  color: var(--color-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+  transform-origin: left top;
+  transition:
+    top 180ms ease,
+    transform 180ms ease,
+    color 180ms ease,
+    font-size 180ms ease,
+    letter-spacing 180ms ease;
+}
+
+.floating-field--select > .floating-label,
+.floating-field--textarea > .floating-label {
+  top: 1rem;
+  transform: none;
+}
+
+.floating-field.is-filled > .floating-label,
+.floating-field.is-active > .floating-label,
+.floating-field:focus-within > .floating-label {
+  top: 0.68rem;
+  transform: none;
+  color: var(--color-subtle);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .surface-panel::after {
   content: "";
   position: absolute;

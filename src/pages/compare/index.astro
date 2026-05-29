@@ -34,14 +34,14 @@ const categoryBadge: Record<string, string> = {
         <h1 class="page-title">{compareContent.title}</h1>
         <p class="page-copy">{compareContent.intro}</p>
         <div class="button-row">
-          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
-          <Button href="/docs/" variant="secondary" icon="arrow-right">Read Documentation</Button>
-          <Button href="/why-not-direct-pixels/" variant="secondary" icon="arrow-right">Why not direct pixels?</Button>
+          <Button href="/why-not-direct-pixels/" variant="primary" icon="arrow-right">Why EventsGateway wins over direct pixels</Button>
+          <Button href="/docs/" variant="secondary" icon="arrow-right">Open playbooks</Button>
+          <Button href="/install/" variant="secondary" icon="download">Self-hosted install</Button>
         </div>
         <div class="compare-toolbar">
-          <label class="compare-search">
-            <span class="compare-search__label">Search comparisons</span>
-            <input id="compare-search" type="search" placeholder="Search by tool, stack, or use case" />
+          <label class="compare-search floating-field" data-floating-field>
+            <input id="compare-search" type="search" placeholder=" " />
+            <span class="floating-label">Search comparisons</span>
           </label>
           <div class="pill-row compare-filter-row">
             <button class="status-pill status-pill--button is-active" type="button" data-filter="all">All</button>
@@ -65,8 +65,8 @@ const categoryBadge: Record<string, string> = {
     <Container>
       <SectionHeader
         eyebrow="Quick Filters"
-        title="Browse comparisons by the stack you are replacing."
-        description="Start with the category that matches your current setup, then jump into the side-by-side page that matches your evaluation path."
+        title="Browse comparisons by the stack you want to replace."
+        description="Start with the current stack in your ad-measurement workflow, then open the head-to-head page that shows why EventsGateway is stronger for signal quality, routing control, and cost clarity."
       />
       <div class="card-grid">
         {
@@ -101,8 +101,8 @@ const categoryBadge: Record<string, string> = {
                     </div>
                     <div class="button-row compare-card-actions">
                       <Button href={`/compare/${item.slug}/`} variant="primary" icon="arrow-right">Read comparison</Button>
-                      <Button href="/install/" variant="secondary" icon="download">Install</Button>
-                      <Button href="/docs/" variant="secondary" icon="arrow-right">Docs</Button>
+                      <Button href="/docs/" variant="secondary" icon="arrow-right">Playbooks</Button>
+                      <Button href="/install/" variant="secondary" icon="download">Self-hosted install</Button>
                     </div>
                   </PremiumCard>
                 </div>
@@ -123,9 +123,9 @@ const categoryBadge: Record<string, string> = {
             {compareContent.summary.map((item) => <li>{item}</li>)}
           </ul>
           <div class="button-row">
-            <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
-            <Button href="/docs/" variant="secondary" icon="arrow-right">Read Documentation</Button>
-            <Button href="/why-not-direct-pixels/" variant="secondary" icon="arrow-right">Why not direct pixels?</Button>
+            <Button href="/why-not-direct-pixels/" variant="primary" icon="arrow-right">Why EventsGateway beats direct pixels</Button>
+            <Button href="/docs/" variant="secondary" icon="arrow-right">Open playbooks</Button>
+            <Button href="/install/" variant="secondary" icon="download">Self-hosted install</Button>
           </div>
         </div>
       </div>
@@ -147,15 +147,7 @@ const categoryBadge: Record<string, string> = {
   }
 
   .compare-search {
-    display: grid;
-    gap: 0.42rem;
-  }
-
-  .compare-search__label {
-    color: var(--color-subtle);
-    font-size: 0.78rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    display: block;
   }
 
   .compare-search input {

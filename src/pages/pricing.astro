@@ -80,7 +80,7 @@ const pricingJsonLd = {
           />
           <div class="surface-panel">
             <div class="surface-panel__inner pricing-calculator" data-pricing-calculator>
-              <label class="pricing-field">
+              <label class="pricing-field pricing-field--range">
                 <span>Estimated monthly routed events</span>
                 <input id="pricing-events" type="range" min="0" max="20000000" step="50000" value="1000000" />
                 <div class="pricing-range-scale" aria-hidden="true">
@@ -88,9 +88,9 @@ const pricingJsonLd = {
                   <span>20,000,000</span>
                 </div>
               </label>
-              <label class="pricing-field">
-                <span>Exact value</span>
-                <input id="pricing-events-input" type="number" min="0" step="1000" value="1000000" />
+              <label class="pricing-field floating-field" data-floating-field>
+                <input id="pricing-events-input" type="number" min="0" step="1000" value="1000000" placeholder=" " />
+                <span class="floating-label">Exact value</span>
               </label>
               <div class="pricing-summary-grid">
                 <div class="pricing-summary-card">
@@ -193,7 +193,7 @@ const pricingJsonLd = {
     color: var(--color-muted);
   }
 
-  .pricing-field span {
+  .pricing-field--range > span {
     font-size: 0.85rem;
   }
 
@@ -321,4 +321,4 @@ const pricingJsonLd = {
   }
 </style>
 
-<script src="/scripts/pricing-calculator.js" defer></script>
+<script is:inline src="/scripts/pricing-calculator.js" defer></script>

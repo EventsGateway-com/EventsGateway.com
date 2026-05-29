@@ -44,8 +44,8 @@ const installJsonLd = {
               <Button variant="primary" icon="arrow-right" disabled>Set GitHub Repository URL</Button>
             )
           }
-          <Button href="/pricing/" variant="secondary" icon="arrow-right">View Pricing</Button>
-          <Button href="/docs/stripe-billing/" variant="secondary" icon="arrow-right">Stripe Billing Docs</Button>
+          <Button href="/open-source/" variant="secondary" icon="arrow-right">Open Source</Button>
+          <Button href="/status/" variant="secondary" icon="arrow-right">Status</Button>
         </div>
       </div>
     </Container>
@@ -156,86 +156,86 @@ const installJsonLd = {
       <div class="wizard-grid" data-install-wizard>
         <div class="surface-panel wizard-panel">
           <div class="surface-panel__inner stack wizard-form">
-            <label class="wizard-field">
-              <span>Root domain</span>
-              <input id="install-root-domain" type="text" value="example.com" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-root-domain" type="text" value="example.com" placeholder=" " />
+              <span class="floating-label">Root domain</span>
             </label>
-            <label class="wizard-field">
-              <span>Dashboard domain</span>
-              <input id="install-dashboard-domain" type="text" value="dash.example.com" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-dashboard-domain" type="text" value="dash.example.com" placeholder=" " />
+              <span class="floating-label">Dashboard domain</span>
             </label>
-            <label class="wizard-field">
-              <span>API domain</span>
-              <input id="install-api-domain" type="text" value="api.example.com" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-api-domain" type="text" value="api.example.com" placeholder=" " />
+              <span class="floating-label">API domain</span>
             </label>
-            <label class="wizard-field">
-              <span>Collector domain</span>
-              <input id="install-collector-domain" type="text" value="events.example.com" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-collector-domain" type="text" value="events.example.com" placeholder=" " />
+              <span class="floating-label">Collector domain</span>
             </label>
-            <label class="wizard-field">
-              <span>Cloudflare account ID</span>
-              <input id="install-account-id" type="text" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-account-id" type="text" value="" placeholder=" " />
+              <span class="floating-label">Cloudflare account ID</span>
             </label>
-            <label class="wizard-field">
-              <span>Cloudflare zone ID</span>
-              <input id="install-zone-id" type="text" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-zone-id" type="text" value="" placeholder=" " />
+              <span class="floating-label">Cloudflare zone ID</span>
             </label>
-            <label class="wizard-field">
-              <span>D1 database ID</span>
-              <input id="install-database-id" type="text" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-database-id" type="text" value="" placeholder=" " />
+              <span class="floating-label">D1 database ID</span>
             </label>
-            <label class="wizard-field">
-              <span>D1 database name</span>
-              <input id="install-database-name" type="text" value="eventsgateway-control-plane" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-database-name" type="text" value="eventsgateway-control-plane" placeholder=" " />
+              <span class="floating-label">D1 database name</span>
             </label>
-            <label class="wizard-field">
-              <span>KV namespace ID</span>
-              <input id="install-kv-namespace-id" type="text" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-kv-namespace-id" type="text" value="" placeholder=" " />
+              <span class="floating-label">KV namespace ID</span>
             </label>
-            <label class="wizard-field">
-              <span>R2 bucket name</span>
-              <input id="install-r2-bucket-name" type="text" value="eventsgateway-ledger-production" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-r2-bucket-name" type="text" value="eventsgateway-ledger-production" placeholder=" " />
+              <span class="floating-label">R2 bucket name</span>
             </label>
-            <label class="wizard-field">
-              <span>Queue name</span>
-              <input id="install-queue-name" type="text" value="eventsgateway-ingest-production" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-queue-name" type="text" value="eventsgateway-ingest-production" placeholder=" " />
+              <span class="floating-label">Queue name</span>
             </label>
-            <label class="wizard-field">
-              <span>Durable Object name</span>
-              <input id="install-visitor-state-do-name" type="text" value="eventsgateway-visitor-state-production" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-visitor-state-do-name" type="text" value="eventsgateway-visitor-state-production" placeholder=" " />
+              <span class="floating-label">Durable Object name</span>
             </label>
           </div>
         </div>
 
         <div class="surface-panel wizard-panel">
           <div class="surface-panel__inner stack wizard-form">
-            <label class="wizard-field">
-              <span>Captcha provider</span>
+            <label class="wizard-field floating-field floating-field--select is-filled" data-floating-field>
               <select id="install-captcha-provider">
                 <option value="turnstile">Cloudflare Turnstile</option>
                 <option value="recaptcha">Google reCAPTCHA</option>
                 <option value="hcaptcha">hCaptcha</option>
               </select>
+              <span class="floating-label">Captcha provider</span>
             </label>
-            <label class="wizard-field">
-              <span>Captcha site key</span>
-              <input id="install-captcha-site-key" type="text" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-captcha-site-key" type="text" value="" placeholder=" " />
+              <span class="floating-label">Captcha site key</span>
             </label>
-            <label class="wizard-field">
-              <span>Captcha secret key</span>
-              <input id="install-captcha-secret-key" type="password" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-captcha-secret-key" type="password" value="" placeholder=" " />
+              <span class="floating-label">Captcha secret key</span>
             </label>
-            <label class="wizard-field">
-              <span>Stripe publishable key</span>
-              <input id="install-stripe-publishable-key" type="text" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-stripe-publishable-key" type="text" value="" placeholder=" " />
+              <span class="floating-label">Stripe publishable key</span>
             </label>
-            <label class="wizard-field">
-              <span>Stripe secret key</span>
-              <input id="install-stripe-secret-key" type="password" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-stripe-secret-key" type="password" value="" placeholder=" " />
+              <span class="floating-label">Stripe secret key</span>
             </label>
-            <label class="wizard-field">
-              <span>Stripe webhook secret</span>
-              <input id="install-stripe-webhook-secret" type="password" value="" />
+            <label class="wizard-field floating-field" data-floating-field>
+              <input id="install-stripe-webhook-secret" type="password" value="" placeholder=" " />
+              <span class="floating-label">Stripe webhook secret</span>
             </label>
             <div class="wizard-note">
               The official repository ships with deployment defaults for the hosted EventsGateway instance. Replace them in your own copy during install.
@@ -345,13 +345,8 @@ const installJsonLd = {
   }
 
   .wizard-field {
-    display: grid;
-    gap: 0.45rem;
+    display: block;
     color: var(--color-muted);
-  }
-
-  .wizard-field span {
-    font-size: 0.85rem;
   }
 
   .wizard-field input,

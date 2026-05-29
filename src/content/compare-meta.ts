@@ -5,16 +5,16 @@ export const compareMeta = {
     scorecard: [
       { label: "Canonical event control", alternative: 2, eventsgateway: 5, note: "EventsGateway gives the browser one stable event contract." },
       { label: "Destination routing depth", alternative: 3, eventsgateway: 5, note: "Routing rules and fan-out are first-class in EventsGateway." },
-      { label: "Cloudflare-native fit", alternative: 5, eventsgateway: 5, note: "Both fit Cloudflare-native teams well." }
+      { label: "Meta signal quality focus", alternative: 2, eventsgateway: 5, note: "EventsGateway is positioned around stronger ad-platform signal, not only tag governance." }
     ]
   },
   rudderstack: {
     category: "CDP",
     bestFor: "Best for teams wanting a lighter CDP alternative",
     scorecard: [
-      { label: "Operational simplicity", alternative: 2, eventsgateway: 5, note: "EventsGateway is narrower and easier to deploy." },
+      { label: "Operational simplicity", alternative: 2, eventsgateway: 5, note: "EventsGateway is narrower and easier to launch." },
       { label: "Warehouse-centric breadth", alternative: 5, eventsgateway: 2, note: "RudderStack is broader for warehouse-heavy workflows." },
-      { label: "Cloudflare-native deployment", alternative: 1, eventsgateway: 5, note: "EventsGateway is purpose-positioned for Cloudflare." }
+      { label: "Cost clarity", alternative: 2, eventsgateway: 5, note: "EventsGateway stays easier to understand and cheaper to position for direct routing needs." }
     ]
   },
   segment: {
@@ -23,7 +23,7 @@ export const compareMeta = {
     scorecard: [
       { label: "Ecosystem breadth", alternative: 5, eventsgateway: 3, note: "Segment stays broader across enterprise integrations." },
       { label: "Routing-first clarity", alternative: 3, eventsgateway: 5, note: "EventsGateway keeps the story focused on collection and routing." },
-      { label: "Small-site cost fit", alternative: 2, eventsgateway: 5, note: "EventsGateway is positioned better for lean deployments." }
+      { label: "Cost efficiency", alternative: 2, eventsgateway: 5, note: "EventsGateway is positioned better for leaner routing programs." }
     ]
   },
   posthog: {
@@ -50,7 +50,7 @@ export const compareMeta = {
     scorecard: [
       { label: "Privacy-led positioning", alternative: 5, eventsgateway: 4, note: "JENTIS is more privacy-centric in positioning." },
       { label: "Open-source flexibility", alternative: 1, eventsgateway: 5, note: "EventsGateway is the stronger open-source option." },
-      { label: "Cloudflare-native fit", alternative: 1, eventsgateway: 5, note: "EventsGateway is built around Cloudflare-native deployment." }
+      { label: "Ad-signal routing clarity", alternative: 2, eventsgateway: 5, note: "EventsGateway stays clearer when the goal is strong signal distribution across ad channels." }
     ]
   },
   "stape-gtm-ss": {
@@ -68,7 +68,7 @@ export const compareMeta = {
     scorecard: [
       { label: "Lightweight analytics simplicity", alternative: 5, eventsgateway: 3, note: "Plausible is simpler for traffic reporting alone." },
       { label: "Multi-destination delivery", alternative: 1, eventsgateway: 5, note: "EventsGateway wins when multiple tools need the same event stream." },
-      { label: "Small-site cost fit", alternative: 5, eventsgateway: 5, note: "Both can be attractive for smaller sites." }
+      { label: "Revenue-tracking depth", alternative: 1, eventsgateway: 5, note: "EventsGateway is much stronger when purchases, leads, and ad routing matter." }
     ]
   },
   matomo: {
@@ -77,7 +77,7 @@ export const compareMeta = {
     scorecard: [
       { label: "Owned analytics reporting", alternative: 5, eventsgateway: 2, note: "Matomo is stronger as a reporting destination." },
       { label: "Destination routing control", alternative: 2, eventsgateway: 5, note: "EventsGateway wins when the same data must feed many tools." },
-      { label: "Cloudflare-native simplicity", alternative: 2, eventsgateway: 5, note: "EventsGateway is easier to position on Cloudflare." }
+      { label: "Meta signal posture", alternative: 2, eventsgateway: 5, note: "EventsGateway is easier to position around stronger ad-platform matching inputs." }
     ]
   },
   "ga4-gtm": {
@@ -104,7 +104,7 @@ export const compareMeta = {
     scorecard: [
       { label: "Analytics sophistication", alternative: 5, eventsgateway: 2, note: "Amplitude wins for behavioral analytics depth." },
       { label: "Routing simplicity", alternative: 2, eventsgateway: 5, note: "EventsGateway is easier when routing is the real need." },
-      { label: "Cloudflare-native fit", alternative: 1, eventsgateway: 5, note: "EventsGateway fits Cloudflare-first stacks better." }
+      { label: "Ad-signal delivery", alternative: 2, eventsgateway: 5, note: "EventsGateway is stronger when clean delivery to ad platforms matters more than analytics depth." }
     ]
   },
   heap: {
@@ -122,7 +122,7 @@ export const compareMeta = {
     scorecard: [
       { label: "Data engineering depth", alternative: 5, eventsgateway: 2, note: "Snowplow is stronger for modeled data pipelines." },
       { label: "Install simplicity", alternative: 2, eventsgateway: 5, note: "EventsGateway is easier to deploy and explain." },
-      { label: "Cloudflare-native fit", alternative: 1, eventsgateway: 5, note: "EventsGateway fits Cloudflare-first teams much better." }
+      { label: "Time to value", alternative: 2, eventsgateway: 5, note: "EventsGateway reaches a live routing workflow much faster for growth teams." }
     ]
   },
   "adobe-analytics": {
@@ -157,7 +157,7 @@ export const compareMeta = {
     bestFor: "Best for teams wanting lighter privacy-first routing",
     scorecard: [
       { label: "Privacy governance depth", alternative: 5, eventsgateway: 4, note: "Piwik PRO is stronger as a governance suite." },
-      { label: "Cloudflare-native deployability", alternative: 1, eventsgateway: 5, note: "EventsGateway is easier for Cloudflare-native setups." },
+      { label: "Deployment simplicity", alternative: 2, eventsgateway: 5, note: "EventsGateway is easier to launch as a direct routing layer." },
       { label: "Routing-first product story", alternative: 2, eventsgateway: 5, note: "EventsGateway is much clearer as a routing layer." }
     ]
   },
