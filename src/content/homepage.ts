@@ -1,6 +1,6 @@
 export const homeContent = {
   eyebrow: "Commercial Event Gateway",
-  title: "The best-priced event gateway for marketers who want <span style=\"color: var(--color-accent);\">less ad spend</span>&nbsp;and better performance.",
+  title: "The best-priced event gateway for marketers who want&nbsp;<span style=\"color: var(--color-accent);\">less ad spend</span>&nbsp;and better performance.",
   description:
     "EVENTS Gateway is built for advertisers who care about Meta signal quality and Event Match Quality (EMQ). Replace scattered pixels and expensive CDPs with one clean event stream. Feed Meta, GA4, Google Ads, and TikTok simultaneously—with better resilience on iOS. Stop losing conversions to browser restrictions and start driving higher ROAS.",
   trustMarks: [
