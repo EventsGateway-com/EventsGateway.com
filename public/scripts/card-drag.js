@@ -12,6 +12,7 @@ const draggableContainerSelectors = [
 
 const interactiveSelector = "a, button, input, select, textarea, summary, label";
 let dragZIndex = 10;
+const dragGridSize = 24;
 
 function normalizeKeyPart(value) {
   return (value || "card")
@@ -38,6 +39,10 @@ function writeState(storageKey, state) {
   try {
     localStorage.setItem(storageKey, JSON.stringify(state));
   } catch {}
+}
+
+function snapToGrid(value, size = dragGridSize) {
+  return Math.round(value / size) * size;
 }
 
 function applyState(element, state) {
@@ -80,8 +85,8 @@ function makeCardDraggable(element, storageKey) {
 
       dragState = {
         ...dragState,
-        x: start.cardX + (moveEvent.clientX - start.x),
-        y: start.cardY + (moveEvent.clientY - start.y)
+        x: snapToGrid(start.cardX + (moveEvent.clientX - start.x)),
+        y: snapToGrid(start.cardY + (moveEvent.clientY - start.y))
       };
       applyState(element, dragState);
     };

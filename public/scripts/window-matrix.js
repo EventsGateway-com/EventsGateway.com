@@ -8,6 +8,7 @@ document.querySelectorAll("[data-window-matrix]").forEach((root) => {
     Array.from(root.querySelectorAll("[data-dock-item]")).map((item) => [item.dataset.dockItem, item])
   );
   const storageKey = `window-matrix:${root.dataset.instance || "default"}`;
+  const positionGridStep = 2;
   let zIndex = windows.length + 1;
 
   const defaults = Object.fromEntries(
@@ -40,6 +41,8 @@ document.querySelectorAll("[data-window-matrix]").forEach((root) => {
       localStorage.setItem(storageKey, JSON.stringify(state));
     } catch {}
   };
+
+  const snapToGrid = (value, step = positionGridStep) => Math.round(value / step) * step;
 
   const clampRect = (rect) => ({
     ...rect,
@@ -110,8 +113,8 @@ document.querySelectorAll("[data-window-matrix]").forEach((root) => {
       const onMove = (moveEvent) => {
         const nextRect = {
           ...state[id],
-          x: start.rect.x + ((moveEvent.clientX - start.x) / stageRect.width) * 100,
-          y: start.rect.y + ((moveEvent.clientY - start.y) / stageRect.height) * 100
+          x: snapToGrid(start.rect.x + ((moveEvent.clientX - start.x) / stageRect.width) * 100),
+          y: snapToGrid(start.rect.y + ((moveEvent.clientY - start.y) / stageRect.height) * 100)
         };
         state[id] = clampRect(nextRect);
         applyWindow(window);

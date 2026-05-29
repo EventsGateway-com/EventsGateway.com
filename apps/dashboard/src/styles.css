@@ -214,6 +214,39 @@ p {
   color: transparent;
 }
 
+.eg-field--password {
+  position: relative;
+}
+
+.eg-input--password {
+  padding-right: 3.2rem;
+}
+
+.eg-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.8rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--eg-muted);
+  cursor: pointer;
+  transform: translateY(-20%);
+  transition: color 0.18s ease, opacity 0.18s ease;
+}
+
+.eg-password-toggle:hover,
+.eg-password-toggle:focus-visible {
+  color: var(--eg-text);
+  outline: none;
+}
+
 .eg-input:focus {
   border-color: rgba(125, 211, 252, 0.35);
   box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.12);

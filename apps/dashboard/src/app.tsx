@@ -11,6 +11,7 @@ import {
 } from "./mock-data";
 import { useAuth } from "./auth";
 import {
+  loadCaptchaConfig,
   readCaptchaSiteKey,
   requestDashboardPasswordReset,
   resetDashboardPassword,
@@ -104,9 +105,7 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
 
   return {
     dashboard_env: [
-      `VITE_API_BASE_URL=${apiBaseUrl}`,
-      `VITE_CAPTCHA_PROVIDER=${captchaProvider}`,
-      `VITE_CAPTCHA_SITE_KEY=${input.captcha_site_key || `replace-with-your-${captchaProvider}-site-key`}`
+      `VITE_API_BASE_URL=${apiBaseUrl}`
     ].join("\n"),
     api_dev_vars: [
       "API_TOKEN=replace-with-a-long-random-token",
@@ -555,8 +554,90 @@ function AuthShell({
   );
 }
 
+function PasswordToggleIcon({ visible }: { visible: boolean }) {
+  return visible ? (
+    <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
+      <path
+        d="M3 12C4.9 8.6 8.1 6.5 12 6.5C15.9 6.5 19.1 8.6 21 12C19.1 15.4 15.9 17.5 12 17.5C8.1 17.5 4.9 15.4 3 12Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  ) : (
+    <svg aria-hidden="true" fill="none" height="18" viewBox="0 0 24 24" width="18">
+      <path
+        d="M3 12C4.9 8.6 8.1 6.5 12 6.5C13.9 6.5 15.6 7 17 7.9M21 12C20.2 13.4 19.2 14.5 18 15.3C16.3 16.5 14.3 17.1 12 17.1C8.1 17.1 4.9 15.1 3 12"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path d="M9.9 9.9C9.4 10.4 9 11.2 9 12C9 13.7 10.3 15 12 15C12.8 15 13.6 14.6 14.1 14.1" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="M4 4L20 20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+type PasswordFieldProps = {
+  label: string;
+  autoComplete: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function PasswordField({ label, autoComplete, placeholder, value, onChange }: PasswordFieldProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <label className="eg-field eg-field--password">
+      <span>{label}</span>
+      <input
+        autoComplete={autoComplete}
+        className="eg-input eg-input--password"
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        required
+        type={isVisible ? "text" : "password"}
+        value={value}
+      />
+      <button
+        aria-label={isVisible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+        aria-pressed={isVisible}
+        className="eg-password-toggle"
+        onClick={() => setIsVisible((current) => !current)}
+        type="button"
+      >
+        <PasswordToggleIcon visible={isVisible} />
+      </button>
+    </label>
+  );
+}
+
+function useCaptchaAvailability() {
+  const [isReady, setIsReady] = useState(isCaptchaConfigured());
+
+  useEffect(() => {
+    let active = true;
+    void loadCaptchaConfig().then(() => {
+      if (active) {
+        setIsReady(isCaptchaConfigured());
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return isReady;
+}
+
 function LoginPage() {
   const { login, user } = useAuth();
+  const isCaptchaReady = useCaptchaAvailability();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
@@ -616,18 +697,13 @@ function LoginPage() {
           />
         </label>
 
-        <label className="eg-field">
-          <span>Password</span>
-          <input
-            autoComplete="current-password"
-            className="eg-input"
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Enter your password"
-            required
-            type="password"
-            value={password}
-          />
-        </label>
+        <PasswordField
+          autoComplete="current-password"
+          label="Password"
+          onChange={setPassword}
+          placeholder="Enter your password"
+          value={password}
+        />
 
         <div className="eg-auth-form__meta">
           <div className="eg-auth-form__links">
@@ -640,7 +716,7 @@ function LoginPage() {
         <CaptchaWidget onTokenChange={setCaptchaToken} resetNonce={captchaResetNonce} />
         {error ? <p className="eg-form-error">{error}</p> : null}
 
-        <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaConfigured() || !captchaToken} type="submit">
+        <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaReady || !captchaToken} type="submit">
           {isSubmitting ? "Signing in..." : "Login"}
         </button>
       </form>
@@ -650,6 +726,7 @@ function LoginPage() {
 
 function RegisterPage() {
   const { register, user } = useAuth();
+  const isCaptchaReady = useCaptchaAvailability();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -728,36 +805,26 @@ function RegisterPage() {
           />
         </label>
 
-        <label className="eg-field">
-          <span>Password</span>
-          <input
-            autoComplete="new-password"
-            className="eg-input"
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="At least 8 characters"
-            required
-            type="password"
-            value={password}
-          />
-        </label>
+        <PasswordField
+          autoComplete="new-password"
+          label="Password"
+          onChange={setPassword}
+          placeholder="At least 8 characters"
+          value={password}
+        />
 
-        <label className="eg-field">
-          <span>Confirm password</span>
-          <input
-            autoComplete="new-password"
-            className="eg-input"
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Repeat the password"
-            required
-            type="password"
-            value={confirmPassword}
-          />
-        </label>
+        <PasswordField
+          autoComplete="new-password"
+          label="Confirm password"
+          onChange={setConfirmPassword}
+          placeholder="Repeat the password"
+          value={confirmPassword}
+        />
 
         <CaptchaWidget onTokenChange={setCaptchaToken} resetNonce={captchaResetNonce} />
         {error ? <p className="eg-form-error">{error}</p> : null}
 
-        <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaConfigured() || !captchaToken} type="submit">
+        <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaReady || !captchaToken} type="submit">
           {isSubmitting ? "Creating account..." : "Register"}
         </button>
       </form>
@@ -767,6 +834,7 @@ function RegisterPage() {
 
 function ForgotPasswordPage() {
   const { user } = useAuth();
+  const isCaptchaReady = useCaptchaAvailability();
   const [email, setEmail] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
@@ -833,7 +901,7 @@ function ForgotPasswordPage() {
         {success ? <p className="eg-form-success">{success}</p> : null}
         {error ? <p className="eg-form-error">{error}</p> : null}
 
-        <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaConfigured() || !captchaToken} type="submit">
+        <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaReady || !captchaToken} type="submit">
           {isSubmitting ? "Sending link..." : "Send reset link"}
         </button>
       </form>
