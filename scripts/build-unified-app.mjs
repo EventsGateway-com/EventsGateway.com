@@ -51,7 +51,6 @@ async function cleanDashboardOutput() {
 async function mergeDashboardIntoRootDist() {
   await cleanDashboardOutput();
   await fs.mkdir(dashboardTargetDir, { recursive: true });
-  await fs.copyFile(path.join(dashboardDistDir, "index.html"), path.join(dashboardTargetDir, "index.html"));
   await fs.copyFile(path.join(dashboardDistDir, "index.html"), path.join(dashboardTargetDir, "dashboard-shell.txt"));
 
   const dashboardAssetsDir = path.join(dashboardDistDir, "assets");

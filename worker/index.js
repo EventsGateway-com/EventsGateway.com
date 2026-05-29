@@ -579,6 +579,7 @@ async function serveDashboardShell(request, env) {
   const shellResponse = await env.ASSETS.fetch(createAssetRequest(request, "/__dashboard/dashboard-shell.txt"));
   const headers = new Headers(shellResponse.headers);
   headers.set("content-type", "text/html; charset=utf-8");
+  headers.set("cache-control", "no-store, max-age=0");
   return new Response(shellResponse.body, {
     status: shellResponse.status,
     headers
@@ -587,6 +588,10 @@ async function serveDashboardShell(request, env) {
 
 async function handleDashboardRequest(request, env) {
   const url = new URL(request.url);
+
+  if (url.pathname === "/__dashboard" || url.pathname === "/__dashboard/" || url.pathname === "/__dashboard/index.html") {
+    return serveDashboardShell(request, env);
+  }
 
   if (isFileLikePath(url.pathname) || url.pathname.startsWith("/assets/")) {
     return env.ASSETS.fetch(request);
