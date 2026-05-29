@@ -17,32 +17,32 @@
 		{
 			"binding": "DB",
 			"database_name": "eventsgateway-control-plane",
-			"database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
+			"database_id": "4ad76441-1626-4e3d-a13a-ee73c7a20a34",
 			"remote": true
 		}
 	],
 	"kv_namespaces": [
 		{
 			"binding": "CACHE",
-			"id": "c6906c939d8a44e9978254f9073b7434",
+			"id": "91a458b7d3ea404cb830dcda48397d5c",
 			"remote": true
 		}
 	],
 	"vars": {
 		"PUBLIC_STATS_SITE_ID": "site_alpha"
 	},
-	"account_id": "63e37d6abff509f43d4d9a722361d03a",
+	"account_id": "ce74f36f0eaf8e06b7c94ec7442d364d",
 	"workers_dev": false,
 	"routes": [
 		{
 			"pattern": "eventsgateway.com",
 			"custom_domain": true,
-			"zone_id": "dc8513a03681904c320e4ab0517f312e"
+			"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
 		},
 		{
 			"pattern": "www.eventsgateway.com",
 			"custom_domain": true,
-			"zone_id": "dc8513a03681904c320e4ab0517f312e"
+			"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
 		}
 	],
 	"env": {
@@ -51,14 +51,14 @@
 				{
 					"binding": "DB",
 					"database_name": "eventsgateway-control-plane",
-					"database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
+					"database_id": "4ad76441-1626-4e3d-a13a-ee73c7a20a34",
 					"remote": true
 				}
 			],
 			"kv_namespaces": [
 				{
 					"binding": "CACHE",
-					"id": "c6906c939d8a44e9978254f9073b7434",
+					"id": "91a458b7d3ea404cb830dcda48397d5c",
 					"remote": true
 				}
 			],
@@ -69,12 +69,12 @@
 				{
 					"pattern": "eventsgateway.com",
 					"custom_domain": true,
-					"zone_id": "dc8513a03681904c320e4ab0517f312e"
+					"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
 				},
 				{
 					"pattern": "www.eventsgateway.com",
 					"custom_domain": true,
-					"zone_id": "dc8513a03681904c320e4ab0517f312e"
+					"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
 				}
 			]
 		}
