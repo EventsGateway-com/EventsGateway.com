@@ -143,17 +143,19 @@ const Tag = href && !disabled ? "a" : "div";
   }
 
   .premium-card__logo {
-    width: 3rem;
-    height: 3rem;
+    width: 2.85rem;
+    height: 2.85rem;
     display: grid;
     place-items: center;
+    color: var(--color-text);
   }
 
   .premium-card__logo img {
-    width: 3rem;
-    height: 3rem;
+    width: 2.4rem;
+    height: 2.4rem;
     display: block;
     object-fit: contain;
+    filter: brightness(0) invert(1);
   }
 
   .premium-card__eyebrow {
