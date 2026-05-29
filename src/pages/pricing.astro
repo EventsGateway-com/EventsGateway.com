@@ -1,0 +1,282 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PremiumCard from "../components/PremiumCard.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { pricingContent } from "../content/pricing";
+import { siteConfig } from "../config/site";
+
+const pricingJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "OfferCatalog",
+  name: `${siteConfig.name} pricing`,
+  itemListElement: pricingContent.plans.map((plan) => ({
+    "@type": "Offer",
+    name: plan.name,
+    description: plan.highlight,
+    price: plan.price.replace(/[^0-9.]/g, "") || "0",
+    priceCurrency: "USD"
+  }))
+};
+---
+
+<BaseLayout
+  title={`Pricing - ${siteConfig.name}`}
+  description="Transparent EventsGateway pricing with a free 1,000,000 event allowance and $5 per extra 1,000,000 events."
+  canonicalPath="/pricing/"
+  jsonLd={pricingJsonLd}
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{pricingContent.eyebrow}</span>
+        <h1 class="page-title">{pricingContent.title}</h1>
+        <p class="page-copy">{pricingContent.intro}</p>
+        <div class="button-row">
+          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Plans"
+        title="Clear commercial structure from the first million events."
+        description="The commercial logic is intentionally simple: free up to the included allowance, then linear $5 blocks as monthly routed usage grows."
+      />
+      <div class="card-grid">
+        {
+          pricingContent.plans.map((plan) => (
+            <PremiumCard icon="layers" title={plan.name} text={plan.highlight} eyebrow="Plan">
+              <div class="pricing-plan">
+                <div class="pricing-plan__price">
+                  <strong>{plan.price}</strong>
+                  <span>{plan.cadence}</span>
+                </div>
+                <ul class="simple-list">
+                  {plan.features.map((feature) => <li>{feature}</li>)}
+                </ul>
+              </div>
+            </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <div class="two-column pricing-layout">
+        <div class="stack">
+          <SectionHeader
+            eyebrow="Calculator"
+            title="Estimate your monthly bill in seconds."
+            description="Use the calculator to see how the free allowance and linear overage work for your expected monthly routed volume."
+          />
+          <div class="surface-panel">
+            <div class="surface-panel__inner pricing-calculator" data-pricing-calculator>
+              <label class="pricing-field">
+                <span>Estimated monthly routed events</span>
+                <input id="pricing-events" type="range" min="0" max="20000000" step="50000" value="1000000" />
+              </label>
+              <label class="pricing-field">
+                <span>Exact value</span>
+                <input id="pricing-events-input" type="number" min="0" step="1000" value="1000000" />
+              </label>
+              <div class="pricing-summary-grid">
+                <div class="pricing-summary-card">
+                  <span>Included free</span>
+                  <strong>1,000,000 events</strong>
+                </div>
+                <div class="pricing-summary-card">
+                  <span>Estimated monthly bill</span>
+                  <strong id="pricing-total">$0</strong>
+                </div>
+                <div class="pricing-summary-card">
+                  <span>Extra blocks billed</span>
+                  <strong id="pricing-blocks">0</strong>
+                </div>
+              </div>
+              <div class="pricing-breakdown">
+                <div><span>Free allowance</span><strong id="pricing-included">1,000,000</strong></div>
+                <div><span>Overage events</span><strong id="pricing-overage">0</strong></div>
+                <div><span>Billing rule</span><strong>$5 per extra 1M events</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <SectionHeader
+            eyebrow="What Is Included"
+            title="No ambiguity around the Free plan."
+            description="This is what the pricing statement means in practice for evaluation, launch, and commercial growth."
+          />
+          <div class="card-grid">
+            {
+              pricingContent.included.map((item) => (
+                <PremiumCard icon="check" title={item} text="Included in the product and commercial model from the first install." />
+              ))
+            }
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Billing Rules"
+        title="How overage billing works."
+        description="The goal is to keep the price legible to founders, operators, and procurement teams."
+      />
+      <div class="card-grid">
+        {
+          pricingContent.footnotes.map((item, index) => (
+            <PremiumCard icon="terminal" title={`Rule ${index + 1}`} text={item} />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .pricing-plan {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .pricing-plan__price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+
+  .pricing-plan__price strong {
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    letter-spacing: -0.05em;
+  }
+
+  .pricing-plan__price span {
+    color: var(--color-muted);
+  }
+
+  .pricing-layout {
+    align-items: start;
+  }
+
+  .pricing-calculator {
+    display: grid;
+    gap: 1rem;
+    padding: 1.35rem;
+  }
+
+  .pricing-field {
+    display: grid;
+    gap: 0.5rem;
+    color: var(--color-muted);
+  }
+
+  .pricing-field span {
+    font-size: 0.85rem;
+  }
+
+  .pricing-field input[type="range"],
+  .pricing-field input[type="number"] {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(5, 10, 24, 0.9);
+    color: var(--color-text);
+  }
+
+  .pricing-summary-grid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pricing-summary-card,
+  .pricing-breakdown div {
+    display: grid;
+    gap: 0.3rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .pricing-summary-card span,
+  .pricing-breakdown span {
+    color: var(--color-subtle);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .pricing-summary-card strong {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    letter-spacing: -0.04em;
+  }
+
+  .pricing-breakdown {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 960px) {
+    .pricing-summary-grid,
+    .pricing-breakdown {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script is:inline>
+  const calculatorRoot = document.querySelector("[data-pricing-calculator]");
+
+  if (calculatorRoot) {
+    const rangeInput = document.querySelector("#pricing-events");
+    const exactInput = document.querySelector("#pricing-events-input");
+    const totalNode = document.querySelector("#pricing-total");
+    const blocksNode = document.querySelector("#pricing-blocks");
+    const includedNode = document.querySelector("#pricing-included");
+    const overageNode = document.querySelector("#pricing-overage");
+    const formatter = new Intl.NumberFormat("en-US");
+    const currencyFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0
+    });
+
+    const syncPricing = (rawValue) => {
+      const events = Math.max(0, Number(rawValue) || 0);
+      const included = 1000000;
+      const overage = Math.max(0, events - included);
+      const blocks = overage === 0 ? 0 : Math.ceil(overage / 1000000);
+      const total = blocks * 5;
+
+      if (rangeInput && String(rangeInput.value) !== String(events)) rangeInput.value = String(events);
+      if (exactInput && String(exactInput.value) !== String(events)) exactInput.value = String(events);
+      if (totalNode) totalNode.textContent = currencyFormatter.format(total);
+      if (blocksNode) blocksNode.textContent = formatter.format(blocks);
+      if (includedNode) includedNode.textContent = formatter.format(included);
+      if (overageNode) overageNode.textContent = formatter.format(overage);
+    };
+
+    rangeInput?.addEventListener("input", (event) => syncPricing(event.target.value));
+    exactInput?.addEventListener("input", (event) => syncPricing(event.target.value));
+    syncPricing(1000000);
+  }
+</script>

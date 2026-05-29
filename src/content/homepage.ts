@@ -15,28 +15,28 @@ export const homeContent = {
   ],
   pricingHighlights: [
     {
-      label: "Workers Free",
-      value: "100,000/day",
-      detail: "Worker requests included on the free plan, which is often enough for a small tracking setup."
+      label: "Free allowance",
+      value: "1M / mo",
+      detail: "The Free plan includes up to 1,000,000 routed events every month before commercial overage starts."
     },
     {
-      label: "Queues Free",
-      value: "10,000/day",
-      detail: "Queue operations included for retry-friendly event delivery on low-volume sites."
+      label: "Overage block",
+      value: "$5 / 1M",
+      detail: "Every extra started block of 1,000,000 monthly events is billed at a flat $5."
     },
     {
-      label: "R2 Free",
-      value: "10 GB",
-      detail: "Standard object storage included, plus 1M Class A and 10M Class B operations per month."
+      label: "Pricing model",
+      value: "Linear",
+      detail: "There is no hard pricing cliff. Costs scale in simple 1,000,000-event blocks."
     },
     {
-      label: "Paid Plan",
-      value: "$5/mo",
-      detail: "The Workers paid plan usually matters only after your site grows beyond the free-tier envelope."
+      label: "Commercial runtime",
+      value: "Stripe-ready",
+      detail: "Billing, invoices, reminders, and payment flows are designed to plug into Stripe cleanly."
     }
   ],
   pricingFootnote:
-    "Cloudflare pricing depends on real usage. Free-tier capacity, storage, and queue limits apply, so small sites can often run tracking at zero monthly runtime cost while larger workloads move naturally into paid usage.",
+    "EventsGateway uses a transparent commercial rule set on top of Cloudflare: the product starts free for the first 1,000,000 routed monthly events, then adds $5 for each extra started 1,000,000-event block while Stripe handles payment processing and invoicing flows.",
   problems: [
     {
       icon: "spark",

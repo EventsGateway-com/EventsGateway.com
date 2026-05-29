@@ -120,3 +120,95 @@ CREATE TABLE IF NOT EXISTS operation_jobs (
   created_at TEXT NOT NULL,
   finished_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS billing_customers (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL UNIQUE,
+  stripe_customer_id TEXT,
+  company_name TEXT NOT NULL,
+  billing_name TEXT NOT NULL,
+  billing_email TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  payment_method_summary TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS billing_subscriptions (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL UNIQUE,
+  customer_id TEXT NOT NULL,
+  stripe_subscription_id TEXT,
+  plan_code TEXT NOT NULL,
+  status TEXT NOT NULL,
+  included_events INTEGER NOT NULL DEFAULT 1000000,
+  overage_block_events INTEGER NOT NULL DEFAULT 1000000,
+  overage_block_price_usd REAL NOT NULL DEFAULT 5,
+  monthly_events_used INTEGER NOT NULL DEFAULT 0,
+  current_period_start TEXT NOT NULL,
+  current_period_end TEXT NOT NULL,
+  grace_period_ends_at TEXT,
+  suspended_at TEXT,
+  suspension_reason TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS billing_invoices (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL,
+  customer_id TEXT NOT NULL,
+  subscription_id TEXT NOT NULL,
+  stripe_invoice_id TEXT,
+  invoice_number TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'USD',
+  subtotal_usd REAL NOT NULL DEFAULT 0,
+  overage_events INTEGER NOT NULL DEFAULT 0,
+  overage_blocks INTEGER NOT NULL DEFAULT 0,
+  total_usd REAL NOT NULL DEFAULT 0,
+  hosted_invoice_url TEXT,
+  pdf_url TEXT,
+  period_start TEXT NOT NULL,
+  period_end TEXT NOT NULL,
+  due_at TEXT,
+  paid_at TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS billing_transactions (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL,
+  invoice_id TEXT,
+  stripe_payment_intent_id TEXT,
+  stripe_charge_id TEXT,
+  amount_usd REAL NOT NULL DEFAULT 0,
+  status TEXT NOT NULL,
+  payment_method_brand TEXT,
+  payment_method_last4 TEXT,
+  created_at TEXT NOT NULL,
+  paid_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS billing_reminders (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL,
+  invoice_id TEXT NOT NULL,
+  days_before_due INTEGER NOT NULL,
+  scheduled_for TEXT NOT NULL,
+  sent_at TEXT,
+  status TEXT NOT NULL DEFAULT 'scheduled',
+  channel TEXT NOT NULL DEFAULT 'email',
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS billing_webhook_events (
+  id TEXT PRIMARY KEY,
+  stripe_event_id TEXT NOT NULL UNIQUE,
+  type TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  processed_at TEXT
+);

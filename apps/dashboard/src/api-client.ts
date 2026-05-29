@@ -245,6 +245,116 @@ export type AdminSiteRecord = DashboardBootstrap["site"] & {
   api_keys: SiteKeyRecord[];
 };
 
+export type BillingSubscription = {
+  id: string;
+  site_id: string;
+  customer_id: string;
+  stripe_subscription_id: string | null;
+  plan_code: "free" | "growth" | "enterprise";
+  status: "active" | "past_due" | "suspended" | "canceled";
+  included_events: number;
+  overage_block_events: number;
+  overage_block_price_usd: number;
+  monthly_events_used: number;
+  current_period_start: string;
+  current_period_end: string;
+  grace_period_ends_at: string | null;
+  suspended_at: string | null;
+  suspension_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BillingCustomer = {
+  id: string;
+  site_id: string;
+  stripe_customer_id: string | null;
+  company_name: string;
+  billing_name: string;
+  billing_email: string;
+  status: "active" | "blocked";
+  payment_method_summary: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BillingInvoice = {
+  id: string;
+  site_id: string;
+  customer_id: string;
+  subscription_id: string;
+  stripe_invoice_id: string | null;
+  invoice_number: string;
+  status: "draft" | "open" | "paid" | "void" | "past_due";
+  currency: string;
+  subtotal_usd: number;
+  overage_events: number;
+  overage_blocks: number;
+  total_usd: number;
+  hosted_invoice_url: string | null;
+  pdf_url: string | null;
+  period_start: string;
+  period_end: string;
+  due_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BillingTransaction = {
+  id: string;
+  site_id: string;
+  invoice_id: string | null;
+  stripe_payment_intent_id: string | null;
+  stripe_charge_id: string | null;
+  amount_usd: number;
+  status: "pending" | "succeeded" | "failed";
+  payment_method_brand: string | null;
+  payment_method_last4: string | null;
+  created_at: string;
+  paid_at: string | null;
+};
+
+export type BillingReminder = {
+  id: string;
+  site_id: string;
+  invoice_id: string;
+  days_before_due: number;
+  scheduled_for: string;
+  sent_at: string | null;
+  status: "scheduled" | "sent" | "canceled";
+  channel: "email";
+  created_at: string;
+};
+
+export type SiteBillingSummary = {
+  customer: BillingCustomer;
+  subscription: BillingSubscription;
+  invoices: BillingInvoice[];
+  transactions: BillingTransaction[];
+  reminders: BillingReminder[];
+  suspension: {
+    is_suspended: boolean;
+    reason: string | null;
+    grace_period_ends_at: string | null;
+  };
+};
+
+export type AdminBillingOverview = {
+  totals: {
+    subscriptions: number;
+    active_subscriptions: number;
+    past_due_subscriptions: number;
+    suspended_subscriptions: number;
+    monthly_revenue_usd: number;
+    quarterly_revenue_usd: number;
+    overdue_amount_usd: number;
+    successful_transactions: number;
+  };
+  monthly_revenue: Array<{ month: string; total_usd: number }>;
+  quarterly_revenue: Array<{ quarter: string; total_usd: number }>;
+};
+
 type OverviewData = ReturnType<typeof getOverview>;
 type RealtimeData = ReturnType<typeof getRealtime>;
 type EventListData = ReturnType<typeof listEvents>;
@@ -938,6 +1048,34 @@ export function fetchInstall(siteId: string): Promise<InstallData> {
   return requestJson<InstallData>(`/v1/sites/${siteId}/settings/install`);
 }
 
+export function fetchBilling(siteId: string): Promise<SiteBillingSummary> {
+  return requestJson<SiteBillingSummary>(`/v1/sites/${siteId}/billing`);
+}
+
+export function fetchBillingInvoices(siteId: string): Promise<BillingInvoice[]> {
+  return requestJson<BillingInvoice[]>(`/v1/sites/${siteId}/billing/invoices`);
+}
+
+export function createBillingCheckoutSession(siteId: string) {
+  return requestJson<{ provider: "stripe"; mode: "setup" | "billing_portal"; url: string; session_id?: string }>(
+    `/v1/sites/${siteId}/billing/checkout`,
+    {
+      method: "POST",
+      body: JSON.stringify({})
+    }
+  );
+}
+
+export function createBillingPortalSession(siteId: string) {
+  return requestJson<{ provider: "stripe"; mode: "setup" | "billing_portal"; url: string; session_id?: string }>(
+    `/v1/sites/${siteId}/billing/portal`,
+    {
+      method: "POST",
+      body: JSON.stringify({})
+    }
+  );
+}
+
 export function fetchTagManager(siteId: string): Promise<TagManagerData> {
   return Promise.resolve(readTagManagerStore(siteId));
 }
@@ -1036,6 +1174,43 @@ export function fetchApiKeys(siteId: string) {
 
 export function fetchAdminOverview() {
   return requestJson<AdminOverview>("/v1/admin/overview");
+}
+
+export function fetchAdminBillingOverview() {
+  return requestJson<AdminBillingOverview>("/v1/admin/billing/overview");
+}
+
+export function fetchAdminBillingSubscriptions() {
+  return requestJson<Array<BillingSubscription & { company_name: string; billing_email: string }>>("/v1/admin/billing/subscriptions");
+}
+
+export function fetchAdminBillingTransactions() {
+  return requestJson<Array<BillingTransaction & { invoice_number: string | null; company_name: string; billing_email: string }>>(
+    "/v1/admin/billing/transactions"
+  );
+}
+
+export function updateAdminBillingSubscription(
+  subscriptionId: string,
+  input: {
+    plan_code?: "free" | "growth" | "enterprise";
+    status?: "active" | "past_due" | "suspended" | "canceled";
+    included_events?: number;
+    overage_block_price_usd?: number;
+    suspension_reason?: string | null;
+  }
+) {
+  return requestJson<BillingSubscription>(`/v1/admin/billing/subscriptions/${subscriptionId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export function issueAdminInvoice(input: { site_id: string; amount_usd: number; due_in_days?: number; note?: string }) {
+  return requestJson<BillingInvoice>("/v1/admin/billing/invoices", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
 }
 
 export function fetchAdminUsers() {

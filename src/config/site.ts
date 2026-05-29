@@ -9,6 +9,7 @@ export const siteConfig = {
   footerStatus: "Open source event infrastructure for collection, routing, delivery, and observability.",
   nav: [
     { label: "Home", href: "/" },
+    { label: "Pricing", href: "/pricing/" },
     { label: "Install", href: "/install/" },
     { label: "Docs", href: "/docs/" },
     { label: "Playbooks", href: "/docs/playbooks/" },
@@ -18,6 +19,10 @@ export const siteConfig = {
   cta: {
     primary: { label: "Install", href: "/install/" },
     secondary: { label: "Contact", href: "/contact/" }
+  },
+  auth: {
+    login: { label: "Login", href: "https://dash.eventsgateway.com/login" },
+    register: { label: "Register", href: "https://dash.eventsgateway.com/register" }
   },
   social: {
     github: "https://github.com/EventsGateway-com/EventsGateway.com",

@@ -31,15 +31,20 @@ function buildArtifacts() {
   const captchaProvider = getValue("install-captcha-provider") || "turnstile";
   const captchaSiteKey = getValue("install-captcha-site-key") || `replace-with-your-${captchaProvider}-site-key`;
   const captchaSecretKey = getValue("install-captcha-secret-key") || `replace-with-your-${captchaProvider}-secret-key`;
+  const stripePublishableKey = getValue("install-stripe-publishable-key") || "pk_test_replace_with_your_publishable_key";
+  const stripeSecretKey = getValue("install-stripe-secret-key") || "sk_test_replace_with_your_secret_key";
+  const stripeWebhookSecret = getValue("install-stripe-webhook-secret") || "whsec_replace_with_your_webhook_secret";
   const apiBaseUrl = `https://${apiDomain}`;
   const passwordResetBaseUrl = `https://${dashboardDomain}/reset-password`;
+  const billingReturnUrl = `https://${dashboardDomain}`;
 
   setText(
     "install-output-dashboard-env",
     [
       `VITE_API_BASE_URL=${apiBaseUrl}`,
       `VITE_CAPTCHA_PROVIDER=${captchaProvider}`,
-      `VITE_CAPTCHA_SITE_KEY=${captchaSiteKey}`
+      `VITE_CAPTCHA_SITE_KEY=${captchaSiteKey}`,
+      `VITE_STRIPE_PUBLISHABLE_KEY=${stripePublishableKey}`
     ].join("\n")
   );
 
@@ -51,7 +56,10 @@ function buildArtifacts() {
       "BREVO_SENDER_EMAIL=no-reply@example.com",
       `PASSWORD_RESET_BASE_URL=${passwordResetBaseUrl}`,
       `CAPTCHA_PROVIDER=${captchaProvider}`,
-      `CAPTCHA_SECRET_KEY=${captchaSecretKey}`
+      `CAPTCHA_SECRET_KEY=${captchaSecretKey}`,
+      `STRIPE_SECRET_KEY=${stripeSecretKey}`,
+      `STRIPE_WEBHOOK_SECRET=${stripeWebhookSecret}`,
+      `STRIPE_BILLING_RETURN_URL=${billingReturnUrl}`
     ].join("\n")
   );
 
@@ -89,6 +97,12 @@ function buildArtifacts() {
         provider: capitalizeWord(captchaProvider),
         site_key: captchaSiteKey,
         secret_env: "CAPTCHA_SECRET_KEY"
+      },
+      stripe: {
+        publishable_key: stripePublishableKey,
+        secret_env: "STRIPE_SECRET_KEY",
+        webhook_secret_env: "STRIPE_WEBHOOK_SECRET",
+        billing_return_url: billingReturnUrl
       }
     })
   );

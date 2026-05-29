@@ -212,11 +212,26 @@ const installJsonLd = {
               <span>Captcha secret key</span>
               <input id="install-captcha-secret-key" type="password" value="" />
             </label>
+            <label class="wizard-field">
+              <span>Stripe publishable key</span>
+              <input id="install-stripe-publishable-key" type="text" value="" />
+            </label>
+            <label class="wizard-field">
+              <span>Stripe secret key</span>
+              <input id="install-stripe-secret-key" type="password" value="" />
+            </label>
+            <label class="wizard-field">
+              <span>Stripe webhook secret</span>
+              <input id="install-stripe-webhook-secret" type="password" value="" />
+            </label>
             <div class="wizard-note">
               The official repository ships with deployment defaults for the hosted EventsGateway instance. Replace them in your own copy during install.
             </div>
             <div class="wizard-note">
               The secret key must stay only in private local files, CI secrets, or Cloudflare secret storage.
+            </div>
+            <div class="wizard-note">
+              Stripe keeps card data off your infrastructure. EventsGateway stores billing state, invoices, reminders, and suspension controls, while Stripe handles sensitive payment details.
             </div>
           </div>
         </div>

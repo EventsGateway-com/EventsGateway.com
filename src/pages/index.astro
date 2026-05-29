@@ -4,6 +4,7 @@ import Button from "../components/Button.astro";
 import CommandCenterMockup from "../components/CommandCenterMockup.astro";
 import Container from "../components/Container.astro";
 import PremiumCard from "../components/PremiumCard.astro";
+import RealtimeHeroStats from "../components/RealtimeHeroStats.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import SurfaceGlow from "../components/SurfaceGlow.astro";
 import { homeContent } from "../content/homepage";
@@ -61,6 +62,7 @@ const softwareJsonLd = {
               ))
             }
           </div>
+          <RealtimeHeroStats />
           <div class="stats-grid">
             {
               heroTelemetry.map((stat) => (
@@ -137,8 +139,8 @@ const softwareJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Pricing"
-        title="Small-site tracking can often stay free."
-        description="Cloudflare's free tiers are large enough that many low-volume sites can run EventsGateway without needing the $5/month Workers paid plan on day one."
+        title="Free until the first million monthly routed events."
+        description="The commercial model is now explicit: up to 1,000,000 routed events per month stay on the Free plan, and every extra 1,000,000-event block adds $5."
       />
       <div class="stats-grid">
         {
@@ -154,6 +156,10 @@ const softwareJsonLd = {
         }
       </div>
       <p class="pricing-note">{homeContent.pricingFootnote}</p>
+      <div class="button-row button-row--center">
+        <Button href="/pricing/" variant="primary" icon="arrow-right">Open Pricing</Button>
+        <Button href="/install/" variant="secondary" icon="download">Install Free</Button>
+      </div>
     </Container>
   </section>
 
@@ -229,6 +235,7 @@ const softwareJsonLd = {
 </BaseLayout>
 
 <script is:inline src="/scripts/window-matrix.js" defer></script>
+<script is:inline src="/scripts/hero-realtime.js" defer></script>
 
 <style>
   .stat-card {
@@ -257,6 +264,11 @@ const softwareJsonLd = {
     color: var(--color-muted);
     line-height: 1.7;
     text-align: center;
+  }
+
+  .button-row--center {
+    justify-content: center;
+    margin-top: 1.25rem;
   }
 
   .hero-signal-bar {

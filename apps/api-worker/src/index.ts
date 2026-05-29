@@ -93,6 +93,18 @@ import {
   updateAdminUser
 } from "../../../packages/runtime/src/control-plane";
 import {
+  createSiteBillingCheckoutSession,
+  createSiteBillingPortalSession,
+  getAdminBillingOverview,
+  getSiteBillingSummary,
+  issueAdminInvoice,
+  listAdminBillingSubscriptions,
+  listAdminBillingTransactions,
+  listSiteBillingInvoices,
+  processStripeWebhook,
+  updateAdminBillingSubscription
+} from "../../../packages/runtime/src/billing";
+import {
   createRequestContext,
   ensureMethod,
   errorResponse,
@@ -258,6 +270,24 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
     return json(context, { service: "api-worker", status: "healthy" });
   }
 
+  if (segments[0] === "v1" && segments[1] === "billing" && segments[2] === "stripe-webhook") {
+    if (!env?.DB) {
+      return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    }
+
+    const methodResponse = ensureMethod(context, ["POST"]);
+    if (methodResponse) return methodResponse;
+
+    try {
+      const signatureHeader = request.headers.get("stripe-signature") || "";
+      const payload = await request.text();
+      const result = await processStripeWebhook(env.DB, env, signatureHeader, payload);
+      return json(context, result);
+    } catch (error) {
+      return errorResponse(context, "stripe_webhook_failed", error instanceof Error ? error.message : "Unable to process Stripe webhook.", 400);
+    }
+  }
+
   if (segments[0] === "v1" && segments[1] === "auth") {
     if (!env?.DB) {
       return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
@@ -365,6 +395,42 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
       return json(context, await getAdminOverview(env.DB));
     }
 
+    if (segments[2] === "billing" && segments[3] === "overview" && method === "GET") {
+      return json(context, await getAdminBillingOverview(env.DB));
+    }
+
+    if (segments[2] === "billing" && segments[3] === "subscriptions" && method === "GET") {
+      return json(context, await listAdminBillingSubscriptions(env.DB));
+    }
+
+    if (segments[2] === "billing" && segments[3] === "transactions" && method === "GET") {
+      return json(context, await listAdminBillingTransactions(env.DB));
+    }
+
+    if (segments[2] === "billing" && segments[3] === "subscriptions" && segments[4] && method === "PATCH") {
+      try {
+        const body = await readJson<{
+          plan_code?: "free" | "growth" | "enterprise";
+          status?: "active" | "past_due" | "suspended" | "canceled";
+          included_events?: number;
+          overage_block_price_usd?: number;
+          suspension_reason?: string | null;
+        }>(request);
+        return json(context, await updateAdminBillingSubscription(env.DB, segments[4], body));
+      } catch (error) {
+        return errorResponse(context, "billing_subscription_update_failed", error instanceof Error ? error.message : "Unable to update subscription.", 400);
+      }
+    }
+
+    if (segments[2] === "billing" && segments[3] === "invoices" && method === "POST") {
+      try {
+        const body = await readJson<{ site_id: string; amount_usd: number; due_in_days?: number; note?: string }>(request);
+        return json(context, await issueAdminInvoice(env.DB, body.site_id, body), { status: 201 });
+      } catch (error) {
+        return errorResponse(context, "billing_invoice_create_failed", error instanceof Error ? error.message : "Unable to issue invoice.", 400);
+      }
+    }
+
     if (segments[2] === "users" && segments.length === 3 && method === "GET") {
       return json(context, await listAdminUsers(env.DB));
     }
@@ -459,6 +525,34 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
   if (segments[3] === "overview" && method === "GET") {
     const range = (context.url.searchParams.get("range") ?? "24h") as DateRangePreset;
     return json(context, getOverview(siteId, range));
+  }
+
+  if (segments[3] === "billing" && method === "GET") {
+    if (!env?.DB) return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    return json(context, await getSiteBillingSummary(env.DB, siteId));
+  }
+
+  if (segments[3] === "billing" && segments[4] === "invoices" && method === "GET") {
+    if (!env?.DB) return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    return json(context, await listSiteBillingInvoices(env.DB, siteId));
+  }
+
+  if (segments[3] === "billing" && segments[4] === "checkout" && method === "POST") {
+    if (!env?.DB) return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    try {
+      return json(context, await createSiteBillingCheckoutSession(env.DB, env ?? {}, siteId), { status: 201 });
+    } catch (error) {
+      return errorResponse(context, "billing_checkout_failed", error instanceof Error ? error.message : "Unable to start Stripe Checkout.", 400);
+    }
+  }
+
+  if (segments[3] === "billing" && segments[4] === "portal" && method === "POST") {
+    if (!env?.DB) return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
+    try {
+      return json(context, await createSiteBillingPortalSession(env.DB, env ?? {}, siteId), { status: 201 });
+    } catch (error) {
+      return errorResponse(context, "billing_portal_failed", error instanceof Error ? error.message : "Unable to open Stripe Billing Portal.", 400);
+    }
   }
 
   if (segments[3] === "realtime" && method === "GET") {

@@ -1,0 +1,161 @@
+---
+const { endpoint = "/api/live-stats" } = Astro.props;
+---
+
+<section class="live-hero" data-live-hero data-endpoint={endpoint}>
+  <div class="live-hero__primary surface-panel">
+    <div class="surface-panel__inner live-card">
+      <div class="live-card__header">
+        <span class="kicker">Realtime Routed Events</span>
+        <span class="status-pill">Refreshes every 2 seconds</span>
+      </div>
+      <strong class="live-card__value" data-live-events>--</strong>
+      <p class="live-card__copy">
+        Current routed event count across the active live window, updated continuously from the edge runtime.
+      </p>
+      <div class="live-card__meta">
+        <div>
+          <span>Last 24 hours</span>
+          <strong data-live-events-24h>--</strong>
+        </div>
+        <div>
+          <span>Current window</span>
+          <strong>120 seconds</strong>
+        </div>
+      </div>
+      <div class="live-history">
+        <div class="live-history__bars" data-live-events-bars></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="live-hero__secondary surface-panel">
+    <div class="surface-panel__inner live-card">
+      <div class="live-card__header">
+        <span class="kicker">Purchase And Lead Value</span>
+        <span class="status-pill status-pill--success">USD</span>
+      </div>
+      <strong class="live-card__value" data-live-value>--</strong>
+      <p class="live-card__copy">
+        Combined routed value for `Purchase` and `Lead` events, with a rolling 24-hour context to show commercial signal.
+      </p>
+      <div class="live-card__meta">
+        <div>
+          <span>Last 24 hours</span>
+          <strong data-live-value-24h>--</strong>
+        </div>
+        <div>
+          <span>Tracked types</span>
+          <strong>Purchase + Lead</strong>
+        </div>
+      </div>
+      <div class="live-history live-history--value">
+        <div class="live-history__bars" data-live-value-bars></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .live-hero {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .live-card {
+    display: grid;
+    gap: 1rem;
+    min-height: 100%;
+    padding: 1.4rem;
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.1), rgba(255, 255, 255, 0.025)),
+      rgba(8, 12, 23, 0.88);
+  }
+
+  .live-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .live-card__value {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 5vw, 4.4rem);
+    letter-spacing: -0.06em;
+    line-height: 0.95;
+  }
+
+  .live-card__copy {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.7;
+  }
+
+  .live-card__meta {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .live-card__meta div {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .live-card__meta span {
+    color: var(--color-subtle);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .live-card__meta strong {
+    font-size: 1.05rem;
+    letter-spacing: -0.03em;
+  }
+
+  .live-history {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .live-history__bars {
+    display: grid;
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.35rem;
+    min-height: 8rem;
+  }
+
+  .live-history__bars span {
+    display: block;
+    min-height: 0.65rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(125, 211, 252, 0.95), rgba(167, 139, 250, 0.92));
+    box-shadow: 0 0 22px rgba(125, 211, 252, 0.18);
+    opacity: 0.9;
+    transition: height 0.28s ease, opacity 0.28s ease, transform 0.28s ease;
+  }
+
+  .live-history--value .live-history__bars span {
+    background: linear-gradient(180deg, rgba(52, 211, 153, 0.95), rgba(125, 211, 252, 0.92));
+  }
+
+  .status-pill--success {
+    border-color: rgba(52, 211, 153, 0.22);
+    color: #b8f7d7;
+  }
+
+  @media (max-width: 960px) {
+    .live-hero {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

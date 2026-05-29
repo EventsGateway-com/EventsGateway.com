@@ -15,6 +15,10 @@ export const installGuideContent = {
     {
       title: "A target website",
       text: "Your site can live on any stack. EventsGateway only needs a small tracker install and one collector endpoint."
+    },
+    {
+      title: "Stripe account",
+      text: "If you want commercial billing from day one, prepare Stripe test and production API keys before running the private install values."
     }
   ],
   steps: [
@@ -47,6 +51,11 @@ export const installGuideContent = {
       step: "06",
       title: "Verify event flow on the real domain",
       text: "Load the live site, confirm page views and custom events reach the collector, then validate routing, delivery status, and retries from the dashboard."
+    },
+    {
+      step: "07",
+      title: "Activate Stripe billing",
+      text: "Set Stripe publishable key, secret key, webhook secret, and billing return URL during installation so payment methods, invoices, reminders, and suspension logic are ready."
     }
   ],
   domainExample: {
@@ -79,11 +88,23 @@ cd ../forwarder-worker
 npx wrangler deploy`
     },
     {
+      title: "Set Stripe billing secrets",
+      code: `cd apps/api-worker
+npx wrangler secret put STRIPE_SECRET_KEY
+npx wrangler secret put STRIPE_WEBHOOK_SECRET
+
+cd ../dashboard
+set VITE_STRIPE_PUBLISHABLE_KEY=pk_test_replace_me`
+    },
+    {
       title: "Add the tracker to your site",
-      code: `<script>
-  window.eventsGatewayEndpoint = "https://events.example.com/v1/collect";
-</script>
-<script src="https://cdn.example.com/eventsgateway/tracker.js"></script>`
+      code: `<script
+  src="https://events.example.com/tracker.js"
+  data-site-id="site_alpha"
+  data-api-key="pk_live_replace_me"
+  data-endpoint="https://events.example.com/v1/collect"
+  async
+></script>`
     }
   ],
   checklist: [

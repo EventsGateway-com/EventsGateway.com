@@ -71,6 +71,10 @@ export type EnvironmentBindings = {
   CORS_ORIGIN?: string;
   BREVO_API_KEY?: string;
   BREVO_SENDER_EMAIL?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_PUBLISHABLE_KEY?: string;
+  STRIPE_BILLING_RETURN_URL?: string;
   PASSWORD_RESET_BASE_URL?: string;
   CAPTCHA_PROVIDER?: string;
   CAPTCHA_SECRET_KEY?: string;

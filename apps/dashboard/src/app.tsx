@@ -205,6 +205,7 @@ function getNavGroups(isAdmin: boolean): NavGroup[] {
         { label: "Queues", href: sitePath("operations/queues") },
         { label: "Audit", href: sitePath("operations/audit") },
         { label: "Install", href: sitePath("settings/install") },
+        { label: "Billing", href: sitePath("settings/billing") },
         { label: "Tag Manager", href: sitePath("settings/tag-manager") },
         { label: "Domains", href: sitePath("settings/domains") },
         { label: "API Keys", href: sitePath("settings/api-keys") },
@@ -219,6 +220,7 @@ function getNavGroups(isAdmin: boolean): NavGroup[] {
       label: "Admin",
       items: [
         { label: "Platform Overview", href: sitePath("admin/overview") },
+        { label: "Billing Admin", href: sitePath("admin/billing") },
         { label: "Users Admin", href: sitePath("admin/users") },
         { label: "Sites Admin", href: sitePath("admin/sites") }
       ]
@@ -3999,6 +4001,331 @@ function SettingsPage() {
   );
 }
 
+function BillingPage() {
+  const billingQuery = useQuery({
+    queryKey: qk.billing(currentContext.siteId),
+    queryFn: dashboardApi.fetchBilling
+  });
+  const invoicesQuery = useQuery({
+    queryKey: qk.billingInvoices(currentContext.siteId),
+    queryFn: dashboardApi.fetchBillingInvoices
+  });
+  const [error, setError] = useState("");
+  const checkoutMutation = useMutation({
+    mutationFn: dashboardApi.createBillingCheckoutSession,
+    onSuccess: (result) => {
+      setError("");
+      window.location.href = result.url;
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to start Stripe Checkout.");
+    }
+  });
+  const portalMutation = useMutation({
+    mutationFn: dashboardApi.createBillingPortalSession,
+    onSuccess: (result) => {
+      setError("");
+      window.location.href = result.url;
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to open Stripe Billing Portal.");
+    }
+  });
+
+  if (!billingQuery.data) {
+    return <StateCard title="Loading billing" description="Preparing subscription, invoice, and payment status." />;
+  }
+
+  const { customer, subscription, suspension } = billingQuery.data;
+  const usagePercent = Math.min(100, Math.round((subscription.monthly_events_used / Math.max(subscription.included_events, 1)) * 100));
+
+  return (
+    <div className="eg-page">
+      <PageIntro
+        title="Billing"
+        description="Manage payment method, invoice history, reminders, subscription status, and routing suspension posture."
+        action={
+          <div className="eg-inline-actions">
+            <button className="eg-button eg-button--primary" onClick={() => checkoutMutation.mutate()} type="button">
+              Save payment method
+            </button>
+            <button className="eg-button" onClick={() => portalMutation.mutate()} type="button">
+              Open billing portal
+            </button>
+          </div>
+        }
+      />
+      {error ? <p className="eg-form-error">{error}</p> : null}
+      {suspension.is_suspended ? (
+        <div className="eg-alert eg-alert--danger">
+          <strong>Routing suspended</strong>
+          <p>{suspension.reason || "Event routing is suspended until overdue billing is resolved."}</p>
+        </div>
+      ) : subscription.status === "past_due" ? (
+        <div className="eg-alert eg-alert--warning">
+          <strong>Payment overdue</strong>
+          <p>Routing remains active until {formatDateTime(suspension.grace_period_ends_at)}, then the platform suspends delivery automatically.</p>
+        </div>
+      ) : null}
+      <section className="eg-metric-grid">
+        <MetricCard label="Plan" value={subscription.plan_code} detail="Current commercial plan code attached to this site" />
+        <MetricCard label="Monthly usage" value={subscription.monthly_events_used.toLocaleString("en-US")} detail="Routed events counted in the current billing period" />
+        <MetricCard label="Included events" value={subscription.included_events.toLocaleString("en-US")} detail="Free monthly event allowance before overage starts" />
+        <MetricCard label="Overage rule" value={`$${subscription.overage_block_price_usd}`} detail={`Per extra ${subscription.overage_block_events.toLocaleString("en-US")} events`} />
+      </section>
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Billing profile" subtitle="The company and payer information attached to this site">
+          <div className="eg-stack">
+            <ActionLine title="Company" text={customer.company_name} />
+            <ActionLine title="Billing contact" text={`${customer.billing_name} · ${customer.billing_email}`} />
+            <ActionLine title="Payment method" text={customer.payment_method_summary || "No payment method saved yet."} />
+            <ActionLine title="Subscription status" text={subscription.status} />
+          </div>
+        </SurfaceCard>
+        <SurfaceCard title="Usage posture" subtitle="Commercial clarity for the current monthly usage window">
+          <div className="eg-stack">
+            <ActionLine title="Current period" text={`${formatDateTime(subscription.current_period_start)} to ${formatDateTime(subscription.current_period_end)}`} />
+            <ActionLine title="Usage percentage" text={`${usagePercent}% of the included monthly allowance`} />
+            <ActionLine title="Grace period" text={subscription.grace_period_ends_at ? formatDateTime(subscription.grace_period_ends_at) : "Not active"} />
+            <ActionLine title="Suspension reason" text={subscription.suspension_reason || "No active suspension."} />
+          </div>
+        </SurfaceCard>
+      </section>
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Invoices" subtitle="Issued invoices, billing periods, and downloadable invoice links">
+          {!invoicesQuery.data?.length ? (
+            <StateCard compact title="No invoices yet" description="The billing ledger will populate as soon as the first monthly cycle or manual invoice exists." />
+          ) : (
+            <div className="eg-table">
+              <div className="eg-table__head eg-table__row">
+                <span className="eg-table__cell">Invoice</span>
+                <span className="eg-table__cell">Status</span>
+                <span className="eg-table__cell">Amount</span>
+                <span className="eg-table__cell">Period</span>
+              </div>
+              {invoicesQuery.data.map((invoice) => (
+                <div className="eg-table__row" key={invoice.id}>
+                  <span className="eg-table__cell" data-label="Invoice">
+                    <strong>{invoice.invoice_number}</strong>
+                    <small>{formatDateTime(invoice.created_at)}</small>
+                  </span>
+                  <div className="eg-table__cell" data-label="Status">
+                    <StatusBadge status={invoice.status === "paid" ? "healthy" : invoice.status === "past_due" ? "warning" : "pending"}>
+                      {invoice.status}
+                    </StatusBadge>
+                  </div>
+                  <span className="eg-table__cell" data-label="Amount">${invoice.total_usd.toFixed(2)}</span>
+                  <span className="eg-table__cell" data-label="Period">
+                    {formatDateTime(invoice.period_start)} - {formatDateTime(invoice.period_end)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </SurfaceCard>
+        <SurfaceCard title="Payment reminders" subtitle="Automated reminder cadence before due date and on due date">
+          <div className="eg-list">
+            {billingQuery.data.reminders.map((reminder) => (
+              <div className="eg-list__row" key={reminder.id}>
+                <div>
+                  <strong>{reminder.days_before_due} day reminder</strong>
+                  <span>{formatDateTime(reminder.scheduled_for)}</span>
+                </div>
+                <div className="eg-inline-actions">
+                  <StatusBadge status={reminder.status === "sent" ? "healthy" : reminder.status === "canceled" ? "warning" : "pending"}>
+                    {reminder.status}
+                  </StatusBadge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </section>
+    </div>
+  );
+}
+
+function AdminBillingPage() {
+  const queryClient = useQueryClient();
+  const [error, setError] = useState("");
+  const [invoiceDraft, setInvoiceDraft] = useState({
+    site_id: currentContext.siteId,
+    amount_usd: "25",
+    due_in_days: "7"
+  });
+  const overviewQuery = useQuery({
+    queryKey: qk.adminBillingOverview(),
+    queryFn: dashboardApi.fetchAdminBillingOverview
+  });
+  const subscriptionsQuery = useQuery({
+    queryKey: qk.adminBillingSubscriptions(),
+    queryFn: dashboardApi.fetchAdminBillingSubscriptions
+  });
+  const transactionsQuery = useQuery({
+    queryKey: qk.adminBillingTransactions(),
+    queryFn: dashboardApi.fetchAdminBillingTransactions
+  });
+
+  const refreshBilling = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.adminBillingOverview() }),
+      queryClient.invalidateQueries({ queryKey: qk.adminBillingSubscriptions() }),
+      queryClient.invalidateQueries({ queryKey: qk.adminBillingTransactions() })
+    ]);
+  };
+
+  const updateSubscriptionMutation = useMutation({
+    mutationFn: ({ subscriptionId, input }: { subscriptionId: string; input: Parameters<typeof dashboardApi.updateAdminBillingSubscription>[1] }) =>
+      dashboardApi.updateAdminBillingSubscription(subscriptionId, input),
+    onSuccess: async () => {
+      setError("");
+      await refreshBilling();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to update billing subscription.");
+    }
+  });
+
+  const issueInvoiceMutation = useMutation({
+    mutationFn: dashboardApi.issueAdminInvoice,
+    onSuccess: async () => {
+      setError("");
+      await refreshBilling();
+    },
+    onError: (mutationError) => {
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to issue invoice.");
+    }
+  });
+
+  if (!overviewQuery.data || !subscriptionsQuery.data || !transactionsQuery.data) {
+    return <StateCard title="Loading billing admin" description="Preparing subscriptions, transactions, and revenue monitoring." />;
+  }
+
+  return (
+    <div className="eg-page">
+      <PageIntro
+        title="Billing Admin"
+        description="Global finance operations for subscriptions, transactions, manual invoices, and suspension control."
+      />
+      {error ? <p className="eg-form-error">{error}</p> : null}
+      <section className="eg-metric-grid">
+        <MetricCard label="Subscriptions" value={overviewQuery.data.totals.subscriptions} detail="All commercial subscriptions across the platform" />
+        <MetricCard label="Active" value={overviewQuery.data.totals.active_subscriptions} detail="Subscriptions currently allowed to route events" />
+        <MetricCard label="Past due" value={overviewQuery.data.totals.past_due_subscriptions} detail="Subscriptions in payment recovery before suspension" />
+        <MetricCard label="Suspended" value={overviewQuery.data.totals.suspended_subscriptions} detail="Subscriptions currently blocked from routing" />
+        <MetricCard label="Monthly revenue" value={`$${overviewQuery.data.totals.monthly_revenue_usd.toFixed(2)}`} detail="Latest monthly recognized paid invoice total" />
+        <MetricCard label="Quarterly revenue" value={`$${overviewQuery.data.totals.quarterly_revenue_usd.toFixed(2)}`} detail="Latest quarterly recognized paid invoice total" />
+        <MetricCard label="Overdue amount" value={`$${overviewQuery.data.totals.overdue_amount_usd.toFixed(2)}`} detail="Open and past-due invoice value currently at risk" />
+        <MetricCard label="Successful payments" value={overviewQuery.data.totals.successful_transactions} detail="Successful transactions captured in the billing ledger" />
+      </section>
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Manual invoice" subtitle="Issue a manual invoice from the control plane">
+          <form className="eg-auth-form" onSubmit={(event) => {
+            event.preventDefault();
+            issueInvoiceMutation.mutate({
+              site_id: invoiceDraft.site_id.trim(),
+              amount_usd: Number(invoiceDraft.amount_usd),
+              due_in_days: Number(invoiceDraft.due_in_days)
+            });
+          }}>
+            <label className="eg-field">
+              <span>Site ID</span>
+              <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, site_id: event.target.value }))} type="text" value={invoiceDraft.site_id} />
+            </label>
+            <label className="eg-field">
+              <span>Amount USD</span>
+              <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, amount_usd: event.target.value }))} type="number" value={invoiceDraft.amount_usd} />
+            </label>
+            <label className="eg-field">
+              <span>Due in days</span>
+              <input className="eg-input" onChange={(event) => setInvoiceDraft((current) => ({ ...current, due_in_days: event.target.value }))} type="number" value={invoiceDraft.due_in_days} />
+            </label>
+            <button className="eg-button eg-button--primary" type="submit">Issue invoice</button>
+          </form>
+        </SurfaceCard>
+        <SurfaceCard title="Revenue reports" subtitle="Monthly and quarterly snapshots generated from paid invoices">
+          <div className="eg-list">
+            {overviewQuery.data.monthly_revenue.map((item) => (
+              <div className="eg-list__row" key={item.month}>
+                <div>
+                  <strong>{item.month}</strong>
+                  <span>Monthly recognized revenue</span>
+                </div>
+                <div className="eg-inline-actions">
+                  <span className="eg-pill">${item.total_usd.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+            {overviewQuery.data.quarterly_revenue.map((item) => (
+              <div className="eg-list__row" key={item.quarter}>
+                <div>
+                  <strong>{item.quarter}</strong>
+                  <span>Quarterly recognized revenue</span>
+                </div>
+                <div className="eg-inline-actions">
+                  <span className="eg-pill">${item.total_usd.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </section>
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Subscriptions" subtitle="Plan codes, usage posture, and suspension controls">
+          <div className="eg-stack">
+            {subscriptionsQuery.data.map((subscription) => (
+              <div className="eg-admin-user" key={subscription.id}>
+                <div className="eg-admin-user__meta">
+                  <ActionLine title="Company" text={subscription.company_name} />
+                  <ActionLine title="Billing email" text={subscription.billing_email} />
+                  <ActionLine title="Plan" text={subscription.plan_code} />
+                  <ActionLine title="Status" text={subscription.status} />
+                  <ActionLine title="Usage" text={`${subscription.monthly_events_used.toLocaleString("en-US")} / ${subscription.included_events.toLocaleString("en-US")}`} />
+                </div>
+                <div className="eg-admin-user__actions">
+                  <div className="eg-inline-actions">
+                    <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: subscription.plan_code === "free" ? "growth" : "free" } })} type="button">
+                      Toggle plan
+                    </button>
+                    <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { status: subscription.status === "suspended" ? "active" : "suspended" } })} type="button">
+                      {subscription.status === "suspended" ? "Reactivate" : "Suspend"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+        <SurfaceCard title="Transactions" subtitle="All recorded payment attempts and payment-method outcomes">
+          <div className="eg-table">
+            <div className="eg-table__head eg-table__row">
+              <span className="eg-table__cell">Company</span>
+              <span className="eg-table__cell">Invoice</span>
+              <span className="eg-table__cell">Amount</span>
+              <span className="eg-table__cell">Status</span>
+            </div>
+            {transactionsQuery.data.map((transaction) => (
+              <div className="eg-table__row" key={transaction.id}>
+                <span className="eg-table__cell" data-label="Company">
+                  <strong>{transaction.company_name}</strong>
+                  <small>{transaction.billing_email}</small>
+                </span>
+                <span className="eg-table__cell" data-label="Invoice">{transaction.invoice_number || "n/a"}</span>
+                <span className="eg-table__cell" data-label="Amount">${transaction.amount_usd.toFixed(2)}</span>
+                <div className="eg-table__cell" data-label="Status">
+                  <StatusBadge status={transaction.status === "succeeded" ? "healthy" : transaction.status === "failed" ? "warning" : "pending"}>
+                    {transaction.status}
+                  </StatusBadge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </section>
+    </div>
+  );
+}
+
 function AdminOverviewPage() {
   const overviewQuery = useQuery({
     queryKey: qk.adminOverview(),
@@ -5562,6 +5889,7 @@ export default function App() {
         <Route path="operations/replay" element={<ReplayPage />} />
         <Route path="operations/audit" element={<AuditPage />} />
         <Route path="settings/install" element={<InstallPage />} />
+        <Route path="settings/billing" element={<BillingPage />} />
         <Route path="settings/tag-manager" element={<TagManagerPage />} />
         <Route path="settings/domains" element={<DomainsPage />} />
         <Route path="settings/api-keys" element={<ApiKeysPage />} />
@@ -5569,6 +5897,7 @@ export default function App() {
         <Route path="settings/general" element={<SettingsPage />} />
         <Route element={<ProtectedAdminOutlet />}>
           <Route path="admin/overview" element={<AdminOverviewPage />} />
+          <Route path="admin/billing" element={<AdminBillingPage />} />
           <Route path="admin/users" element={<AdminUsersPage />} />
           <Route path="admin/sites" element={<AdminSitesPage />} />
         </Route>

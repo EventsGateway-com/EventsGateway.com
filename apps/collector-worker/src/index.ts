@@ -5,6 +5,7 @@ import {
   storeCollectedEvent,
   validateCollectAccess
 } from "../../../packages/runtime/src/control-plane";
+import { getSiteRoutingAccessStatus } from "../../../packages/runtime/src/billing";
 import {
   createRequestContext,
   type DeliveryQueueMessage,
@@ -19,6 +20,7 @@ import {
   type EnvironmentBindings
 } from "../../../packages/runtime/src/index";
 import type { EventGatewayEvent } from "../../../packages/schemas/src/index";
+import { createBrowserLoaderSource } from "../../../packages/tracker-sdk/src/index";
 
 type CollectBody = Partial<EventGatewayEvent> &
   Pick<EventGatewayEvent, "type" | "source" | "environment"> & {
@@ -70,6 +72,19 @@ async function handleCollect(request: Request, env?: EnvironmentBindings) {
       return errorResponse(context, "unauthorized_site", "The site_id, api_key or origin is not allowed.", 401);
     }
 
+    const routingAccess = await getSiteRoutingAccessStatus(env.DB, body.site_id);
+    if (!routingAccess.allowed) {
+      return errorResponse(
+        context,
+        "billing_suspended",
+        routingAccess.reason || "Event routing is suspended until overdue billing is resolved.",
+        402,
+        {
+          grace_period_ends_at: routingAccess.grace_period_ends_at
+        }
+      );
+    }
+
     const stored = await storeCollectedEvent(env.DB, {
       siteId: body.site_id,
       originDomain: authorization.origin_domain,
@@ -87,11 +102,13 @@ async function handleCollect(request: Request, env?: EnvironmentBindings) {
       }
     });
 
-    await enqueueCollectedDelivery(env, {
-      site_id: stored.site_id,
-      delivery_attempt_id: stored.delivery_attempt_id,
-      event_id: stored.event_id
-    });
+    for (const deliveryAttemptId of stored.delivery_attempt_ids) {
+      await enqueueCollectedDelivery(env, {
+        site_id: stored.site_id,
+        delivery_attempt_id: deliveryAttemptId,
+        event_id: stored.event_id
+      });
+    }
   }
 
   return json(context, collectEvent(body), { status: 202 });
@@ -120,6 +137,9 @@ async function handleBatch(request: Request, env?: EnvironmentBindings) {
 
       if (!authorization) continue;
 
+      const routingAccess = await getSiteRoutingAccessStatus(env.DB, event.site_id);
+      if (!routingAccess.allowed) continue;
+
       const stored = await storeCollectedEvent(env.DB, {
         siteId: event.site_id,
         originDomain: authorization.origin_domain,
@@ -137,11 +157,13 @@ async function handleBatch(request: Request, env?: EnvironmentBindings) {
         }
       });
 
-      await enqueueCollectedDelivery(env, {
-        site_id: stored.site_id,
-        delivery_attempt_id: stored.delivery_attempt_id,
-        event_id: stored.event_id
-      });
+      for (const deliveryAttemptId of stored.delivery_attempt_ids) {
+        await enqueueCollectedDelivery(env, {
+          site_id: stored.site_id,
+          delivery_attempt_id: deliveryAttemptId,
+          event_id: stored.event_id
+        });
+      }
     }
   }
 
@@ -178,6 +200,19 @@ async function handleIdentify(request: Request, env?: EnvironmentBindings) {
       return errorResponse(context, "unauthorized_site", "The site_id, api_key or origin is not allowed.", 401);
     }
 
+    const routingAccess = await getSiteRoutingAccessStatus(env.DB, body.site_id);
+    if (!routingAccess.allowed) {
+      return errorResponse(
+        context,
+        "billing_suspended",
+        routingAccess.reason || "Event routing is suspended until overdue billing is resolved.",
+        402,
+        {
+          grace_period_ends_at: routingAccess.grace_period_ends_at
+        }
+      );
+    }
+
     const stored = await storeCollectedEvent(env.DB, {
       siteId: body.site_id,
       originDomain: authorization.origin_domain,
@@ -193,11 +228,13 @@ async function handleIdentify(request: Request, env?: EnvironmentBindings) {
       }
     });
 
-    await enqueueCollectedDelivery(env, {
-      site_id: stored.site_id,
-      delivery_attempt_id: stored.delivery_attempt_id,
-      event_id: stored.event_id
-    });
+    for (const deliveryAttemptId of stored.delivery_attempt_ids) {
+      await enqueueCollectedDelivery(env, {
+        site_id: stored.site_id,
+        delivery_attempt_id: deliveryAttemptId,
+        event_id: stored.event_id
+      });
+    }
   }
 
   return json(context, identifyUser(body.site_id, body));
@@ -217,6 +254,23 @@ async function handleDebugCollect(request: Request) {
   }
 
   return json(context, debugCollect(body));
+}
+
+function handleTrackerJs(request: Request) {
+  const context = createRequestContext(request);
+  const optionsResponse = withOptions(context);
+  if (optionsResponse) return optionsResponse;
+
+  const methodResponse = ensureMethod(context, ["GET"]);
+  if (methodResponse) return methodResponse;
+
+  return new Response(createBrowserLoaderSource(), {
+    status: 200,
+    headers: {
+      "content-type": "application/javascript; charset=utf-8",
+      "cache-control": "public, max-age=300"
+    }
+  });
 }
 
 function handleHealth(request: Request) {
@@ -240,6 +294,7 @@ export default {
     const path = `/${segments.join("/")}`;
 
     if (path === "/health") return handleHealth(request);
+    if (path === "/tracker.js") return handleTrackerJs(request);
     if (path === "/v1/collect") return handleCollect(request, env);
     if (path === "/v1/batch") return handleBatch(request, env);
     if (path === "/v1/identify") return handleIdentify(request, env);
