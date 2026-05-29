@@ -6,16 +6,15 @@ import Container from "../components/Container.astro";
 import PremiumCard from "../components/PremiumCard.astro";
 import RealtimeHeroStats from "../components/RealtimeHeroStats.astro";
 import SectionHeader from "../components/SectionHeader.astro";
-import SurfaceGlow from "../components/SurfaceGlow.astro";
 import { homeContent } from "../content/homepage";
 import { siteConfig } from "../config/site";
 
 const heroTelemetry = homeContent.stats;
-
-const heroSignals = [
-  "Best-priced commercial model",
-  "One setup, many destinations",
-  "Clear cost from day one"
+const heroOutcomes = [
+  "Higher Event Match Score for Meta campaigns",
+  "Cleaner conversions for Google Ads and TikTok Ads",
+  "More reliable mobile and iOS tracking",
+  "Less wasted spend caused by broken or fragmented signals"
 ];
 
 const softwareJsonLd = {
@@ -38,13 +37,6 @@ const softwareJsonLd = {
       <div class="hero-grid">
         <div class="stack">
           <span class="eyebrow">{homeContent.eyebrow}</span>
-          <div class="hero-signal-bar">
-            {
-              heroSignals.map((item) => (
-                <span class="hero-signal">{item}</span>
-              ))
-            }
-          </div>
           <h1 class="hero-title">{homeContent.title}</h1>
           <p class="hero-copy">{homeContent.description}</p>
           <div class="hero-actions">
@@ -79,23 +71,40 @@ const softwareJsonLd = {
         </div>
 
         <div class="hero-visual">
-          <SurfaceGlow class="hero-visual__glow hero-visual__glow--primary" />
-          <SurfaceGlow class="hero-visual__glow hero-visual__glow--secondary" />
-          <div class="hero-orbit hero-orbit--outer"></div>
-          <div class="hero-orbit hero-orbit--inner"></div>
-          <div class="hero-visual__badge hero-visual__badge--top">One setup, many destinations</div>
-          <div class="hero-visual__badge hero-visual__badge--bottom">Predictable commercial pricing</div>
-          <div class="hero-side-panel hero-side-panel--left">
-            <span class="hero-side-panel__label">Commercial posture</span>
-            <strong>Collect once</strong>
-            <small>Send clean events to multiple destinations from one control layer</small>
+          <div class="surface-panel hero-proof-card">
+            <div class="surface-panel__inner stack">
+              <span class="kicker">Why advertisers switch</span>
+              <h2 class="hero-proof-card__title">Stop losing signal quality between pixels, tags, plugins, and disconnected tools.</h2>
+              <p class="hero-proof-card__copy">
+                EventsGateway helps paid-media teams send cleaner purchase and lead events to Meta, Google Ads, and
+                TikTok so campaigns learn from better data and optimize against stronger signals.
+              </p>
+              <ul class="hero-proof-list">
+                {
+                  heroOutcomes.map((item) => (
+                    <li>{item}</li>
+                  ))
+                }
+              </ul>
+              <div class="hero-proof-grid">
+                <div class="hero-proof-stat">
+                  <span>Meta</span>
+                  <strong>Higher EMQ</strong>
+                  <p>Stronger matching inputs for better optimization and audience quality.</p>
+                </div>
+                <div class="hero-proof-stat">
+                  <span>Mobile</span>
+                  <strong>Cleaner tracking</strong>
+                  <p>More stable measurement across mobile sessions and iOS-heavy traffic.</p>
+                </div>
+                <div class="hero-proof-stat">
+                  <span>Spend</span>
+                  <strong>Lower waste</strong>
+                  <p>Reduce bad data, duplicate logic, and tracking gaps that weaken campaign performance.</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="hero-side-panel hero-side-panel--right">
-            <span class="hero-side-panel__label">Cost posture</span>
-            <strong>Lower-cost by design</strong>
-            <small>Replace heavier vendor stacks with one pricing model that stays easy to understand</small>
-          </div>
-          <CommandCenterMockup instanceId="hero" />
         </div>
       </div>
     </Container>
@@ -271,183 +280,97 @@ const softwareJsonLd = {
     margin-top: 1.25rem;
   }
 
-  .hero-signal-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .hero-signal {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.15rem;
-    padding: 0.45rem 0.8rem;
-    border: 1px solid rgba(125, 211, 252, 0.16);
-    border-radius: 999px;
-    background:
-      linear-gradient(180deg, rgba(125, 211, 252, 0.08), rgba(255, 255, 255, 0.02)),
-      rgba(6, 10, 20, 0.72);
-    color: var(--color-muted);
-    font-size: 0.82rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
   .hero-visual {
     position: relative;
-    padding-block: 2.25rem;
+    display: flex;
+    align-items: stretch;
   }
 
-  .hero-visual__glow--primary {
-    top: -12%;
-    right: -5%;
+  .hero-proof-card {
+    width: 100%;
   }
 
-  .hero-visual__glow--secondary {
-    bottom: -18%;
-    left: -8%;
-    background:
-      radial-gradient(circle, rgba(167, 139, 250, 0.2), rgba(167, 139, 250, 0.04) 42%, transparent 72%);
+  .hero-proof-card__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 2.8vw, 2.35rem);
+    letter-spacing: -0.04em;
+    line-height: 1.05;
   }
 
-  .hero-orbit {
-    position: absolute;
-    inset: 50% auto auto 50%;
-    border: 1px solid rgba(125, 211, 252, 0.12);
-    border-radius: 999px;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
+  .hero-proof-card__copy {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.7;
   }
 
-  .hero-orbit::before,
-  .hero-orbit::after {
+  .hero-proof-list {
+    display: grid;
+    gap: 0.8rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hero-proof-list li {
+    position: relative;
+    padding-left: 1.35rem;
+    color: var(--color-text);
+    line-height: 1.6;
+  }
+
+  .hero-proof-list li::before {
     content: "";
     position: absolute;
+    top: 0.58rem;
+    left: 0;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 999px;
-    background: var(--color-accent);
-    box-shadow: 0 0 18px rgba(125, 211, 252, 0.7);
+    background: rgba(125, 211, 252, 0.95);
+    box-shadow: 0 0 16px rgba(125, 211, 252, 0.45);
   }
 
-  .hero-orbit--outer {
-    width: min(42rem, 92%);
-    aspect-ratio: 1;
-    opacity: 0.28;
-  }
-
-  .hero-orbit--outer::before {
-    top: 12%;
-    left: 72%;
-    width: 0.55rem;
-    height: 0.55rem;
-  }
-
-  .hero-orbit--outer::after {
-    bottom: 16%;
-    left: 14%;
-    width: 0.4rem;
-    height: 0.4rem;
-  }
-
-  .hero-orbit--inner {
-    width: min(28rem, 62%);
-    aspect-ratio: 1;
-    opacity: 0.2;
-  }
-
-  .hero-orbit--inner::before {
-    top: 15%;
-    left: 26%;
-    width: 0.42rem;
-    height: 0.42rem;
-  }
-
-  .hero-orbit--inner::after {
-    bottom: 20%;
-    right: 22%;
-    width: 0.35rem;
-    height: 0.35rem;
-  }
-
-  .hero-visual__badge {
-    position: absolute;
-    z-index: 2;
-    padding: 0.7rem 0.9rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    background: rgba(7, 11, 20, 0.82);
-    box-shadow: var(--shadow-card);
-    color: var(--color-muted);
-    font-size: 0.86rem;
-  }
-
-  .hero-visual__badge--top {
-    top: 5%;
-    right: -2%;
-  }
-
-  .hero-visual__badge--bottom {
-    bottom: 5%;
-    left: -4%;
-  }
-
-  .hero-side-panel {
-    position: absolute;
-    z-index: 2;
+  .hero-proof-grid {
     display: grid;
-    gap: 0.35rem;
-    width: min(12.5rem, 38vw);
-    padding: 0.95rem 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .hero-proof-stat {
+    display: grid;
+    gap: 0.45rem;
+    padding: 1rem;
     border: 1px solid rgba(125, 211, 252, 0.14);
     border-radius: 1rem;
     background:
       linear-gradient(180deg, rgba(125, 211, 252, 0.08), rgba(255, 255, 255, 0.02)),
       rgba(8, 12, 23, 0.9);
-    box-shadow: var(--shadow-card);
   }
 
-  .hero-side-panel__label {
+  .hero-proof-stat span {
     color: var(--color-subtle);
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
   }
 
-  .hero-side-panel strong {
+  .hero-proof-stat strong {
     font-family: var(--font-display);
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     letter-spacing: -0.03em;
   }
 
-  .hero-side-panel small {
+  .hero-proof-stat p {
+    margin: 0;
     color: var(--color-muted);
     line-height: 1.5;
   }
 
-  .hero-side-panel--left {
-    top: 22%;
-    left: -8%;
-  }
-
-  .hero-side-panel--right {
-    right: -8%;
-    bottom: 18%;
-  }
-
   @media (max-width: 960px) {
-    .hero-visual__badge {
-      position: static;
-      display: inline-flex;
-      margin-bottom: 0.75rem;
-    }
-
-    .hero-side-panel {
-      position: static;
+    .hero-proof-grid {
       width: 100%;
-      margin-bottom: 0.75rem;
-    }
-
-    .hero-orbit {
-      display: none;
+      grid-template-columns: 1fr;
     }
   }
 </style>
