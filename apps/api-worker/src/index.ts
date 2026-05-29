@@ -404,7 +404,7 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
         return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
       }
       try {
-        const body = await readJson<{ name?: string; email?: string; phone?: string; password?: string }>(request);
+        const body = await readJson<{ name?: string; email?: string; phone?: string; password?: string; current_password?: string }>(request);
         const result = await updateMyProfile(env.DB, authorization.user.id, body);
         return json(context, result);
       } catch (error) {
@@ -588,12 +588,20 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
 
   if (segments[3] === "billing" && method === "GET") {
     if (!env?.DB) return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
-    return json(context, await getSiteBillingSummary(env.DB, siteId));
+    try {
+      return json(context, await getSiteBillingSummary(env.DB, siteId));
+    } catch (error) {
+      return errorResponse(context, "billing_summary_failed", error instanceof Error ? error.message : "Unable to fetch billing summary.", 500);
+    }
   }
 
   if (segments[3] === "billing" && segments[4] === "invoices" && method === "GET") {
     if (!env?.DB) return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
-    return json(context, await listSiteBillingInvoices(env.DB, siteId));
+    try {
+      return json(context, await listSiteBillingInvoices(env.DB, siteId));
+    } catch (error) {
+      return errorResponse(context, "billing_invoices_failed", error instanceof Error ? error.message : "Unable to fetch billing invoices.", 500);
+    }
   }
 
   if (segments[3] === "billing" && segments[4] === "checkout" && method === "POST") {

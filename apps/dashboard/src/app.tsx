@@ -1262,31 +1262,32 @@ function AcceptInvitePage() {
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-function DraggablePanel({ title, children, isMinimized, onToggleMinimize }: { title: string; children: React.ReactNode; isMinimized: boolean; onToggleMinimize: () => void }) {
-  const [maximized, setMaximized] = useState(false);
-  
+function DraggablePanel({ title, children, isMinimized, onToggleMinimize, onClose }: { title: string; children: React.ReactNode; isMinimized: boolean; onToggleMinimize: () => void; onClose: () => void }) {
   return (
-    <div className={`eg-draggable-panel ${maximized ? 'is-maximized' : ''} ${isMinimized ? 'is-minimized' : ''}`} style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--eg-bg-elevated)', border: '1px solid var(--eg-border)', borderRadius: 'var(--eg-radius-lg)', overflow: maximized ? 'auto' : 'hidden', zIndex: maximized ? 1000 : 1, position: maximized ? 'fixed' : 'relative', top: maximized ? '2rem' : 'auto', left: maximized ? '2rem' : 'auto', right: maximized ? '2rem' : 'auto', bottom: maximized ? '2rem' : 'auto' }}>
-      <div className="eg-draggable-panel__header drag-handle" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: isMinimized ? 'none' : '1px solid var(--eg-border)', cursor: 'move', background: 'rgba(255,255,255,0.02)' }}>
+    <div className={`eg-draggable-panel ${isMinimized ? 'is-minimized' : ''}`} style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--eg-bg-elevated)', border: '1px solid var(--eg-border)', borderRadius: 'var(--eg-radius-lg)', overflow: 'hidden', zIndex: 1, position: 'relative' }}>
+      <div className="eg-draggable-panel__header drag-handle" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: isMinimized ? 'none' : '1px solid var(--eg-border)', cursor: 'grab', background: 'rgba(255,255,255,0.02)', userSelect: 'none' }}>
         <strong style={{ fontSize: '0.95rem', fontWeight: 600 }}>{title}</strong>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button type="button" onClick={onToggleMinimize} style={{ background: 'transparent', border: 'none', color: 'var(--eg-muted)', cursor: 'pointer' }}>
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            {isMinimized ? (
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            )}
           </button>
-          {!isMinimized && (
-            <button type="button" onClick={() => setMaximized(!maximized)} style={{ background: 'transparent', border: 'none', color: 'var(--eg-muted)', cursor: 'pointer' }}>
-              {maximized ? (
-                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-              ) : (
-                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-              )}
-            </button>
-          )}
+          <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--eg-muted)', cursor: 'pointer' }}>
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
       </div>
       {!isMinimized && (
         <div className="eg-draggable-panel__content" style={{ padding: '1rem', flex: 1, overflow: 'auto' }}>
           {children}
+        </div>
+      )}
+      {!isMinimized && (
+        <div className="eg-draggable-panel__resize-handle" style={{ position: 'absolute', bottom: '4px', right: '4px', cursor: 'nwse-resize', color: 'var(--eg-muted)' }}>
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="21 15 21 21 15 21"></polyline><line x1="21" y1="21" x2="13" y2="13"></line></svg>
         </div>
       )}
     </div>
@@ -1299,46 +1300,120 @@ function OverviewPage() {
     queryFn: dashboardApi.fetchOverview
   });
 
+  const STORAGE_KEY = "eg_dashboard_overview_state";
+
   const defaultLayouts = {
     lg: [
       { i: 'metric1', x: 0, y: 0, w: 3, h: 5 },
       { i: 'metric2', x: 3, y: 0, w: 3, h: 5 },
       { i: 'metric3', x: 6, y: 0, w: 3, h: 5 },
       { i: 'metric4', x: 9, y: 0, w: 3, h: 5 },
-      { i: 'panel1', x: 0, y: 5, w: 6, h: 8 },
-      { i: 'panel2', x: 6, y: 5, w: 6, h: 8 }
+      { i: 'panel1', x: 0, y: 5, w: 6, h: 10 },
+      { i: 'panel2', x: 6, y: 5, w: 6, h: 10 }
     ]
   };
   
   const [layouts, setLayouts] = useState<any>(defaultLayouts);
   const [minimizedPanels, setMinimizedPanels] = useState<Record<string, boolean>>({});
+  const [closedPanels, setClosedPanels] = useState<Record<string, boolean>>({});
+  const [originalHeights, setOriginalHeights] = useState<Record<string, number>>({});
 
-  const toggleMinimize = (panelId: string, originalHeight: number) => {
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`${STORAGE_KEY}_${currentContext.siteId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.layouts) setLayouts(parsed.layouts);
+        if (parsed.minimizedPanels) setMinimizedPanels(parsed.minimizedPanels);
+        if (parsed.closedPanels) setClosedPanels(parsed.closedPanels);
+        if (parsed.originalHeights) setOriginalHeights(parsed.originalHeights);
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [currentContext.siteId]);
+
+  const saveState = (newState: any) => {
+    try {
+      const current = localStorage.getItem(`${STORAGE_KEY}_${currentContext.siteId}`);
+      const parsed = current ? JSON.parse(current) : {};
+      localStorage.setItem(`${STORAGE_KEY}_${currentContext.siteId}`, JSON.stringify({ ...parsed, ...newState }));
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  const handleLayoutChange = (currentLayout: any, allLayouts: any) => {
+    setLayouts(allLayouts);
+    saveState({ layouts: allLayouts });
+  };
+
+  const toggleMinimize = (panelId: string) => {
     setMinimizedPanels(prev => {
       const isCurrentlyMinimized = !!prev[panelId];
       const newMinimizedState = { ...prev, [panelId]: !isCurrentlyMinimized };
       
       setLayouts((currentLayouts: any) => {
         const newLayouts = { ...currentLayouts };
+        let newHeights = { ...originalHeights };
+        
         Object.keys(newLayouts).forEach(breakpoint => {
           newLayouts[breakpoint] = newLayouts[breakpoint].map((l: any) => {
             if (l.i === panelId) {
-              return { ...l, h: !isCurrentlyMinimized ? 2 : originalHeight };
+              if (!isCurrentlyMinimized) {
+                // We are minimizing, save the current height
+                newHeights[panelId] = l.h;
+                return { ...l, h: 2 }; // exactly 2 rows for title bar
+              } else {
+                // We are restoring, use saved height or default
+                return { ...l, h: newHeights[panelId] || 5 };
+              }
             }
             return l;
           });
         });
+        
+        setOriginalHeights(newHeights);
+        saveState({ layouts: newLayouts, originalHeights: newHeights });
         return newLayouts;
       });
       
+      saveState({ minimizedPanels: newMinimizedState });
       return newMinimizedState;
+    });
+  };
+
+  const closePanel = (panelId: string) => {
+    setClosedPanels(prev => {
+      const newState = { ...prev, [panelId]: true };
+      saveState({ closedPanels: newState });
+      return newState;
+    });
+  };
+
+  const restorePanel = (panelId: string) => {
+    setClosedPanels(prev => {
+      const newState = { ...prev, [panelId]: false };
+      saveState({ closedPanels: newState });
+      return newState;
     });
   };
 
   if (!overviewQuery.data) return <StateCard title="Loading overview" description="Building the latest metrics snapshot." />;
 
+  const allPanels = [
+    { id: 'metric1', title: 'Events per minute', content: <><div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.ingestPerMinute}</div><div style={{ color: 'var(--eg-muted)' }}>Current ingest lane</div></> },
+    { id: 'metric2', title: 'Matched rate', content: <><div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.matchedRate}%</div><div style={{ color: 'var(--eg-muted)' }}>Events that resolve into at least one route</div></> },
+    { id: 'metric3', title: 'Delivery success', content: <><div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.deliverySuccess}%</div><div style={{ color: 'var(--eg-muted)' }}>Last 24h delivery performance</div></> },
+    { id: 'metric4', title: 'Queue depth', content: <><div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.queueDepth}</div><div style={{ color: 'var(--eg-muted)' }}>Forwarder backlog</div></> },
+    { id: 'panel1', title: 'Top signals', content: <div className="eg-list">{overviewQuery.data.topSignals.map((signal) => (<div className="eg-list__row" key={signal.label}><div><strong>{signal.label}</strong><span>{signal.value.toLocaleString()} events</span></div><StatusBadge status="healthy">{signal.delta}</StatusBadge></div>))}</div> },
+    { id: 'panel2', title: 'Routing state', content: <div className="eg-stack"><div className="eg-stat-line"><span>Compiled version</span><strong>v{overviewQuery.data.compiledVersion}</strong></div><div className="eg-stat-line"><span>Active routes</span><strong>{overviewQuery.data.activeRoutes}</strong></div><div className="eg-stat-line"><span>Pipeline posture</span><strong>Collect once, route everywhere</strong></div></div> }
+  ];
+
+  const closedPanelObjects = allPanels.filter(p => closedPanels[p.id]);
+
   return (
-    <div className="eg-page">
+    <div className="eg-page" style={{ paddingBottom: closedPanelObjects.length > 0 ? '4rem' : '1rem' }}>
       <PageIntro
         title="Overview"
         description="Central view for ingestion, matching, delivery success and active routing state."
@@ -1349,71 +1424,30 @@ function OverviewPage() {
           layouts={layouts}
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
           cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-          rowHeight={25}
+          rowHeight={20}
           draggableHandle=".drag-handle"
-          onLayoutChange={(currentLayout, allLayouts) => setLayouts(allLayouts)}
+          onLayoutChange={handleLayoutChange}
         >
-          <div key="metric1">
-            <DraggablePanel title="Events per minute" isMinimized={!!minimizedPanels['metric1']} onToggleMinimize={() => toggleMinimize('metric1', 5)}>
-              <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.ingestPerMinute}</div>
-              <div style={{ color: 'var(--eg-muted)' }}>Current ingest lane</div>
-            </DraggablePanel>
-          </div>
-          <div key="metric2">
-            <DraggablePanel title="Matched rate" isMinimized={!!minimizedPanels['metric2']} onToggleMinimize={() => toggleMinimize('metric2', 5)}>
-              <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.matchedRate}%</div>
-              <div style={{ color: 'var(--eg-muted)' }}>Events that resolve into at least one route</div>
-            </DraggablePanel>
-          </div>
-          <div key="metric3">
-            <DraggablePanel title="Delivery success" isMinimized={!!minimizedPanels['metric3']} onToggleMinimize={() => toggleMinimize('metric3', 5)}>
-              <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.deliverySuccess}%</div>
-              <div style={{ color: 'var(--eg-muted)' }}>Last 24h delivery performance</div>
-            </DraggablePanel>
-          </div>
-          <div key="metric4">
-            <DraggablePanel title="Queue depth" isMinimized={!!minimizedPanels['metric4']} onToggleMinimize={() => toggleMinimize('metric4', 5)}>
-              <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.queueDepth}</div>
-              <div style={{ color: 'var(--eg-muted)' }}>Forwarder backlog</div>
-            </DraggablePanel>
-          </div>
-          
-          <div key="panel1">
-            <DraggablePanel title="Top signals" isMinimized={!!minimizedPanels['panel1']} onToggleMinimize={() => toggleMinimize('panel1', 8)}>
-              <div className="eg-list">
-                {overviewQuery.data.topSignals.map((signal) => (
-                  <div className="eg-list__row" key={signal.label}>
-                    <div>
-                      <strong>{signal.label}</strong>
-                      <span>{signal.value.toLocaleString()} events</span>     
-                    </div>
-                    <StatusBadge status="healthy">{signal.delta}</StatusBadge>
-                  </div>
-                ))}
-              </div>
-            </DraggablePanel>
-          </div>
-
-          <div key="panel2">
-            <DraggablePanel title="Routing state" isMinimized={!!minimizedPanels['panel2']} onToggleMinimize={() => toggleMinimize('panel2', 8)}>
-              <div className="eg-stack">
-                <div className="eg-stat-line">
-                  <span>Compiled version</span>
-                  <strong>v{overviewQuery.data.compiledVersion}</strong>      
-                </div>
-                <div className="eg-stat-line">
-                  <span>Active routes</span>
-                  <strong>{overviewQuery.data.activeRoutes}</strong>
-                </div>
-                <div className="eg-stat-line">
-                  <span>Pipeline posture</span>
-                  <strong>Collect once, route everywhere</strong>
-                </div>
-              </div>
-            </DraggablePanel>
-          </div>
+          {allPanels.filter(p => !closedPanels[p.id]).map(p => (
+            <div key={p.id}>
+              <DraggablePanel title={p.title} isMinimized={!!minimizedPanels[p.id]} onToggleMinimize={() => toggleMinimize(p.id)} onClose={() => closePanel(p.id)}>
+                {p.content}
+              </DraggablePanel>
+            </div>
+          ))}
         </ResponsiveGridLayout>
       </div>
+
+      {closedPanelObjects.length > 0 && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '0.75rem', background: 'var(--eg-bg-elevated)', borderTop: '1px solid var(--eg-border)', display: 'flex', gap: '0.5rem', zIndex: 100, alignItems: 'center' }}>
+          <strong style={{ fontSize: '0.85rem', color: 'var(--eg-muted)', marginRight: '1rem' }}>Hidden panels:</strong>
+          {closedPanelObjects.map(p => (
+            <button key={p.id} className="eg-button eg-button--compact" onClick={() => restorePanel(p.id)} type="button">
+              {p.title}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -7415,62 +7449,119 @@ function SiteSelectorPage() {
 }
 
 function MyProfilePage() {
-  const { user, bootstrap } = useAuth();
+  const { user } = useAuth();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
+  
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordNotice, setPasswordNotice] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage("");
-    try {
-      await dashboardApi.updateMyProfile({ name, email, phone, password });
-      setMessage("Profile updated successfully.");
-      if (password) {
-        window.location.assign("/login");
-      }
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Failed to update profile.");
-    } finally {
-      setIsSubmitting(false);
+  const updateProfileMutation = useMutation({
+    mutationFn: () => dashboardApi.updateMyProfile({ name, email, phone }),
+    onSuccess: () => {
+      setError("");
+      setNotice("Profile details updated.");
+      setTimeout(() => setNotice(""), 3000);
+    },
+    onError: (err) => {
+      setNotice("");
+      setError(err instanceof Error ? err.message : "Unable to update profile.");
     }
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: () => dashboardApi.updateMyProfile({ password: newPassword, current_password: currentPassword }),
+    onSuccess: () => {
+      setPasswordError("");
+      setPasswordNotice("Password updated successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPasswordNotice(""), 3000);
+    },
+    onError: (err) => {
+      setPasswordNotice("");
+      setPasswordError(err instanceof Error ? err.message : "Unable to update password.");
+    }
+  });
+
+  async function handleProfileSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    updateProfileMutation.mutate();
+  }
+
+  async function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters long.");
+      return;
+    }
+    updatePasswordMutation.mutate();
   }
 
   return (
     <div className="eg-page">
-      <PageIntro title="My Profile" description="Manage your personal account details." />
-      <SurfaceCard title="Personal Information">
-        <form onSubmit={handleSubmit} className="eg-stack" style={{ maxWidth: "400px" }}>
-          <label className="eg-field">
-            <span>Name</span>
-            <input className="eg-input" type="text" value={name} onChange={e => setName(e.target.value)} required />
-          </label>
-          <label className="eg-field">
-            <span>Email</span>
-            <input className="eg-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-          </label>
-          <label className="eg-field">
-            <span>Phone</span>
-            <input className="eg-input" type="text" value={phone} onChange={e => setPhone(e.target.value)} />
-          </label>
-          <label className="eg-field">
-            <span>New Password (optional)</span>
-            <input className="eg-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Leave blank to keep current" />
-          </label>
-          {message && <p className={message.includes("success") ? "eg-form-success" : "eg-form-error"}>{message}</p>}
-          <button className="eg-button eg-button--primary" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save changes"}
-          </button>
-        </form>
-      </SurfaceCard>
+      <PageIntro title="My Profile" description="Manage your personal account details and security credentials." />
+      
+      <div className="eg-grid eg-grid--two">
+        <SurfaceCard title="Personal Information" subtitle="Update your contact details and display name.">
+          {error ? <p className="eg-form-error">{error}</p> : null}
+          {notice ? <p className="eg-form-notice" style={{ color: "var(--eg-healthy)" }}>{notice}</p> : null}
+          <form className="eg-stack" onSubmit={handleProfileSubmit}>
+            <label className="eg-field">
+              <span>Full name</span>
+              <input className="eg-input" type="text" value={name} onChange={e => setName(e.target.value)} required />
+            </label>
+            <label className="eg-field">
+              <span>Email address</span>
+              <input className="eg-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+            </label>
+            <label className="eg-field">
+              <span>Phone number</span>
+              <input className="eg-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} />
+            </label>
+            <button className="eg-button eg-button--primary" type="submit" disabled={updateProfileMutation.isPending}>
+              {updateProfileMutation.isPending ? "Saving..." : "Save changes"}
+            </button>
+          </form>
+        </SurfaceCard>
+
+        <SurfaceCard title="Security" subtitle="Change your account password.">
+          {passwordError ? <p className="eg-form-error">{passwordError}</p> : null}
+          {passwordNotice ? <p className="eg-form-notice" style={{ color: "var(--eg-healthy)" }}>{passwordNotice}</p> : null}
+          <form className="eg-stack" onSubmit={handlePasswordSubmit}>
+            <label className="eg-field">
+              <span>Current password</span>
+              <input className="eg-input" type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
+            </label>
+            <label className="eg-field">
+              <span>New password</span>
+              <input className="eg-input" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+            </label>
+            <label className="eg-field">
+              <span>Confirm new password</span>
+              <input className="eg-input" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+            </label>
+            <button className="eg-button eg-button--primary" type="submit" disabled={updatePasswordMutation.isPending || !currentPassword || !newPassword || !confirmPassword}>
+              {updatePasswordMutation.isPending ? "Updating..." : "Update password"}
+            </button>
+          </form>
+        </SurfaceCard>
+      </div>
     </div>
   );
 }
-
 function ProtectedAdminShell() {
   const { user } = useAuth();
   if (!user || user.role !== "global_admin") return <Navigate replace to="/app/sites" />;

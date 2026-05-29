@@ -3086,251 +3086,49 @@ export async function acceptSiteInvite(
 export async function updateMyProfile(
   dbInput: DatabaseBinding | undefined,
   userId: string,
-  input: { name?: string; email?: string; phone?: string; password?: string }
+  input: { name?: string; email?: string; phone?: string; password?: string; current_password?: string }
 ) {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
 
   const target = await firstRecord(
     db,
-    "SELECT id, name, email, phone FROM dashboard_users WHERE id = ? LIMIT 1",
+    "SELECT id, name, email, phone, password_hash FROM dashboard_users WHERE id = ? LIMIT 1",
     userId
   );
   if (!target) {
     throw new Error("User not found.");
+  }
+
+  if (input.password) {
+    if (!input.current_password) {
+      throw new Error("Current password is required to set a new password.");
+    }
+    const isValid = await verifyPassword(input.current_password, asString(target.password_hash));
+    if (!isValid) {
+      throw new Error("Current password is incorrect.");
+    }
+    
+    if (input.password.length < 8) {
+      throw new Error("New password must be at least 8 characters long.");
+    }
+    const hash = await hashPassword(input.password);
+    await db
+      .prepare("UPDATE dashboard_users SET password_hash = ?, password_changed_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(hash, userId)
+      .run();
   }
 
   const nextName = input.name?.trim() || asString(target.name);
   const nextEmail = input.email ? normalizeEmail(input.email) : asString(target.email);
   const nextPhone = input.phone !== undefined ? input.phone.trim() : asNullableString(target.phone);
 
-  await db.prepare("UPDATE dashboard_users SET name = ?, email = ?, phone = ? WHERE id = ?")
+  await db
+    .prepare("UPDATE dashboard_users SET name = ?, email = ?, phone = ? WHERE id = ?")
     .bind(nextName, nextEmail, nextPhone || null, userId)
     .run();
 
-  if (input.password && input.password.trim().length >= 8) {
-    const passwordChangedAt = nowIso();
-    await db.prepare(
-      "UPDATE dashboard_users SET password_hash = ?, password_changed_at = ? WHERE id = ?"
-    )
-      .bind(await sha256Hex(input.password.trim()), passwordChangedAt, userId)
-      .run();
-    
-    // Invalidate other sessions
-    await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(userId).run();
-  }
-
-  return { success: true };
-}
-
-export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId: string): Promise<BootstrapPayload> {
-  const db = ensureDb(dbInput);
-  await ensureControlPlane(db);
-  const user = await firstRecord(
-    db,
-    `
-      SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
-      FROM dashboard_users
-      WHERE id = ?
-      LIMIT 1
-    `,
-    userId
-  );
-  if (!user) {
-    throw new Error("User not found.");
-  }
-
-  let accessibleSites: any[] = [];
-  if (user.role === "global_admin") {
-    accessibleSites = await allRecords(
-      db,
-      `
-        SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at, 'admin' as role
-        FROM sites
-        ORDER BY created_at ASC
-      `
-    );
-  } else {
-    accessibleSites = await allRecords(
-      db,
-      `
-        SELECT s.id, s.org_id, s.org_name, s.project_id, s.project_name, s.name, s.environment, s.collector_url, s.created_at, sm.role
-        FROM sites s
-        INNER JOIN site_memberships sm ON sm.site_id = s.id
-        WHERE sm.user_id = ? AND sm.status = 'active'
-        ORDER BY s.created_at ASC
-      `,
-      userId
-    );
-  }
-
-  const site = await getDefaultSite(db);
-  const domains = await listSiteDomains(db, site.id);
-  return {
-    user: toDashboardUser(user),
-    accessible_sites: accessibleSites.map(s => ({ ...s, id: asString(s.id) })),
-    site,
-    domains
-  };
-}
-
-async function countGlobalAdmins(db: DatabaseBinding) {
-  return countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE role = 'global_admin'");
-}
-
-export async function getAdminOverview(dbInput: DatabaseBinding | undefined): Promise<AdminOverview> {
-  const db = ensureDb(dbInput);
-  await ensureControlPlane(db);
-
-  const [
-    users,
-    admins,
-    blockedUsers,
-    activeSessions,
-    sites,
-    domains,
-    apiKeys,
-    collectedEvents,
-    recentUsersRecords,
-    recentSiteRecords
-  ] = await Promise.all([
-    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users"),
-    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE role = 'global_admin'"),
-    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_users WHERE status = 'blocked'"),
-    countRecords(db, "SELECT COUNT(*) AS count FROM dashboard_sessions"),
-    countRecords(db, "SELECT COUNT(*) AS count FROM sites"),
-    countRecords(db, "SELECT COUNT(*) AS count FROM site_domains"),
-    countRecords(db, "SELECT COUNT(*) AS count FROM site_keys"),
-    countRecords(db, "SELECT COUNT(*) AS count FROM collected_events"),
-    allRecords(
-      db,
-      `
-        SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
-        FROM dashboard_users
-        ORDER BY created_at DESC, email DESC
-        LIMIT 6
-      `
-    ),
-    allRecords(
-      db,
-      `
-        SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at
-        FROM sites
-        ORDER BY created_at DESC, name ASC
-        LIMIT 6
-      `
-    )
-  ]);
-
-  return {
-    totals: {
-      users,
-      admins,
-      blocked_users: blockedUsers,
-      active_sessions: activeSessions,
-      sites,
-      domains,
-      api_keys: apiKeys,
-      collected_events: collectedEvents
-    },
-    recent_users: recentUsersRecords.map(toDashboardUser),
-    recent_sites: recentSiteRecords.map(toDashboardSite)
-  };
-}
-
-export async function listAdminUsers(dbInput: DatabaseBinding | undefined): Promise<AdminUserRecord[]> {
-  const db = ensureDb(dbInput);
-  await ensureControlPlane(db);
-
-  const records = await allRecords(
-    db,
-    `
-      SELECT
-        u.id,
-        u.name,
-        u.email,
-        u.role,
-        u.status,
-        u.created_at,
-        u.last_login_at,
-        u.password_changed_at,
-        COUNT(s.id) AS session_count
-      FROM dashboard_users u
-      LEFT JOIN dashboard_sessions s ON s.user_id = u.id
-      GROUP BY u.id, u.name, u.email, u.role, u.status, u.created_at, u.last_login_at, u.password_changed_at
-      ORDER BY
-        CASE WHEN u.role = 'global_admin' THEN 0 ELSE 1 END,
-        u.created_at ASC,
-        u.email ASC
-    `
-  );
-
-  return records.map((record) => ({
-    ...toDashboardUser(record),
-    session_count: Number(record.session_count ?? 0)
-  }));
-}
-
-export async function updateAdminUser(
-  dbInput: DatabaseBinding | undefined,
-  actorUserId: string,
-  targetUserId: string,
-  input: { role?: DashboardUserRole; status?: DashboardUserStatus }
-) {
-  const db = ensureDb(dbInput);
-  await ensureControlPlane(db);
-
-  const target = await firstRecord(
-    db,
-    "SELECT id, role, status FROM dashboard_users WHERE id = ? LIMIT 1",
-    targetUserId
-  );
-  if (!target) {
-    throw new Error("User not found.");
-  }
-
-  const nextRole = input.role ?? toDashboardUserRole(target.role);
-  const nextStatus = input.status ?? toDashboardUserStatus(target.status);
-
-  if (actorUserId === targetUserId && nextRole !== "global_admin") {
-    throw new Error("You cannot remove your own admin role.");
-  }
-
-  if (actorUserId === targetUserId && nextStatus === "blocked") {
-    throw new Error("You cannot block your own account.");
-  }
-
-  if (toDashboardUserRole(target.role) === "global_admin" && nextRole !== "global_admin") {
-    const adminCount = await countGlobalAdmins(db);
-    if (adminCount <= 1) {
-      throw new Error("At least one global admin must remain.");
-    }
-  }
-
-  await db.prepare("UPDATE dashboard_users SET role = ?, status = ? WHERE id = ?")
-    .bind(nextRole, nextStatus, targetUserId)
-    .run();
-
-  if (nextStatus === "blocked") {
-    await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(targetUserId).run();
-  }
-
-  const updated = await firstRecord(
-    db,
-    `
-      SELECT id, name, email, role, status, created_at, phone, last_login_at, password_changed_at
-      FROM dashboard_users
-      WHERE id = ?
-      LIMIT 1
-    `,
-    targetUserId
-  );
-
-  if (!updated) {
-    throw new Error("User not found after update.");
-  }
-
-  return toDashboardUser(updated);
+  return { updated: true };
 }
 
 export async function adminSetUserPassword(

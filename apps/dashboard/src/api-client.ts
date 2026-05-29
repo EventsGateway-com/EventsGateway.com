@@ -1576,7 +1576,7 @@ export function updateAdminUserRecord(
   });
 }
 
-export function updateMyProfile(input: { name?: string; email?: string; phone?: string; password?: string }) {
+export function updateMyProfile(input: { name?: string; email?: string; phone?: string; password?: string; current_password?: string }) {
   return requestJson<{ success: boolean }>(`/v1/auth/me/profile`, {
     method: "PATCH",
     body: JSON.stringify(input)

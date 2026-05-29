@@ -1425,3 +1425,7 @@ p {
     padding: 0.9rem 1.15rem;
   }
 }
+
+
+.react-resizable-handle { opacity: 0; }
+.react-grid-item.react-draggable-dragging { user-select: none; }
