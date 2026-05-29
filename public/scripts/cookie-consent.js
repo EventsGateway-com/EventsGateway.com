@@ -46,6 +46,8 @@
     window.dispatchEvent(new CustomEvent("eg:cookie-consent", { detail: { choice, consent } }));
     if (cookieBar) {
       cookieBar.hidden = true;
+      cookieBar.setAttribute("hidden", "");
+      cookieBar.style.display = "none";
     }
   }
 
@@ -58,6 +60,24 @@
     const savedChoice = readStorage(COOKIE_CHOICE_KEY);
     document.documentElement.dataset.cookieChoice = savedChoice || "";
     cookieBar.hidden = Boolean(savedChoice);
+    cookieBar.style.display = savedChoice ? "none" : "";
+
+    const actionButtons = Array.from(cookieBar.querySelectorAll("[data-cookie-action]"));
+    actionButtons.forEach((button) => {
+      const applyChoice = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        persistChoice(button.getAttribute("data-cookie-action") === "accept" ? "accept" : "essential", cookieBar);
+      };
+
+      button.addEventListener("click", applyChoice);
+      button.addEventListener("pointerup", applyChoice);
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          applyChoice(event);
+        }
+      });
+    });
 
     cookieBar.addEventListener("click", (event) => {
       const actionTarget = event.target instanceof Element ? event.target.closest("[data-cookie-action]") : null;

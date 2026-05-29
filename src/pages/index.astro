@@ -1,7 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Button from "../components/Button.astro";
-import CommandCenterMockup from "../components/CommandCenterMockup.astro";
 import Container from "../components/Container.astro";
 import PremiumCard from "../components/PremiumCard.astro";
 import RealtimeHeroStats from "../components/RealtimeHeroStats.astro";
@@ -35,10 +34,17 @@ const softwareJsonLd = {
   <section class="section section--hero">
     <Container>
       <div class="hero-grid">
-        <div class="stack">
+        <div class="stack hero-stack">
           <span class="eyebrow">{homeContent.eyebrow}</span>
           <h1 class="hero-title">{homeContent.title}</h1>
           <p class="hero-copy">{homeContent.description}</p>
+          <ul class="hero-proof-list">
+            {
+              heroOutcomes.map((item) => (
+                <li>{item}</li>
+              ))
+            }
+          </ul>
           <div class="hero-actions">
             <Button href={siteConfig.auth.register.href} variant="primary" icon="arrow-right">
               Start Free
@@ -54,8 +60,25 @@ const softwareJsonLd = {
               ))
             }
           </div>
+          <div class="hero-proof-grid">
+            <div class="hero-proof-stat">
+              <span>Meta</span>
+              <strong>Higher EMQ</strong>
+              <p>Stronger matching inputs for better optimization and audience quality.</p>
+            </div>
+            <div class="hero-proof-stat">
+              <span>Mobile</span>
+              <strong>Cleaner tracking</strong>
+              <p>More stable measurement across mobile sessions and iOS-heavy traffic.</p>
+            </div>
+            <div class="hero-proof-stat">
+              <span>Spend</span>
+              <strong>Lower waste</strong>
+              <p>Reduce bad data, duplicate logic, and tracking gaps that weaken campaign performance.</p>
+            </div>
+          </div>
           <RealtimeHeroStats />
-          <div class="stats-grid">
+          <div class="stats-grid hero-stats-grid">
             {
               heroTelemetry.map((stat) => (
                 <div class="surface-panel">
@@ -69,43 +92,6 @@ const softwareJsonLd = {
             }
           </div>
         </div>
-
-        <div class="hero-visual">
-          <div class="surface-panel hero-proof-card">
-            <div class="surface-panel__inner stack">
-              <span class="kicker">Why advertisers switch</span>
-              <h2 class="hero-proof-card__title">Stop losing signal quality between pixels, tags, plugins, and disconnected tools.</h2>
-              <p class="hero-proof-card__copy">
-                EventsGateway helps paid-media teams send cleaner purchase and lead events to Meta, Google Ads, and
-                TikTok so campaigns learn from better data and optimize against stronger signals.
-              </p>
-              <ul class="hero-proof-list">
-                {
-                  heroOutcomes.map((item) => (
-                    <li>{item}</li>
-                  ))
-                }
-              </ul>
-              <div class="hero-proof-grid">
-                <div class="hero-proof-stat">
-                  <span>Meta</span>
-                  <strong>Higher EMQ</strong>
-                  <p>Stronger matching inputs for better optimization and audience quality.</p>
-                </div>
-                <div class="hero-proof-stat">
-                  <span>Mobile</span>
-                  <strong>Cleaner tracking</strong>
-                  <p>More stable measurement across mobile sessions and iOS-heavy traffic.</p>
-                </div>
-                <div class="hero-proof-stat">
-                  <span>Spend</span>
-                  <strong>Lower waste</strong>
-                  <p>Reduce bad data, duplicate logic, and tracking gaps that weaken campaign performance.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </Container>
   </section>
@@ -114,8 +100,8 @@ const softwareJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Positioning"
-        title="Built for teams that need control without tracking sprawl."
-        description="EventsGateway gives product and growth teams one edge-native control plane for collection, routing, retries, and visibility."
+        title="Built for marketers who want cleaner tracking without adding more tools."
+        description="EventsGateway gives growth teams one place to manage cleaner conversion data, stronger matching inputs, and lower wasted ad spend."
       />
       <div class="card-grid">
         {
@@ -131,8 +117,8 @@ const softwareJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Capability Grid"
-        title="One commercial layer for collection, routing, and delivery."
-        description="Every capability is designed to reduce vendor sprawl, simplify installs, and keep performance marketing operations readable."
+        title="One setup for cleaner campaign data across every ad channel."
+        description="Every capability is designed to reduce tool sprawl, simplify setup, and keep campaign tracking easier to trust."
       />
       <div class="capability-grid">
         {
@@ -178,8 +164,8 @@ const softwareJsonLd = {
         <div class="stack">
           <SectionHeader
             eyebrow="Workflow"
-            title="A direct path from tracker install to live event routing."
-            description="Start with one lightweight integration, route once, and expand destinations only when your stack needs them."
+            title="A simple path from install to better campaign data."
+            description="Start once, send cleaner events once, and use the same setup across Meta, Google Ads, TikTok, and analytics tools."
           />
           <ul class="info-list">
             <li>Built for founders, growth teams, ecommerce operators, and product teams.</li>
@@ -195,17 +181,6 @@ const softwareJsonLd = {
           }
         </div>
       </div>
-    </Container>
-  </section>
-
-  <section class="section">
-    <Container>
-      <SectionHeader
-        eyebrow="Control Center"
-        title="A product-looking interface for a real event pipeline."
-        description="The visual layer reinforces what matters: one collector, clear routing, operational visibility, and a cost model that stays legible as volume grows."
-      />
-      <CommandCenterMockup instanceId="proof" />
     </Container>
   </section>
 
@@ -280,28 +255,17 @@ const softwareJsonLd = {
     margin-top: 1.25rem;
   }
 
-  .hero-visual {
-    position: relative;
-    display: flex;
-    align-items: stretch;
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .hero-proof-card {
-    width: 100%;
+  .hero-stack {
+    max-width: 74rem;
+    margin-inline: auto;
   }
 
-  .hero-proof-card__title {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 2.8vw, 2.35rem);
-    letter-spacing: -0.04em;
-    line-height: 1.05;
-  }
-
-  .hero-proof-card__copy {
-    margin: 0;
-    color: var(--color-muted);
-    line-height: 1.7;
+  .hero-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .hero-proof-list {
@@ -368,6 +332,7 @@ const softwareJsonLd = {
   }
 
   @media (max-width: 960px) {
+    .hero-stats-grid,
     .hero-proof-grid {
       width: 100%;
       grid-template-columns: 1fr;

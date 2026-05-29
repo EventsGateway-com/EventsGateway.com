@@ -14,21 +14,13 @@ import { contactContent } from "../content/contact";
 >
   <section class="section page-hero">
     <Container>
-      <div class="two-column">
-        <div class="stack">
-          <span class="eyebrow">Enterprise contact</span>
-          <h1 class="page-title">{contactContent.title}</h1>
-          <p class="page-copy">{contactContent.intro}</p>
-          <p class="small-note">{contactContent.responseTime}</p>
-        </div>
-        <div class="surface-panel cta-panel">
-          <div class="surface-panel__inner stack">
-            <span class="kicker">Departments</span>
-            <ul class="simple-list">
-              {contactContent.departments.map((item) => <li><strong>{item.label}</strong> - {item.detail}</li>)}
-            </ul>
-            <p class="small-note">{contactContent.confidentialityNote}</p>
-          </div>
+      <div class="stack">
+        <span class="eyebrow">Contact</span>
+        <h1 class="page-title">{contactContent.title}</h1>
+        <p class="page-copy">{contactContent.intro}</p>
+        <p class="small-note">{contactContent.responseTime}</p>
+        <div class="pill-row">
+          {contactContent.departments.map((item) => <span class="status-pill">{item.label}</span>)}
         </div>
       </div>
     </Container>
@@ -39,7 +31,7 @@ import { contactContent } from "../content/contact";
       <SectionHeader
         eyebrow="Contact form"
         title="Send the request to the right department."
-            description="This form sends the inquiry through Brevo so the team receives structured requests about growth, attribution, and rollout without exposing direct inbox handling in the UI."
+        description="Use the form to ask about campaign tracking, Meta, Google Ads, TikTok, setup help, pricing, or rollout."
       />
       <div class="two-column contact-form-layout">
         <form id="contact-form" class="surface-panel contact-form-panel" data-contact-form>
@@ -105,15 +97,15 @@ import { contactContent } from "../content/contact";
         <div>
           <SectionHeader
             eyebrow="Response expectations"
-            title="Designed to feel like an enterprise inquiry flow."
-            description="The page gives enough structure to support serious outreach through a live backend delivery path."
+            title="Use one form for every commercial conversation."
+            description="Share the ad platforms you use, what you want to improve, and where tracking feels broken today."
           />
           <div class="surface-panel cta-panel">
             <div class="surface-panel__inner stack">
               <span class="kicker">Form-first contact</span>
               <h3 class="contact-focus-title">Use the structured contact form for every inquiry.</h3>
               <p class="section-copy">
-                Share product context, deployment posture, timing, and the destination mix you need so the right department receives the request.
+                Share your funnel type, paid channels, goals, and current tracking issues so the right team can respond faster.
               </p>
             </div>
           </div>
