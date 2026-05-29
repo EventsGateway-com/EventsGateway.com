@@ -230,7 +230,7 @@ main {
 
 .two-column {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: 1fr;
   gap: 1rem;
   align-items: start;
 }
