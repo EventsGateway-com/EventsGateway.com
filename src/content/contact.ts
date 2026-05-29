@@ -1,15 +1,15 @@
 export const contactContent = {
   title: "Contact",
   intro:
-    "Tell us what kind of site you run, which destinations you need, and which department should handle the conversation.",
-  responseTime: "Typical response window: within two business days for product, commercial, and growth inquiries.",
+    "Tell us what you run, which destinations you need, and what you want to improve. We will route the message to the right team.",
+  responseTime: "Typical response time: within two business days for product, commercial, and integration questions.",
   confidentialityNote:
-    "Share only the business context needed for the first conversation, such as funnel type, expected event volume, main ad platforms, and required destinations.",
+    "Share only the context needed for the first conversation, such as funnel type, expected event volume, main platforms, and required destinations.",
   departments: [
     {
       value: "sales",
       label: "Sales",
-      detail: "Commercial questions, Enterprise plans, and buying process."
+      detail: "Pricing questions, Enterprise plans, and buying process."
     },
     {
       value: "support",
@@ -30,22 +30,22 @@ export const contactContent = {
   methods: [
     {
       icon: "mail",
-      title: "Sales and plans",
-      text: "Questions about Free, usage expansion, Enterprise scope, or commercial fit.",
+      title: "Plans and pricing",
+      text: "Questions about the Free plan, usage expansion, Enterprise scope, or commercial fit.",
       actionLabel: "Use contact form",
       href: "#contact-form"
     },
     {
       icon: "spark",
-      title: "Signal strategy",
-      text: "Discuss Meta signal quality, Event Match Quality (EMQ) posture, conversion modeling, and multi-destination rollout.",
+      title: "Tracking strategy",
+      text: "Discuss event modeling, destination setup, signal quality, and rollout planning.",
       actionLabel: "Use contact form",
       href: "#contact-form"
     },
     {
       icon: "terminal",
       title: "Technical integration",
-      text: "Talk about Meta, GA4, Google Ads, webhooks, and custom event routing requirements.",
+      text: "Talk about Meta, GA4, Google Ads, TikTok, webhooks, and custom routing requirements.",
       actionLabel: "Use contact form",
       href: "#contact-form"
     }
@@ -60,19 +60,19 @@ export const contactContent = {
   faq: [
     {
       question: "Can EVENTS Gateway be installed on any site?",
-      answer: "Yes. The platform is designed to work with a lightweight tracker or SDK so installation stays simple across many site stacks."
+      answer: "Yes. The platform works with a lightweight tracker or SDK, so installation stays simple across many site stacks."
     },
     {
-      question: "Can EVENTS Gateway improve Meta signal quality?",
-      answer: "Yes. EVENTS Gateway is designed to standardize event naming, send stronger identifiers, and keep conversion context cleaner so Meta can receive the strongest possible matching signal from your site data."
+      question: "Can one setup route events to multiple tools?",
+      answer: "Yes. EVENTS Gateway is built to collect once and route the same event stream to tools such as Meta, GA4, Google Ads, TikTok, and custom webhooks."
     },
     {
       question: "Is the Free plan enough to start?",
-      answer: "Yes. The Free plan is designed to let teams register, log in, launch tracking quickly, and route up to 1,000,000 events per month before overage begins."
+      answer: "Yes. The Free plan lets teams launch tracking quickly and route up to 1,000,000 events per month before overage begins."
     },
     {
-      question: "Can you route events to multiple destinations from one integration?",
-      answer: "Yes. EVENTS Gateway is built to collect once and route to tools such as Meta, GA4, Google Ads, and custom webhooks."
+      question: "What helps you answer faster?",
+      answer: "Share your site type, main destinations, expected event volume, and the part of tracking that feels unclear or broken."
     }
   ]
 } as const;

@@ -38,8 +38,8 @@ const docsJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Docs Map"
-        title="Commercial documentation for teams using EVENTS Gateway."
-        description="Use Docs for setup guidance, campaign tracking playbooks, billing guidance, and comparison research written for teams using the product."
+        title="Documentation for teams using EVENTS Gateway."
+        description="Use Docs for setup guidance, event playbooks, billing guidance, and comparison pages written for teams using the product."
       />
       <div class="card-grid">
         {
@@ -75,7 +75,7 @@ const docsJsonLd = {
       <SectionHeader
         eyebrow="Quick Start"
         title="Start with one simple event function."
-        description="Your site sends events once, and EVENTS Gateway helps you reuse that same setup across Meta, Google Ads, TikTok, and other tools."
+        description="Your site sends events once, and EVENTS Gateway reuses that setup across Meta, Google Ads, TikTok, analytics tools, and webhooks."
       />
       <div class="command-grid">
         <div class="surface-panel command-panel">
@@ -112,8 +112,8 @@ const docsJsonLd = {
         <div>
           <SectionHeader
             eyebrow="Rules"
-        title="How to keep your tracking clean."
-        description="Keep event names stable in your site code so reporting, routing, and optimization stay easier to trust over time."
+            title="How to keep your tracking clean."
+            description="Keep event names stable in site code so reporting, routing, and optimization stay easier to trust over time."
           />
           <ul class="simple-list">
             {docsContent.notes.map((item) => <li>{item}</li>)}
@@ -123,7 +123,7 @@ const docsJsonLd = {
           <SectionHeader
             eyebrow="Common Fields"
             title="Payload fields that matter most."
-        description="These fields make conversion reporting, audience building, and campaign optimization more reliable."
+            description="These fields make conversion reporting, audience building, and downstream routing more reliable."
           />
           <div class="card-grid">
             {
@@ -141,7 +141,7 @@ const docsJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Billing Guides"
-        title="Commercial setup and recovery documentation."
+        title="Billing setup and recovery documentation."
         description="Use these guides when EVENTS Gateway needs a production-ready billing layer, not just event routing."
       />
       <div class="card-grid">
@@ -161,7 +161,7 @@ const docsJsonLd = {
       <SectionHeader
         eyebrow="Playbooks"
         title="Implementation guides for real funnels."
-        description="Move beyond a raw event catalog and see how the canonical e_g model should be applied in common business models."
+        description="Move beyond a raw event catalog and see how the canonical e_g model applies in common business models."
       />
       <div class="card-grid">
         {
@@ -183,7 +183,7 @@ const docsJsonLd = {
       <SectionHeader
         eyebrow="Canonical Event Catalog"
         title="Standard events for Meta, Google Ads, and TikTok."
-        description="Meta and TikTok have named standard events. Google Ads is modeled here as the recommended conversion or audience action that EVENTS Gateway should map to."
+        description="Meta and TikTok have named standard events. Google Ads is shown here as the recommended conversion or audience action that EVENTS Gateway can map to."
       />
       <div class="surface-panel table-panel">
         <div class="surface-panel__inner">
@@ -227,7 +227,7 @@ const docsJsonLd = {
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
           <span class="eyebrow">Documentation Strategy</span>
-          <h2 class="section-title">Write one event layer once, then route everywhere.</h2>
+          <h2 class="section-title">Define one event layer, then reuse it across destinations.</h2>
           <p class="section-copy">
             That is the point of EVENTS Gateway. Your site sends canonical events through <code>e_g</code>, while the
             platform handles routing, platform naming, payload enrichment, and destination-specific delivery logic.

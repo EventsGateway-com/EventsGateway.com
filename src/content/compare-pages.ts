@@ -1,23 +1,28 @@
+type ComparePage = {
+  alternative: string;
+  title: string;
+  description: string;
+  winner: string;
+  sections: {
+    alternative: string;
+    eventsgateway: string;
+    decision: string;
+  };
+  table: readonly (readonly [string, string, string])[];
+};
+
 export const comparePages = {
   "cloudflare-zaraz": {
+    alternative: "Cloudflare Zaraz",
     title: "EVENTS Gateway vs Cloudflare Zaraz",
     description:
       "Zaraz is useful when the main goal is tag governance. EVENTS Gateway is stronger when the real goal is cleaner conversion data, higher Event Match Quality (EMQ) posture, better targeting inputs, and one event layer that feeds Meta, Google Ads, TikTok, and analytics tools together.",
     winner: "Use EVENTS Gateway when you want stronger ad signal and one event model. Use Zaraz when your main problem is tag orchestration.",
-    points: [
-      {
-        title: "What Zaraz does best",
-        text: "Zaraz helps centralize scripts and reduce browser clutter for teams focused mainly on tag governance."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway keeps purchases, leads, and other conversion events clean, consistent, and ready to route across paid-media and analytics channels."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Zaraz for tag management. Choose EVENTS Gateway for cleaner ad-platform signal, better EMQ posture, and more control over the revenue event stream."
-      }
-    ],
+    sections: {
+      alternative: "Zaraz helps centralize scripts and reduce browser clutter for teams focused mainly on tag governance.",
+      eventsgateway: "EVENTS Gateway keeps purchases, leads, and other conversion events clean, consistent, and ready to route across paid-media and analytics channels.",
+      decision: "Choose Zaraz for tag management. Choose EVENTS Gateway for cleaner ad-platform signal, better EMQ posture, and more control over the revenue event stream."
+    },
     table: [
       ["Primary value", "Tag governance", "Conversion signal quality"],
       ["Meta and TikTok readiness", "Indirect", "Built into the product story"],
@@ -28,24 +33,16 @@ export const comparePages = {
     ]
   },
   rudderstack: {
+    alternative: "RudderStack",
     title: "EVENTS Gateway vs RudderStack",
     description:
       "RudderStack is broader and more CDP-like. EVENTS Gateway is stronger when the paid-media team wants cleaner events, faster launch, clearer cost, and one routing layer focused on better signal for Meta, Google Ads, and TikTok.",
     winner: "Use EVENTS Gateway for faster ad-signal routing. Use RudderStack when warehouse workflows are more important than media performance.",
-    points: [
-      {
-        title: "What RudderStack does best",
-        text: "RudderStack is stronger for larger warehouse-centric data programs with wider activation and governance needs."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway gives marketers one cleaner conversion layer without paying for a broader data stack they may not need."
-      },
-      {
-        title: "Best fit",
-        text: "Choose RudderStack for larger data pipeline programs. Choose EVENTS Gateway for signal quality, EMQ gains, and lower friction in paid-media measurement."
-      }
-    ],
+    sections: {
+      alternative: "RudderStack is stronger for larger warehouse-centric data programs with wider activation and governance needs.",
+      eventsgateway: "EVENTS Gateway gives marketers one cleaner conversion layer without paying for a broader data stack they may not need.",
+      decision: "Choose RudderStack for larger data pipeline programs. Choose EVENTS Gateway for signal quality, EMQ gains, and lower friction in paid-media measurement."
+    },
     table: [
       ["Primary value", "Broad customer data movement", "Cleaner event routing for ads and analytics"],
       ["Cost clarity", "Usually broader and heavier", "Much easier to explain and forecast"],
@@ -56,24 +53,16 @@ export const comparePages = {
     ]
   },
   segment: {
+    alternative: "Segment",
     title: "EVENTS Gateway vs Segment",
     description:
       "Segment is a classic CDP choice. EVENTS Gateway is stronger when the team wants one clean event stream, better purchase and lead quality, stronger Meta matching posture, and a simpler bill than a full CDP commitment.",
     winner: "Use EVENTS Gateway when you want cleaner routing and lower software weight. Use Segment when a full CDP is the real buying goal.",
-    points: [
-      {
-        title: "What Segment does best",
-        text: "Segment is good for large integration ecosystems, governance-heavy workflows, and established CDP operating models."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway keeps the promise simpler: cleaner events, cleaner identifiers, better routing, and stronger signal for the ad stack."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Segment for a broader CDP program. Choose EVENTS Gateway when you mainly want ad-platform signal quality and clearer commercial value."
-      }
-    ],
+    sections: {
+      alternative: "Segment is good for large integration ecosystems, governance-heavy workflows, and established CDP operating models.",
+      eventsgateway: "EVENTS Gateway keeps the promise simpler: cleaner events, cleaner identifiers, better routing, and stronger signal for the ad stack.",
+      decision: "Choose Segment for a broader CDP program. Choose EVENTS Gateway when you mainly want ad-platform signal quality and clearer commercial value."
+    },
     table: [
       ["Primary value", "CDP breadth", "Signal quality and routing clarity"],
       ["Commercial fit", "Broader than many teams need", "Focused and easier to justify"],
@@ -84,24 +73,16 @@ export const comparePages = {
     ]
   },
   posthog: {
+    alternative: "PostHog",
     title: "EVENTS Gateway vs PostHog",
     description:
       "PostHog is excellent for product analytics. EVENTS Gateway is stronger when the performance team wants better signal for campaigns, cleaner conversion routing, and one event stream that improves delivery to Meta, Google Ads, TikTok, and analytics tools together.",
     winner: "Use EVENTS Gateway for ad-signal routing. Use PostHog for deep product analytics and user-behavior work.",
-    points: [
-      {
-        title: "What PostHog does best",
-        text: "PostHog shines in product analytics, session replay, funnels, and product experimentation."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway is built for clean conversion tracking, routing control, and stronger downstream ad-platform data quality."
-      },
-      {
-        title: "Best fit",
-        text: "Choose PostHog for product intelligence. Choose EVENTS Gateway when revenue tracking and ad performance matter more than replay and product UX tooling."
-      }
-    ],
+    sections: {
+      alternative: "PostHog shines in product analytics, session replay, funnels, and product experimentation.",
+      eventsgateway: "EVENTS Gateway is built for clean conversion tracking, routing control, and stronger downstream ad-platform data quality.",
+      decision: "Choose PostHog for product intelligence. Choose EVENTS Gateway when revenue tracking and ad performance matter more than replay and product UX tooling."
+    },
     table: [
       ["Primary value", "Product analytics depth", "Ad-signal quality and routing"],
       ["Purchase and lead quality", "Secondary", "Primary"],
@@ -112,24 +93,16 @@ export const comparePages = {
     ]
   },
   "gtm-server-side": {
+    alternative: "GTM Server-Side",
     title: "EVENTS Gateway vs GTM Server-Side",
     description:
       "GTM server-side is strong for teams that think in containers and tags. EVENTS Gateway is stronger when marketers want one clear conversion layer, one cleaner signal for ad platforms, and less day-to-day dependence on tag logic.",
     winner: "Use EVENTS Gateway when you want a marketer-friendly event layer. Use GTM server-side when your team is committed to container-centric operations.",
-    points: [
-      {
-        title: "What GTM server-side does best",
-        text: "GTM server-side works well for tag-container teams that already manage a mature Google-oriented setup."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway turns the story into business terms: clean events, better routing, better EMQ posture, and fewer tracking regressions."
-      },
-      {
-        title: "Best fit",
-        text: "Choose GTM server-side for tag-container workflows. Choose EVENTS Gateway when the business wants cleaner attribution, better targeting inputs, and simpler control."
-      }
-    ],
+    sections: {
+      alternative: "GTM server-side works well for tag-container teams that already manage a mature Google-oriented setup.",
+      eventsgateway: "EVENTS Gateway turns the story into business terms: clean events, better routing, better EMQ posture, and fewer tracking regressions.",
+      decision: "Choose GTM server-side for tag-container workflows. Choose EVENTS Gateway when the business wants cleaner attribution, better targeting inputs, and simpler control."
+    },
     table: [
       ["Primary value", "Container control", "Cleaner ad-platform signal"],
       ["Learning curve", "Higher for non-technical teams", "Lower for performance teams"],
@@ -140,24 +113,16 @@ export const comparePages = {
     ]
   },
   jentis: {
+    alternative: "JENTIS",
     title: "EVENTS Gateway vs JENTIS",
     description:
       "JENTIS is positioned around privacy-heavy enterprise measurement. EVENTS Gateway is stronger when the goal is cleaner ad signal, one event contract across platforms, and a more direct path to better targeting and better attribution.",
     winner: "Use EVENTS Gateway for cleaner paid-media routing. Use JENTIS when privacy governance is the main buying driver.",
-    points: [
-      {
-        title: "What JENTIS does best",
-        text: "JENTIS is strong for enterprise buyers who lead with privacy governance and consent-heavy measurement programs."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway keeps the promise closer to revenue: one clean event stream, stronger identifiers, better EMQ posture, and wider paid-media routing."
-      },
-      {
-        title: "Best fit",
-        text: "Choose JENTIS for privacy-led programs. Choose EVENTS Gateway when signal quality and campaign performance are the main decision factors."
-      }
-    ],
+    sections: {
+      alternative: "JENTIS is strong for enterprise buyers who lead with privacy governance and consent-heavy measurement programs.",
+      eventsgateway: "EVENTS Gateway keeps the promise closer to revenue: one clean event stream, stronger identifiers, better EMQ posture, and wider paid-media routing.",
+      decision: "Choose JENTIS for privacy-led programs. Choose EVENTS Gateway when signal quality and campaign performance are the main decision factors."
+    },
     table: [
       ["Primary value", "Privacy governance", "Paid-media signal quality"],
       ["Open flexibility", "Lower", "Higher"],
@@ -168,24 +133,16 @@ export const comparePages = {
     ]
   },
   "stape-gtm-ss": {
+    alternative: "Stape + GTM Server-Side",
     title: "EVENTS Gateway vs Stape + GTM Server-Side",
     description:
       "Stape plus GTM server-side is attractive for teams already committed to GTM server containers. EVENTS Gateway is stronger when the business wants a cleaner event model, less tag complexity, and one direct path to better ad-platform signal quality.",
     winner: "Use EVENTS Gateway for a cleaner measurement product. Use Stape plus GTM server-side if GTM containers are already the chosen operating model.",
-    points: [
-      {
-        title: "What Stape plus GTM server-side does best",
-        text: "This path reduces hosting friction for teams already invested in GTM server-side."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway keeps the event model explicit, the routing clearer, and the performance-marketing story much easier to defend commercially."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Stape plus GTM server-side for managed GTM operations. Choose EVENTS Gateway for cleaner conversions, stronger matching inputs, and less platform sprawl."
-      }
-    ],
+    sections: {
+      alternative: "This path reduces hosting friction for teams already invested in GTM server-side.",
+      eventsgateway: "EVENTS Gateway keeps the event model explicit, the routing clearer, and the performance-marketing story much easier to defend commercially.",
+      decision: "Choose Stape plus GTM server-side for managed GTM operations. Choose EVENTS Gateway for cleaner conversions, stronger matching inputs, and less platform sprawl."
+    },
     table: [
       ["Primary value", "Managed GTM workflow", "Cleaner signal and simpler routing"],
       ["Event model clarity", "Indirect", "Direct"],
@@ -196,24 +153,16 @@ export const comparePages = {
     ]
   },
   plausible: {
+    alternative: "Plausible",
     title: "EVENTS Gateway vs Plausible",
     description:
       "Plausible is excellent for simple website analytics. EVENTS Gateway is stronger when the business needs purchases, leads, and other conversion events to improve Meta, Google Ads, and TikTok performance, not only reporting.",
     winner: "Use EVENTS Gateway for campaign signal and routing. Use Plausible for lightweight traffic reporting.",
-    points: [
-      {
-        title: "What Plausible does best",
-        text: "Plausible is simple, clean, and privacy-friendly when the main goal is website reporting."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway turns traffic into usable ad-platform signal by keeping event naming, identifiers, and routing clean."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Plausible for traffic analytics. Choose EVENTS Gateway when performance marketing depends on better purchases, leads, and audience signals."
-      }
-    ],
+    sections: {
+      alternative: "Plausible is simple, clean, and privacy-friendly when the main goal is website reporting.",
+      eventsgateway: "EVENTS Gateway turns traffic into usable ad-platform signal by keeping event naming, identifiers, and routing clean.",
+      decision: "Choose Plausible for traffic analytics. Choose EVENTS Gateway when performance marketing depends on better purchases, leads, and audience signals."
+    },
     table: [
       ["Primary value", "Traffic analytics", "Conversion quality for ads and analytics"],
       ["Meta Event Match Quality (EMQ) posture", "Not a core topic", "Core advantage"],
@@ -224,24 +173,16 @@ export const comparePages = {
     ]
   },
   matomo: {
+    alternative: "Matomo",
     title: "EVENTS Gateway vs Matomo",
     description:
       "Matomo is strong for analytics ownership and reporting depth. EVENTS Gateway is stronger when clean event delivery to ad platforms matters more than owning the reporting layer.",
     winner: "Use EVENTS Gateway for ad-signal routing. Use Matomo for owned analytics and reporting depth.",
-    points: [
-      {
-        title: "What Matomo does best",
-        text: "Matomo is compelling for teams that want owned analytics, privacy control, and mature reporting."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway focuses on what improves campaign performance: cleaner identifiers, better conversion context, and multi-platform delivery."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Matomo for analytics ownership. Choose EVENTS Gateway when better attribution and better targeting are more important than building a reporting destination."
-      }
-    ],
+    sections: {
+      alternative: "Matomo is compelling for teams that want owned analytics, privacy control, and mature reporting.",
+      eventsgateway: "EVENTS Gateway focuses on what improves campaign performance: cleaner identifiers, better conversion context, and multi-platform delivery.",
+      decision: "Choose Matomo for analytics ownership. Choose EVENTS Gateway when better attribution and better targeting are more important than building a reporting destination."
+    },
     table: [
       ["Primary value", "Owned analytics", "Paid-media signal quality"],
       ["Reporting depth", "Strong", "Secondary"],
@@ -252,24 +193,16 @@ export const comparePages = {
     ]
   },
   "ga4-gtm": {
+    alternative: "GA4 + GTM",
     title: "EVENTS Gateway vs GA4 + GTM",
     description:
       "GA4 plus GTM is the default stack many teams start with. EVENTS Gateway becomes stronger when the business wants cleaner conversion data, one event model above vendor tags, and better signal for Meta, Google Ads, TikTok, mobile, and iOS traffic.",
     winner: "Use EVENTS Gateway when the default Google stack is no longer enough for paid-media control. Use GA4 plus GTM for basic analytics and tagging.",
-    points: [
-      {
-        title: "What GA4 plus GTM does best",
-        text: "The Google stack is familiar and useful for baseline analytics and tag management."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway removes the need to let each platform define its own browser logic by giving the business one clean conversion layer."
-      },
-      {
-        title: "Best fit",
-        text: "Choose GA4 plus GTM for a default analytics baseline. Choose EVENTS Gateway when performance marketing needs cleaner signal, cleaner attribution, and broader routing."
-      }
-    ],
+    sections: {
+      alternative: "The Google stack is familiar and useful for baseline analytics and tag management.",
+      eventsgateway: "EVENTS Gateway removes the need to let each platform define its own browser logic by giving the business one clean conversion layer.",
+      decision: "Choose GA4 plus GTM for a default analytics baseline. Choose EVENTS Gateway when performance marketing needs cleaner signal, cleaner attribution, and broader routing."
+    },
     table: [
       ["Primary value", "Default analytics and tags", "Clean conversion routing across platforms"],
       ["Vendor neutrality", "Google-centered", "Multi-platform by design"],
@@ -280,24 +213,16 @@ export const comparePages = {
     ]
   },
   mixpanel: {
+    alternative: "Mixpanel",
     title: "EVENTS Gateway vs Mixpanel",
     description:
       "Mixpanel is built for product analytics and behavior analysis. EVENTS Gateway is stronger when the team wants to improve campaign signal, route conversions everywhere, and keep purchase and lead data cleaner for paid-media optimization.",
     winner: "Use EVENTS Gateway for cleaner campaign signal. Use Mixpanel for product analytics depth.",
-    points: [
-      {
-        title: "What Mixpanel does best",
-        text: "Mixpanel is excellent for funnels, retention, and product-growth reporting."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway keeps the event stream focused on revenue outcomes, cleaner identifiers, and better delivery to ad platforms."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Mixpanel when product analytics is the core need. Choose EVENTS Gateway when better attribution and campaign optimization are the bigger opportunity."
-      }
-    ],
+    sections: {
+      alternative: "Mixpanel is excellent for funnels, retention, and product-growth reporting.",
+      eventsgateway: "EVENTS Gateway keeps the event stream focused on revenue outcomes, cleaner identifiers, and better delivery to ad platforms.",
+      decision: "Choose Mixpanel when product analytics is the core need. Choose EVENTS Gateway when better attribution and campaign optimization are the bigger opportunity."
+    },
     table: [
       ["Primary value", "Product analytics", "Ad-signal quality and routing"],
       ["Revenue-event focus", "Secondary", "Primary"],
@@ -308,24 +233,16 @@ export const comparePages = {
     ]
   },
   amplitude: {
+    alternative: "Amplitude",
     title: "EVENTS Gateway vs Amplitude",
     description:
       "Amplitude is one of the strongest tools for behavioral analytics. EVENTS Gateway is stronger when the paid-media team wants cleaner events, better conversion routing, and stronger audience and optimization data instead of a larger analytics suite.",
     winner: "Use EVENTS Gateway for signal quality and routing. Use Amplitude for analytics depth and experimentation analysis.",
-    points: [
-      {
-        title: "What Amplitude does best",
-        text: "Amplitude shines in behavior analysis, cohorts, and product analytics sophistication."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway keeps the commercial promise simpler: cleaner events, better EMQ posture, stronger delivery, and one conversion layer across channels."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Amplitude when analytics depth drives the purchase. Choose EVENTS Gateway when better paid-media signal is the main business win."
-      }
-    ],
+    sections: {
+      alternative: "Amplitude shines in behavior analysis, cohorts, and product analytics sophistication.",
+      eventsgateway: "EVENTS Gateway keeps the commercial promise simpler: cleaner events, better EMQ posture, stronger delivery, and one conversion layer across channels.",
+      decision: "Choose Amplitude when analytics depth drives the purchase. Choose EVENTS Gateway when better paid-media signal is the main business win."
+    },
     table: [
       ["Primary value", "Behavior analytics", "Clean ad-platform signal"],
       ["Campaign-routing strength", "Secondary", "Primary"],
@@ -336,24 +253,16 @@ export const comparePages = {
     ]
   },
   heap: {
+    alternative: "Heap",
     title: "EVENTS Gateway vs Heap",
     description:
       "Heap is attractive when automatic product analytics capture is the main requirement. EVENTS Gateway is stronger when the business wants explicit control over purchases, leads, and the data quality that actually reaches ad platforms.",
     winner: "Use EVENTS Gateway for explicit conversion control. Use Heap for product analytics teams that value auto-capture.",
-    points: [
-      {
-        title: "What Heap does best",
-        text: "Heap is known for automatic capture and retroactive product analysis."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway gives advertisers deliberate control over event names, identifiers, and routing so campaign systems receive cleaner input."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Heap for exploratory product analytics. Choose EVENTS Gateway when signal quality and routing accuracy matter more than auto-capture."
-      }
-    ],
+    sections: {
+      alternative: "Heap is known for automatic capture and retroactive product analysis.",
+      eventsgateway: "EVENTS Gateway gives advertisers deliberate control over event names, identifiers, and routing so campaign systems receive cleaner input.",
+      decision: "Choose Heap for exploratory product analytics. Choose EVENTS Gateway when signal quality and routing accuracy matter more than auto-capture."
+    },
     table: [
       ["Primary value", "Automatic analytics capture", "Explicit conversion quality control"],
       ["Purchase and lead governance", "Secondary", "Primary"],
@@ -364,24 +273,16 @@ export const comparePages = {
     ]
   },
   snowplow: {
+    alternative: "Snowplow",
     title: "EVENTS Gateway vs Snowplow",
     description:
       "Snowplow is powerful for analytics-engineering and modeled event pipelines. EVENTS Gateway is stronger when the business wants a faster path to cleaner campaign signal, better routing, and clearer value for marketers.",
     winner: "Use EVENTS Gateway for faster signal quality wins. Use Snowplow when analytics engineering depth is the main priority.",
-    points: [
-      {
-        title: "What Snowplow does best",
-        text: "Snowplow is excellent for deep event modeling and warehouse-centric programs."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway is easier to position around revenue: cleaner conversions, stronger matching inputs, and multi-platform routing without engineering-heavy overhead."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Snowplow for data-engineering depth. Choose EVENTS Gateway when you want cleaner paid-media measurement faster."
-      }
-    ],
+    sections: {
+      alternative: "Snowplow is excellent for deep event modeling and warehouse-centric programs.",
+      eventsgateway: "EVENTS Gateway is easier to position around revenue: cleaner conversions, stronger matching inputs, and multi-platform routing without engineering-heavy overhead.",
+      decision: "Choose Snowplow for data-engineering depth. Choose EVENTS Gateway when you want cleaner paid-media measurement faster."
+    },
     table: [
       ["Primary value", "Modeled event pipelines", "Cleaner signal for ad platforms"],
       ["Time to business value", "Longer", "Faster"],
@@ -392,24 +293,16 @@ export const comparePages = {
     ]
   },
   "adobe-analytics": {
+    alternative: "Adobe Analytics",
     title: "EVENTS Gateway vs Adobe Analytics",
     description:
       "Adobe Analytics is built for large enterprise analytics programs. EVENTS Gateway is stronger when the team wants a cleaner and lighter way to improve campaign signal, route events across platforms, and avoid buying a heavyweight analytics suite just to fix ad tracking.",
     winner: "Use EVENTS Gateway for cleaner signal and lighter execution. Use Adobe Analytics for deep enterprise analytics programs.",
-    points: [
-      {
-        title: "What Adobe Analytics does best",
-        text: "Adobe Analytics is strong in enterprise reporting, governance, and large ecosystem integration."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway focuses directly on cleaner purchases, leads, audience inputs, and routing for ad and analytics channels."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Adobe Analytics for enterprise reporting depth. Choose EVENTS Gateway when the goal is better paid-media measurement without enterprise-suite weight."
-      }
-    ],
+    sections: {
+      alternative: "Adobe Analytics is strong in enterprise reporting, governance, and large ecosystem integration.",
+      eventsgateway: "EVENTS Gateway focuses directly on cleaner purchases, leads, audience inputs, and routing for ad and analytics channels.",
+      decision: "Choose Adobe Analytics for enterprise reporting depth. Choose EVENTS Gateway when the goal is better paid-media measurement without enterprise-suite weight."
+    },
     table: [
       ["Primary value", "Enterprise analytics depth", "Paid-media signal quality and routing"],
       ["Commercial weight", "Heavy", "Lighter"],
@@ -420,24 +313,16 @@ export const comparePages = {
     ]
   },
   "simple-analytics": {
+    alternative: "Simple Analytics",
     title: "EVENTS Gateway vs Simple Analytics",
     description:
       "Simple Analytics is compelling for lightweight privacy-friendly reporting. EVENTS Gateway is stronger when the business needs one event stream that improves campaign quality, feeds multiple ad platforms, and keeps conversion tracking usable beyond simple analytics.",
     winner: "Use EVENTS Gateway for campaign signal and routing. Use Simple Analytics for lightweight reporting.",
-    points: [
-      {
-        title: "What Simple Analytics does best",
-        text: "Simple Analytics keeps reporting minimal, clean, and easy to read."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway turns the same events into better ad-platform data, stronger audience signals, and cleaner optimization inputs."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Simple Analytics for privacy-friendly reporting. Choose EVENTS Gateway when the same event stream must improve acquisition performance."
-      }
-    ],
+    sections: {
+      alternative: "Simple Analytics keeps reporting minimal, clean, and easy to read.",
+      eventsgateway: "EVENTS Gateway turns the same events into better ad-platform data, stronger audience signals, and cleaner optimization inputs.",
+      decision: "Choose Simple Analytics for privacy-friendly reporting. Choose EVENTS Gateway when the same event stream must improve acquisition performance."
+    },
     table: [
       ["Primary value", "Simple analytics", "Signal quality and routing"],
       ["Paid-media usefulness", "Limited", "High"],
@@ -448,24 +333,16 @@ export const comparePages = {
     ]
   },
   fathom: {
+    alternative: "Fathom",
     title: "EVENTS Gateway vs Fathom",
     description:
       "Fathom is known for clean privacy-friendly analytics. EVENTS Gateway is stronger when the business wants the same events to improve Meta, Google Ads, and TikTok performance instead of only generating reporting.",
     winner: "Use EVENTS Gateway for conversion quality and routing. Use Fathom for lightweight analytics.",
-    points: [
-      {
-        title: "What Fathom does best",
-        text: "Fathom is excellent for simple site analytics with a clean reporting experience."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway makes those same events more valuable by improving ad-platform delivery, event consistency, and campaign optimization inputs."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Fathom for privacy-first reporting. Choose EVENTS Gateway when the same event stream must influence paid-media performance."
-      }
-    ],
+    sections: {
+      alternative: "Fathom is excellent for simple site analytics with a clean reporting experience.",
+      eventsgateway: "EVENTS Gateway makes those same events more valuable by improving ad-platform delivery, event consistency, and campaign optimization inputs.",
+      decision: "Choose Fathom for privacy-first reporting. Choose EVENTS Gateway when the same event stream must influence paid-media performance."
+    },
     table: [
       ["Primary value", "Simple analytics", "Ad-signal quality and routing"],
       ["Campaign usefulness", "Secondary", "Primary"],
@@ -476,24 +353,16 @@ export const comparePages = {
     ]
   },
   "piwik-pro": {
+    alternative: "Piwik PRO",
     title: "EVENTS Gateway vs Piwik PRO",
     description:
       "Piwik PRO is positioned around privacy governance and owned analytics. EVENTS Gateway is stronger when the business wants a lighter path to cleaner events, better ad-platform matching, and stronger routing across paid-media and analytics channels.",
     winner: "Use EVENTS Gateway for cleaner paid-media signal. Use Piwik PRO when governance-heavy analytics is the main requirement.",
-    points: [
-      {
-        title: "What Piwik PRO does best",
-        text: "Piwik PRO is strong for privacy-sensitive organizations that lead with governance and owned reporting."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway focuses more directly on cleaner event quality, better EMQ posture, and better targeting inputs for campaigns."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Piwik PRO for governance-heavy analytics. Choose EVENTS Gateway when the business wants cleaner signal and better paid-media outcomes."
-      }
-    ],
+    sections: {
+      alternative: "Piwik PRO is strong for privacy-sensitive organizations that lead with governance and owned reporting.",
+      eventsgateway: "EVENTS Gateway focuses more directly on cleaner event quality, better EMQ posture, and better targeting inputs for campaigns.",
+      decision: "Choose Piwik PRO for governance-heavy analytics. Choose EVENTS Gateway when the business wants cleaner signal and better paid-media outcomes."
+    },
     table: [
       ["Primary value", "Governance and owned analytics", "Signal quality and routing"],
       ["Meta, Google, TikTok usefulness", "Secondary", "Primary"],
@@ -504,24 +373,16 @@ export const comparePages = {
     ]
   },
   "meta-pixel-direct": {
+    alternative: "Meta Pixel Direct",
     title: "EVENTS Gateway vs Meta Pixel Direct",
     description:
       "Meta Pixel direct is the quickest way to send events only to Meta. EVENTS Gateway is stronger when the business wants higher Event Match Quality (EMQ) posture, cleaner purchase and lead data, more stable mobile and iOS measurement, and one event stream that also feeds Google Ads, TikTok, and analytics tools.",
     winner: "Use EVENTS Gateway when Meta is part of a broader growth stack. Use Meta Pixel direct only for the smallest Meta-only setup.",
-    points: [
-      {
-        title: "What Meta Pixel direct does best",
-        text: "It is fast for very small Meta-only browser tracking when the business does not need anything beyond basic setup."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway gives Meta cleaner identifiers and cleaner conversion context while also making the same events usable for every other platform in the stack."
-      },
-      {
-        title: "Best fit",
-        text: "Choose Meta Pixel direct for the most basic setup. Choose EVENTS Gateway when you want better EMQ posture, better targeting signals, and more durable mobile tracking."
-      }
-    ],
+    sections: {
+      alternative: "It is fast for very small Meta-only browser tracking when the business does not need anything beyond basic setup.",
+      eventsgateway: "EVENTS Gateway gives Meta cleaner identifiers and cleaner conversion context while also making the same events usable for every other platform in the stack.",
+      decision: "Choose Meta Pixel direct for the most basic setup. Choose EVENTS Gateway when you want better EMQ posture, better targeting signals, and more durable mobile tracking."
+    },
     table: [
       ["Primary value", "Fast Meta-only setup", "Cleaner signal across the whole stack"],
       ["Event Match Quality (EMQ) posture", "Limited by direct setup quality", "Stronger by design"],
@@ -532,24 +393,16 @@ export const comparePages = {
     ]
   },
   "tiktok-pixel-direct": {
+    alternative: "TikTok Pixel Direct",
     title: "EVENTS Gateway vs TikTok Pixel Direct",
     description:
       "TikTok Pixel direct is fine when the site only needs TikTok browser tracking. EVENTS Gateway is stronger when TikTok is only one part of the acquisition stack and the business wants cleaner events, better routing, stronger mobile and iOS consistency, and the same event stream shared with Meta, Google Ads, and analytics tools.",
     winner: "Use EVENTS Gateway when TikTok is one channel inside a bigger growth stack. Use TikTok Pixel direct only for the smallest TikTok-only setup.",
-    points: [
-      {
-        title: "What TikTok Pixel direct does best",
-        text: "It is simple for straightforward TikTok-only tracking with minimal complexity."
-      },
-      {
-        title: "What EVENTS Gateway does best",
-        text: "EVENTS Gateway keeps TikTok events aligned with the rest of the ad stack so purchases, leads, and audience signals stay clean everywhere."
-      },
-      {
-        title: "Best fit",
-        text: "Choose TikTok Pixel direct for a narrow TikTok-only use case. Choose EVENTS Gateway when cleaner cross-platform signal drives better campaign performance."
-      }
-    ],
+    sections: {
+      alternative: "It is simple for straightforward TikTok-only tracking with minimal complexity.",
+      eventsgateway: "EVENTS Gateway keeps TikTok events aligned with the rest of the ad stack so purchases, leads, and audience signals stay clean everywhere.",
+      decision: "Choose TikTok Pixel direct for a narrow TikTok-only use case. Choose EVENTS Gateway when cleaner cross-platform signal drives better campaign performance."
+    },
     table: [
       ["Primary value", "Fast TikTok-only setup", "Clean signal across all paid channels"],
       ["Cross-platform reuse", "No", "Yes"],
@@ -559,6 +412,6 @@ export const comparePages = {
       ["Best for", "Small TikTok-only setups", "Advertisers who want one event stream everywhere"]
     ]
   }
-} as const;
+} as const satisfies Record<string, ComparePage>;
 
 export type CompareSlug = keyof typeof comparePages;

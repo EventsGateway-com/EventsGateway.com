@@ -1,10 +1,10 @@
 export const docsContent = {
-  title: "EVENTS Gateway Documentation",
-  eyebrow: "Commercial Documentation",
+  title: "EVENTS Gateway Docs",
+  eyebrow: "Product Documentation",
   intro:
-    "Use this documentation to configure EVENTS Gateway on your sites, standardize event naming, improve Meta Event Match Quality (EMQ) inputs, map commercial conversions, and roll out routing cleanly from the hosted product.",
+    "Use this documentation to install EVENTS Gateway, define canonical event names, and route the same events to ads, analytics, and CRM tools from one setup.",
   quickStart: `window.e_g = function (eventName, payload = {}) {
-  window.EVENTS Gateway?.track({
+  window.eventsgateway?.track({
     type: eventName,
     properties: payload.properties ?? payload,
     ecommerce: payload.ecommerce,
@@ -40,23 +40,23 @@ export const docsContent = {
   }
 });`,
   notes: [
-    "Use one canonical event name in the browser and let EVENTS Gateway route and transform per destination.",
+    "Use one canonical event name in the browser and let EVENTS Gateway map destinations later.",
     "Pass value, currency, content IDs, and transaction identifiers whenever they exist.",
-    "For Meta advertisers, send the strongest possible identifiers and conversion context so Event Match Quality (EMQ) can stay at the maximum posture supported by your site data.",
-    "For Lead events, send both value and currency so downstream ad platforms receive commercial context, not only a generic form completion.",
-    "For Google Ads, EVENTS Gateway maps canonical events to conversion actions and remarketing-friendly payloads because Google Ads does not use one single standard event list across all use cases.",
-    "For Meta and TikTok, prefer standard events whenever possible because ad platforms optimize and report better on recognized event names."
+    "Send the strongest identifiers your site can collect when you need downstream matching and attribution.",
+    "For Lead events, send both value and currency when the lead has commercial value.",
+    "Map canonical events to destination-specific conversions instead of naming events differently in each tool.",
+    "Prefer standard event names when a destination supports them."
   ],
   playbooks: [
     {
       slug: "ecommerce",
       title: "Ecommerce",
-      text: "Track product views, cart intent, checkout steps, and purchase with catalog-friendly payloads."
+      text: "Track product views, cart actions, checkout steps, and purchases with catalog-friendly payloads."
     },
     {
       slug: "lead-generation",
       title: "Lead Generation",
-      text: "Separate lead submits, contact intent, booked calls, and qualified application milestones."
+      text: "Separate lead submits, contact intent, booked calls, and qualified application steps."
     },
     {
       slug: "saas",
@@ -78,19 +78,19 @@ export const docsContent = {
     {
       slug: "stripe-billing",
       title: "Billing Operations",
-      text: "Configure Checkout, Billing Portal, invoice flow, reminders, and suspension behavior for commercial rollout."
+      text: "Configure Checkout, the Billing Portal, invoice flow, reminders, and suspension behavior."
     }
   ],
   sections: [
     {
       title: "Playbooks",
-      text: "See concrete event modeling patterns for ecommerce, lead generation, SaaS, courses, and donations.",
+      text: "See practical event modeling patterns for ecommerce, lead generation, SaaS, courses, and donations.",
       href: "/docs/playbooks/",
       action: "Browse playbooks"
     },
     {
       title: "Billing",
-      text: "Read the commercial billing guide for subscriptions, invoices, reminders, and account protection flows.",
+      text: "Read the billing guide for subscriptions, invoices, reminders, and account protection flows.",
       href: "/docs/stripe-billing/",
       action: "Open billing guide"
     },

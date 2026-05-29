@@ -26,7 +26,7 @@ const installJsonLd = {
 
 <BaseLayout
   title={`Install ${siteConfig.name} On Your Domain`}
-  description="Step by step guide for installing EVENTS Gateway from the GitHub repository to Cloudflare Workers on a real domain."
+  description="Step-by-step guide for installing EVENTS Gateway from the GitHub repository to Cloudflare Workers on a real domain."
   canonicalPath="/install/"
   jsonLd={installJsonLd}
 >
@@ -56,7 +56,7 @@ const installJsonLd = {
       <SectionHeader
         eyebrow="Preflight"
         title="What you need before you start."
-        description="The installation path is intentionally direct: start from GitHub, deploy the Workers runtime, and attach the tracker to the site you already own."
+        description="The installation path is direct: start from GitHub, deploy the Workers runtime, and attach the tracker to a site you already control."
       />
       <div class="card-grid">
         {
@@ -75,12 +75,12 @@ const installJsonLd = {
           <SectionHeader
             eyebrow="Installation Flow"
             title="From GitHub page to live domain."
-            description="These steps describe the simplest operational path for a team that wants to deploy EVENTS Gateway on its own Cloudflare account."
+            description="These steps describe a straightforward path for a team that wants to deploy EVENTS Gateway on its own Cloudflare account."
           />
           <ul class="info-list">
-            <li>The public website can stay on its own domain while the event collector runs on a dedicated subdomain.</li>
+            <li>The public website can stay on its own domain while the collector runs on a dedicated subdomain.</li>
             <li>The tracker can be added to marketing sites, stores, landing pages, and custom applications.</li>
-            <li>The same Cloudflare Workers runtime can receive events from multiple pages or products.</li>
+            <li>The same Cloudflare Workers runtime can receive events from multiple sites or products.</li>
           </ul>
         </div>
         <div class="timeline">
@@ -99,7 +99,7 @@ const installJsonLd = {
       <SectionHeader
         eyebrow="Command Path"
         title="Run the core installation commands."
-        description="These command blocks mirror the shortest path from the repository to a working Cloudflare Workers deployment and tracker install."
+        description="These command blocks mirror a direct path from the repository to a working Cloudflare Workers deployment and tracker install."
       />
       <div class="command-grid">
         {
@@ -121,7 +121,7 @@ const installJsonLd = {
       <SectionHeader
         eyebrow="Domain Example"
         title="A simple production layout."
-        description="Use separate hostnames so the event entry point is explicit and easy to manage."
+        description="Use separate hostnames so the event entry point stays explicit and easy to manage."
       />
       <div class="card-grid">
         <PremiumCard
@@ -151,7 +151,7 @@ const installJsonLd = {
       <SectionHeader
         eyebrow="Install Wizard"
         title="Generate the private setup values before deployment."
-        description="This initial install flow lives on the public root domain and helps self-hosted users create the Cloudflare resources manually, keep the preset resource names, and paste the real IDs and names into Wrangler before deployment."
+        description="This install flow helps self-hosted users create Cloudflare resources, keep the preset resource names, and paste the real IDs and names into Wrangler before deployment."
       />
       <div class="wizard-grid" data-install-wizard>
         <div class="surface-panel wizard-panel">
@@ -238,16 +238,16 @@ const installJsonLd = {
               <span class="floating-label">Stripe webhook secret</span>
             </label>
             <div class="wizard-note">
-              The official repository ships with deployment defaults for the hosted EVENTS Gateway instance. Replace them in your own copy during install.
+              The public repository ships with deployment defaults for the hosted EVENTS Gateway instance. Replace them in your own copy during install.
             </div>
             <div class="wizard-note">
-              Create D1, KV, R2, Queue, and Durable Object resources manually in Cloudflare first, then paste the generated IDs and names below without changing the preset runtime names used by the project.
+              Create D1, KV, R2, Queue, and Durable Object resources in Cloudflare first, then paste the generated IDs and names below without changing the preset runtime names used by the project.
             </div>
             <div class="wizard-note">
-              The secret key must stay only in private local files, CI secrets, or Cloudflare secret storage.
+              Secret values should stay only in private local files, CI secrets, or Cloudflare secret storage.
             </div>
             <div class="wizard-note">
-              Stripe keeps card data off your infrastructure. EVENTS Gateway stores billing state, invoices, reminders, and suspension controls, while Stripe handles sensitive payment details.
+              Stripe keeps card data off your infrastructure. EVENTS Gateway stores billing state, invoices, reminders, and suspension controls while Stripe handles sensitive payment details.
             </div>
           </div>
         </div>

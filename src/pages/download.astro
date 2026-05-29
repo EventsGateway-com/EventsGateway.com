@@ -10,7 +10,7 @@ import { siteConfig } from "../config/site";
 
 <BaseLayout
   title={`Download ${siteConfig.name}`}
-  description="Download guidance, release notes, and self-hosting direction for the EVENTS Gateway public site."
+  description="Download guidance, release notes, and self-hosting direction for the EVENTS Gateway public source."
   canonicalPath="/download/"
 >
   <section class="section page-hero">
@@ -55,7 +55,7 @@ import { siteConfig } from "../config/site";
           <SectionHeader
             eyebrow="Release Notes"
             title="Public release notes focus on architecture and deployment clarity."
-            description="This page is positioned around source access, self-hosting readiness, and the product surface described by the site."
+            description="This page focuses on source access, self-hosting readiness, and the product surface described by the site."
           />
           <ul class="simple-list">
             {downloadContent.releaseNotes.map((item) => <li>{item}</li>)}
@@ -65,7 +65,7 @@ import { siteConfig } from "../config/site";
           <SectionHeader
             eyebrow="System Requirements"
             title="Baseline requirements for running and shipping the public site."
-            description="The gateway platform grows beyond this static surface, but the public site remains simple to build and deploy."
+            description="The wider platform goes beyond this static surface, but the public site remains simple to build and deploy."
           />
           <ul class="simple-list">
             {downloadContent.requirements.map((item) => <li>{item}</li>)}
@@ -80,9 +80,9 @@ import { siteConfig } from "../config/site";
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
           <span class="eyebrow">Next step</span>
-          <h2 class="section-title">Need help with routing architecture or self-hosting decisions?</h2>
+          <h2 class="section-title">Need help deciding how to self-host or structure routing?</h2>
           <p class="section-copy">
-            Reach out if you want to discuss destination strategy, collector design, attribution requirements, or deployment posture.
+            Reach out if you want to discuss destination strategy, collector design, attribution requirements, or deployment choices.
           </p>
           <div class="button-row">
             <Button href="/contact/" variant="primary" icon="mail">Contact</Button>

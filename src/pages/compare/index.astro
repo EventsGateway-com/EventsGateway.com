@@ -5,21 +5,40 @@ import Container from "../../components/Container.astro";
 import PremiumCard from "../../components/PremiumCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import { compareContent } from "../../content/compare";
+import { compareMeta } from "../../content/compare-meta";
+import { comparePages, type CompareSlug } from "../../content/compare-pages";
+
+const comparisonEntries = Object.entries(comparePages).map(([slug, page]) => {
+  const meta = compareMeta[slug as CompareSlug];
+
+  return {
+    slug,
+    title: page.title,
+    category: meta.category,
+    description: page.description,
+    decision: page.sections.decision,
+    bestFor: meta.bestFor,
+    searchText: [
+      page.title,
+      page.description,
+      page.winner,
+      page.sections.alternative,
+      page.sections.eventsgateway,
+      page.sections.decision,
+      meta.bestFor,
+      ...page.table.flat()
+    ]
+      .join(" ")
+      .toLowerCase()
+  };
+});
 
 const categorySections = compareContent.categories.map((category) => ({
   ...category,
-  cards: compareContent.cards.filter((item) => item.category === category.title)
+  cards: comparisonEntries.filter((item) => item.category === category.title)
 }));
 
 const categorySlug = (value: string) => value.toLowerCase().replace(/\s+/g, "-");
-
-const categoryBadge: Record<string, string> = {
-  Analytics: "Best for analytics teams",
-  CDP: "Best for pipeline-heavy teams",
-  "Tag Manager": "Best for tag-manager-first teams",
-  "Ad Pixel": "Best for direct ad tracking teams",
-  "Privacy Analytics": "Best for privacy-first teams"
-};
 ---
 
 <BaseLayout
@@ -66,7 +85,7 @@ const categoryBadge: Record<string, string> = {
       <SectionHeader
         eyebrow="Quick Filters"
         title="Browse comparisons by the tool you want to replace."
-        description="Start with the tool you use today, then open the comparison that shows why EVENTS Gateway gives marketers cleaner data, better targeting inputs, and lower waste."
+        description="Each page includes a clear decision rule, the trade-off that matters, and the practical reason to switch."
       />
       <div class="card-grid">
         {
@@ -92,15 +111,15 @@ const categoryBadge: Record<string, string> = {
                   class="compare-entry"
                   data-category={item.category}
                   data-title={item.title.toLowerCase()}
-                  data-text={item.text.toLowerCase()}
-                  data-badge={categoryBadge[item.category].toLowerCase()}
+                  data-text={item.searchText}
+                  data-badge={item.bestFor.toLowerCase()}
                 >
-                  <PremiumCard title={item.title} text={item.text} eyebrow={item.eyebrow} icon="layers">
+                  <PremiumCard title={item.title} text={item.decision} eyebrow={item.category} icon="layers">
                     <div class="compare-card-meta">
-                      <span class="status-pill">{categoryBadge[item.category]}</span>
+                      <span class="status-pill">{item.bestFor}</span>
                     </div>
                     <div class="button-row compare-card-actions">
-                      <Button href={`/compare/${item.slug}/`} variant="primary" icon="arrow-right">Read comparison</Button>
+                      <Button href={`/compare/${item.slug}/`} variant="primary" icon="arrow-right">Read verdict</Button>
                       <Button href="/docs/" variant="secondary" icon="arrow-right">Playbooks</Button>
                       <Button href="/install/" variant="secondary" icon="download">Self-hosted install</Button>
                     </div>

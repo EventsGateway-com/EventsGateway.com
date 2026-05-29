@@ -19,6 +19,21 @@ const { page } = Astro.props as {
 };
 
 const meta = compareMeta[Astro.params.slug as CompareSlug];
+const alternativeName = page.alternative;
+const verdictCards = [
+  {
+    title: `Where ${alternativeName} fits`,
+    text: page.sections.alternative
+  },
+  {
+    title: "Where EVENTS Gateway fits",
+    text: page.sections.eventsgateway
+  },
+  {
+    title: "Decision rule",
+    text: page.sections.decision
+  }
+];
 
 const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - value);
 ---
@@ -51,8 +66,8 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
     <Container>
       <SectionHeader
         eyebrow="Scorecard"
-        title="A fast read on where each option wins."
-        description="This scorecard helps you see which option gives marketers cleaner data, better matching inputs, and a simpler path to better campaign performance."
+        title={`A fast read on ${alternativeName} vs EVENTS Gateway.`}
+        description={`This scorecard highlights the practical trade-off between ${alternativeName} and EVENTS Gateway for signal quality, routing, and launch complexity.`}
       />
       <div class="card-grid">
         {
@@ -60,7 +75,7 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
             <PremiumCard icon="layers" title={item.label} text={item.note} eyebrow="Scorecard">
               <div class="score-rail">
                 <div class="score-rail__row">
-                  <span>Alternative</span>
+                  <span>{alternativeName}</span>
                   <code>{renderScore(item.alternative)}</code>
                 </div>
                 <div class="score-rail__row">
@@ -80,11 +95,11 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
       <SectionHeader
         eyebrow="Quick Verdict"
         title={page.winner}
-        description="This page is designed to make the marketer trade-off obvious in plain language."
+        description={`Use this section to see where ${alternativeName} is still the better fit and where EVENTS Gateway creates a clearer advantage.`}
       />
       <div class="card-grid">
         {
-          page.points.map((item) => (
+          verdictCards.map((item) => (
             <PremiumCard icon="check" title={item.title} text={item.text} />
           ))
         }
@@ -96,8 +111,8 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
     <Container>
       <SectionHeader
         eyebrow="Head-to-Head"
-        title="Side-by-side comparison."
-        description="The goal here is clarity for marketers, not generic feature grids."
+        title={`${alternativeName} vs EVENTS Gateway by buying criteria.`}
+        description="The goal here is clarity for marketers, not a generic feature checklist."
       />
       <div class="surface-panel table-panel">
         <div class="surface-panel__inner">
@@ -106,7 +121,7 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
               <thead>
                 <tr>
                   <th>Dimension</th>
-                  <th>Alternative</th>
+                  <th>{alternativeName}</th>
                   <th>EVENTS Gateway</th>
                 </tr>
               </thead>

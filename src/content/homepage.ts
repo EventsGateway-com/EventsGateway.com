@@ -1,23 +1,23 @@
 export const homeContent = {
-  eyebrow: "Commercial Event Gateway",
-  title: "The best-priced event gateway for marketers who want&nbsp;<span style=\"color: var(--color-accent);\">less ad spend</span>&nbsp;and better performance.",
+  eyebrow: "Event Routing Platform",
+  title: "Collect events once. Route them where you need them.",
   description:
-    "EVENTS Gateway is built for advertisers who care about Meta signal quality and Event Match Quality (EMQ). Replace scattered pixels and expensive CDPs with one clean event stream. Feed Meta, GA4, Google Ads, and TikTok simultaneously—with better resilience on iOS. Stop losing conversions to browser restrictions and start driving higher ROAS.",
+    "EVENTS Gateway gives teams one event layer for purchases, leads, signups, and lifecycle events. Collect data once, then route it to Meta, Google Ads, TikTok, GA4, CRM tools, and webhooks without rebuilding tracking for each destination.",
   trustMarks: [
-    "Maximum Event Match Quality (EMQ) posture",
-    "Built for high-volume ecommerce & lead-gen",
-    "More reliable on mobile and iOS"
+    "One event layer for sites, funnels, and apps",
+    "Fits ecommerce, lead generation, SaaS, and multi-site setups",
+    "Built for teams that want simpler tracking operations"
   ],
   stats: [
-    { label: "Event Match Quality (EMQ)", value: "Max", detail: "Built to help Meta receive the strongest matching signal your site can send" },
-    { label: "Linear overage", value: "$5 / 1M", detail: "No pricing cliff when routed volume grows" },
-    { label: "Enterprise from", value: "$1,995+", detail: "Commercial support for high-volume programs and complex delivery needs" }
+    { label: "Setup model", value: "One event layer", detail: "Define events once and map destinations later" },
+    { label: "Linear overage", value: "$5 / 1M", detail: "Costs grow in flat blocks instead of forcing a plan jump" },
+    { label: "Best fit", value: "Ads + analytics + CRM", detail: "Send the same event stream to media, reporting, and downstream systems" }
   ],
   pricingHighlights: [
     {
       label: "Free allowance",
       value: "1M / mo",
-      detail: "The Free plan includes up to 1,000,000 routed events every month before commercial overage starts."
+      detail: "The Free plan includes up to 1,000,000 routed events every month before paid usage starts."
     },
     {
       label: "Overage block",
@@ -27,105 +27,105 @@ export const homeContent = {
     {
       label: "Pricing model",
       value: "Linear",
-      detail: "There is no hard pricing cliff. Costs scale in simple 1,000,000-event blocks."
+      detail: "Costs scale in simple 1,000,000-event blocks instead of forcing a plan jump."
     },
     {
       label: "Enterprise",
       value: "$1,995+",
-      detail: "Enterprise plans start at $1,995 per month for high-volume and custom support needs."
+      detail: "Enterprise is for teams that need onboarding, support, and policy controls for larger programs."
     }
   ],
   pricingFootnote:
-    "EVENTS Gateway is positioned for advertisers who want stronger Meta signal quality and cleaner attribution without accepting the cost of bloated tracking stacks: the first 1,000,000 routed monthly events stay free, each extra started 1,000,000-event block adds $5, and Enterprise starts at $1,995 per month.",
+    "EVENTS Gateway starts free and scales in predictable blocks. The model stays simple: keep one event layer, keep naming consistent, and reuse the same data across ads, analytics, and CRM tools.",
   problems: [
     {
       icon: "spark",
-      title: "Meta signal quality drops when tracking is fragmented",
-      text: "Advertisers lose matching quality when browser logic is spread across plugins, pixels, tags, and inconsistent event payloads."
+      title: "The same conversion gets defined more than once",
+      text: "When Meta, Google Ads, TikTok, GA4, and internal tools each use separate tracking logic, reporting drifts and debugging slows down."
     },
     {
       icon: "layers",
-      title: "Direct pixels make attribution harder to trust",
-      text: "When Meta, GA4, Google Ads, and internal systems all collect separately, campaign data becomes harder to trust and wasted ad spend grows faster."
+      title: "New destinations should not require a rebuild",
+      text: "Most teams lose time every time a new platform or webhook needs the same purchase, lead, or signup event wired again."
     },
     {
       icon: "shield",
-      title: "Advertising teams need stronger data without a longer setup",
-      text: "Most teams need a setup they can install fast, keep readable, and use to improve match quality across desktop, mobile, and iOS-heavy traffic without a long implementation project."
+      title: "Browser tracking becomes hard to maintain",
+      text: "The goal is not more scripts. The goal is cleaner delivery, fewer gaps, and less maintenance in site code."
     }
   ],
   capabilities: [
     {
       icon: "terminal",
-      title: "Fast install",
-      text: "Add one tracker or SDK once and stop repeating separate setup work for Meta, Google Ads, GA4, TikTok, and every new destination."
+      title: "Simple install",
+      text: "Add one tracker or SDK once and stop repeating setup work for every new destination."
     },
     {
       icon: "bolt",
-      title: "One event stream",
-      text: "Send events once, keep naming clean, and avoid fragmented vendor-by-vendor tracking that weakens campaign performance."
+      title: "Canonical events",
+      text: "Keep page views, leads, purchases, and lifecycle events on one naming model that stays readable over time."
     },
     {
       icon: "cloud",
-      title: "Multi-destination routing",
-      text: "Send one clean event stream to Meta, GA4, Google Ads, TikTok, webhooks, and custom tools without duplicating your tracking setup."
+      title: "Destination routing",
+      text: "Send the same event stream to ads, analytics, CRM tools, and custom endpoints without duplicating browser logic."
     },
     {
       icon: "check",
-      title: "Lower operating cost",
-      text: "Replace bloated stacks and duplicate integrations with one commercial model that stays cheaper and easier to understand."
+      title: "Predictable operating cost",
+      text: "Replace layers of plugins, scripts, and one-off integrations with one routing product and one pricing model."
     },
     {
       icon: "spark",
-      title: "Commercial visibility",
-      text: "See volume, delivery health, and the quality of the data your campaigns depend on from one dashboard instead of across multiple tools."
+      title: "Operational visibility",
+      text: "See routed volume, delivery health, and broken flows from one place instead of piecing the story together manually."
     },
     {
       icon: "layers",
-      title: "Built for growth teams",
-      text: "Use the same setup across stores, lead-gen funnels, landing pages, product apps, and multi-site programs while keeping Meta-focused event quality high, especially on mobile and iOS traffic."
+      title: "Built for real teams",
+      text: "Use the same setup across stores, lead-gen funnels, landing pages, product apps, and multi-site programs."
     }
   ],
   workflow: [
     {
       step: "01",
       title: "Install the tracker",
-      text: "Add the script or SDK to your site once and start sending cleaner events from one place."
+      text: "Add the script or SDK once and start sending events from one controlled layer."
     },
     {
       step: "02",
-      title: "Collect clean events",
-      text: "Send page views, leads, purchases, and custom events into one normalized collection layer built for stronger ad-platform matching and more reliable mobile measurement."
+      title: "Name events once",
+      text: "Track page views, leads, purchases, and custom milestones with stable names and cleaner payloads."
     },
     {
       step: "03",
-      title: "Define routes and destinations",
-      text: "Control how events move to Meta, Google Ads, TikTok, analytics tools, and custom systems without rebuilding tracking each time."
+      title: "Map destinations",
+      text: "Choose how each event should flow to Meta, Google Ads, TikTok, analytics tools, CRM systems, and webhooks."
     },
     {
       step: "04",
-      title: "Observe and optimize",
-      text: "Use the dashboard to see what is working, spot broken flows faster, and improve campaign data over time."
+      title: "Monitor delivery",
+      text: "Use the dashboard to spot issues faster, keep routing healthy, and launch changes without touching every integration again."
     }
   ],
   controlColumns: [
     {
       icon: "shield",
-      title: "Lower total cost",
-      text: "Pay for one event gateway instead of stacking separate tools, plugins, agencies, and duplicated tracking setups."
+      title: "Fewer reporting gaps",
+      text: "A single event contract keeps tools closer to the same purchase, lead, and lifecycle story."
     },
     {
       icon: "terminal",
-      title: "Cleaner commercial signal",
-      text: "Keep routing, naming, identifiers, and conversion logic centralized so Meta and other platforms receive stronger matching input and better targeting signals."
+      title: "Less duplicate tagging",
+      text: "New destinations use the same collection layer instead of forcing another browser-side implementation."
     },
     {
       icon: "cloud",
-      title: "One control center",
-      text: "Tracking rules, deliveries, and visibility stay in one product instead of being spread across plugins, tags, and disconnected vendors."
+      title: "One operational view",
+      text: "Routes, deliveries, retries, and destination behavior stay visible in one place."
     }
   ],
-  finalCtaTitle: "Ready to improve Event Match Quality (EMQ) without paying for a heavier stack?",
+  finalCtaTitle: "Want one tracking setup that stays manageable as you grow?",
   finalCtaText:
-    "Start with the hosted dashboard, collect once, route everywhere, and give Meta, Google Ads, and TikTok stronger conversion signal while keeping the commercial model clearer and cheaper than heavier alternatives."
+    "Start with the hosted dashboard, collect events once, and route the same trusted data across ads, analytics, CRM tools, and custom endpoints without turning the browser into a patchwork of scripts."
 } as const;

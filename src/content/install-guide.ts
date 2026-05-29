@@ -1,24 +1,24 @@
 export const installGuideContent = {
   title: "Install EVENTS Gateway On Your Domain",
-  eyebrow: "GitHub To Production",
+  eyebrow: "Self-Hosted Install",
   intro:
-    "This guide shows the fastest path from the GitHub repository page to a working EVENTS Gateway setup on your own domain. The goal is simple: create the required Cloudflare resources manually using the preset project names, define their real IDs and names in Wrangler, deploy the runtime, connect a collector subdomain, install the tracker on any site you already run, and keep the setup inside free-tier limits whenever your traffic profile allows it.",
+    "This guide shows a direct path from the public GitHub repository to a working EVENTS Gateway setup on your own domain. Create the required Cloudflare resources, add their real IDs and names to Wrangler, deploy the runtime, connect a collector subdomain, and install the tracker on your site.",
   preflight: [
     {
       title: "GitHub repository access",
-      text: "Start from the public GitHub page for this project so you can clone it, fork it, or deploy from your own copy."
+      text: "Start from the public GitHub repository so you can clone it, fork it, or deploy from your own copy."
     },
     {
       title: "Cloudflare account",
-      text: "You need a Cloudflare account with access to Workers and the domain where the collector subdomain will run. Create D1, Queues, KV namespaces, R2 buckets, and Durable Objects manually inside your own account, keep the official resource names, then define the generated IDs and names in Wrangler."
+      text: "You need a Cloudflare account with access to Workers and the domain where the collector subdomain will run. Create D1, Queues, KV namespaces, R2 buckets, and Durable Objects in your own account, keep the preset resource names, then add the generated IDs and names to Wrangler."
     },
     {
       title: "A target website",
-      text: "Your site can live on any stack. EVENTS Gateway only needs a small tracker install and one collector endpoint."
+      text: "Your site can live on any stack. EVENTS Gateway only needs a tracker install and one collector endpoint."
     },
     {
       title: "Stripe account",
-      text: "If you want commercial billing from day one, prepare Stripe test and production API keys before running the private install values."
+      text: "If you want billing from day one, prepare your Stripe keys before filling in the private install values."
     }
   ],
   steps: [
@@ -30,12 +30,12 @@ export const installGuideContent = {
     {
       step: "02",
       title: "Create Cloudflare resources manually",
-      text: "Create the D1 database, queue, KV namespaces, R2 ledger bucket, and Durable Object resources in your own Cloudflare account first. Keep the preset project names and copy the generated IDs and names because the next step defines them in Wrangler."
+      text: "Create the D1 database, queue, KV namespaces, R2 ledger bucket, and Durable Object resources in your own Cloudflare account. Keep the preset project names and copy the generated IDs and names because the next step adds them to Wrangler."
     },
     {
       step: "03",
       title: "Define resources in Wrangler and deploy",
-      text: "Add the manual Cloudflare resource IDs and names to Wrangler for the collector, API, and forwarder workers, then deploy them to Cloudflare. For many small sites, this can stay inside the free-tier envelope."
+      text: "Add the Cloudflare resource IDs and names to Wrangler for the collector, API, and forwarder workers, then deploy them to Cloudflare. Smaller sites can often stay inside free-tier limits."
     },
     {
       step: "04",
@@ -45,12 +45,12 @@ export const installGuideContent = {
     {
       step: "05",
       title: "Install the tracker on the site",
-      text: "Add the script tag or SDK snippet to the target website and send events to your collector endpoint. This is why the platform can be installed quickly on almost any site."
+      text: "Add the script tag or SDK snippet to the target website and send events to your collector endpoint."
     },
     {
       step: "06",
       title: "Configure routing and destinations",
-      text: "Use the dashboard to define routes, transformations, and destinations for Meta, GA4, Google Ads, or custom webhooks."
+      text: "Use the dashboard to define routes, transformations, and destinations for Meta, GA4, Google Ads, TikTok, or custom webhooks."
     },
     {
       step: "07",
@@ -60,7 +60,7 @@ export const installGuideContent = {
     {
       step: "08",
       title: "Activate Stripe billing",
-      text: "Set Stripe publishable key, secret key, webhook secret, and billing return URL during installation so payment methods, invoices, reminders, and suspension logic are ready."
+      text: "Set the Stripe publishable key, secret key, webhook secret, and billing return URL so payment methods, invoices, reminders, and suspension logic are ready."
     }
   ],
   domainExample: {
@@ -71,8 +71,8 @@ export const installGuideContent = {
   commandBlocks: [
     {
       title: "Clone from GitHub",
-      code: `git clone https://github.com/EVENTS Gateway-com/EVENTS Gateway.com.git
-cd eventsgateway`
+      code: `git clone https://github.com/EventsGateway-com/EventsGateway.com.git
+cd EventsGateway.com`
     },
     {
       title: "Install dependencies",
@@ -166,7 +166,7 @@ set VITE_STRIPE_PUBLISHABLE_KEY=pk_test_replace_me`
   ],
   checklist: [
     "GitHub repository cloned or forked into your own account",
-    "Cloudflare D1, Queues, KV namespaces, R2 ledger bucket, and Durable Object resources created manually in your own account",
+    "Cloudflare D1, Queues, KV namespaces, R2 ledger bucket, and Durable Object resources created in your own account",
     "Wrangler files updated with the real resource IDs and names before deploy",
     "Cloudflare Workers deployed for collector, API, and forwarding runtime",
     "Collector subdomain mapped on your domain",

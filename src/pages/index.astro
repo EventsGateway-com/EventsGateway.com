@@ -10,10 +10,10 @@ import { siteConfig } from "../config/site";
 
 const heroTelemetry = homeContent.stats;
 const heroOutcomes = [
-  "Higher Event Match Quality (EMQ) for Meta campaigns",
-  "Cleaner conversions for Meta Ads, Google Ads and TikTok Ads",
-  "More reliable mobile and iOS tracking",
-  "Less wasted ad spend caused by broken or fragmented signals"
+  "Use one integration for purchases, leads, and lifecycle events",
+  "Route the same event to ads, analytics, and CRM tools",
+  "Add destinations without rewriting site code",
+  "Keep browser tracking smaller and easier to maintain"
 ];
 
 const softwareJsonLd = {
@@ -62,18 +62,18 @@ const softwareJsonLd = {
         <div class="hero-proof-grid">
           <div class="hero-proof-stat">
             <span>Meta</span>
-            <strong>Higher EMQ</strong>
-            <p>Stronger matching inputs for better optimization and audience quality.</p>
+            <strong>Cleaner routing</strong>
+            <p>Map canonical events to Meta without adding another separate implementation in the site.</p>
           </div>
           <div class="hero-proof-stat">
-            <span>Mobile</span>
-            <strong>Cleaner tracking</strong>
-            <p>More stable measurement across mobile sessions and iOS-heavy traffic.</p>
+            <span>Stack</span>
+            <strong>One collection layer</strong>
+            <p>Use the same event setup across stores, funnels, landing pages, and product surfaces.</p>
           </div>
           <div class="hero-proof-stat">
-            <span>Spend</span>
-            <strong>Lower waste</strong>
-            <p>Reduce bad data, duplicate logic, and tracking gaps that weaken campaign performance.</p>
+            <span>Cost</span>
+            <strong>Predictable pricing</strong>
+            <p>Start free, then scale in flat 1,000,000-event blocks as routed volume grows.</p>
           </div>
         </div>
         <RealtimeHeroStats />
@@ -98,8 +98,8 @@ const softwareJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Positioning"
-        title="Built for marketers who want cleaner tracking without adding more tools."
-        description="EVENTS Gateway gives growth teams one place to manage cleaner conversion data, stronger matching inputs, and lower wasted ad spend."
+        title="Built for teams that want simpler tracking operations."
+        description="EVENTS Gateway gives growth and product teams one place to collect, route, and monitor event data without rebuilding the same setup for every tool."
       />
       <div class="card-grid">
         {
@@ -115,8 +115,8 @@ const softwareJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Capability Grid"
-        title="One setup for cleaner campaign data across every ad channel."
-        description="Every capability is designed to reduce tool sprawl, simplify setup, and keep campaign tracking easier to trust."
+        title="One setup for routing events across the tools you already use."
+        description="Each capability is designed to reduce duplicate work, simplify setup, and keep tracking easier to trust."
       />
       <div class="capability-grid">
         {
@@ -133,7 +133,7 @@ const softwareJsonLd = {
       <SectionHeader
         eyebrow="Pricing"
         title="Free until the first million monthly routed events."
-        description="The commercial model is now explicit: up to 1,000,000 routed events per month stay on the Free plan, and every extra 1,000,000-event block adds $5."
+        description="Up to 1,000,000 routed events per month stay on the Free plan, and every extra 1,000,000-event block adds $5."
       />
       <div class="stats-grid">
         {
@@ -162,13 +162,13 @@ const softwareJsonLd = {
         <div class="stack">
           <SectionHeader
             eyebrow="Workflow"
-            title="A simple path from install to better campaign data."
-            description="Start once, send cleaner events once, and use the same setup across Meta, Google Ads, TikTok, and analytics tools."
+            title="A simple path from install to usable event routing."
+            description="Install once, name events once, and use the same setup across Meta, Google Ads, TikTok, analytics tools, and webhooks."
           />
           <ul class="info-list">
-            <li>Built for founders, growth teams, ecommerce operators, and product teams.</li>
-            <li>Designed to keep implementation readable across both marketing and engineering stakeholders.</li>
-            <li>Optimized for low-friction installation and a cost model that starts small.</li>
+            <li>Fits founders, growth teams, ecommerce operators, and product teams.</li>
+            <li>Keeps implementation readable for both marketing and engineering stakeholders.</li>
+            <li>Starts with a low-friction install and a pricing model that stays simple.</li>
           </ul>
         </div>
         <div class="timeline">
@@ -186,8 +186,8 @@ const softwareJsonLd = {
     <Container>
       <SectionHeader
         eyebrow="Commercial Advantage"
-        title="Why teams choose EVENTS Gateway over heavier alternatives."
-        description="The product story is simple: one setup, lower total cost, cleaner routing, and stronger commercial clarity."
+        title="Why teams choose EVENTS Gateway over more fragmented setups."
+        description="The product story is simple: one setup, less duplicate tagging, and a clearer path for routing events across multiple tools."
       />
       <div class="triple-grid">
         {
@@ -203,7 +203,7 @@ const softwareJsonLd = {
     <Container>
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
-          <span class="eyebrow">Final CTA</span>
+          <span class="eyebrow">Next Step</span>
           <h2 class="section-title">{homeContent.finalCtaTitle}</h2>
           <p class="section-copy">{homeContent.finalCtaText}</p>
           <div class="button-row">

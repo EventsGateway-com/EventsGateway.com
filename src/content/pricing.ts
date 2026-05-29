@@ -1,8 +1,8 @@
 export const pricingContent = {
-  eyebrow: "Transparent Pricing",
-  title: "Stop paying for bloated CDPs. Pay only when volume grows.",
+  eyebrow: "Simple Pricing",
+  title: "Start free. Pay for routed volume when you grow.",
   intro:
-    "EVENTS Gateway is priced for performance teams that want stronger Meta signal quality, higher Event Match Quality (EMQ) posture, cleaner mobile tracking, and lower software cost. The Free plan includes up to 1,000,000 events per month. Every additional 1,000,000-event block is just $5.",
+    "The Free plan includes up to 1,000,000 routed events per month. After that, usage is billed in flat 1,000,000-event blocks at $5 each. Enterprise is available for teams that need onboarding, support, or policy controls.",
   plans: [
     {
       name: "Free",
@@ -11,11 +11,11 @@ export const pricingContent = {
       highlight: "Up to 1,000,000 events every month",
       features: [
         "Up to 1,000,000 routed events per month",
-        "Register, log in, and start from the hosted dashboard",
-        "Built for stronger Meta signal quality, cleaner Event Match Quality (EMQ) inputs, and better targeting data",
+        "Start from the hosted dashboard without a separate install step",
         "Collector, API, forwarder, routing engine, and dashboard included",
         "Meta, GA4, Google Ads, TikTok, webhooks, and custom pipelines",
-        "Operational visibility, retries, queues, and delivery logs"
+        "Delivery visibility, retries, queues, and logs",
+        "Built for teams that want one event layer from day one"
       ]
     },
     {
@@ -25,18 +25,19 @@ export const pricingContent = {
       highlight: "Linear overage, no plan cliff",
       features: [
         "Each additional 1,000,000-event block adds $5",
-        "Scale to 50M+ events seamlessly",
-        "Enterprise is only for custom SLA and architecture support",
-        "Designed for advertisers, ecommerce teams, lead generation, mobile funnels, and multi-site installs"
+        "Scale from small volumes to large monthly routing programs",
+        "Keep the same product setup as volume grows",
+        "Enterprise is only for support, onboarding, and custom operating needs",
+        "Fits ecommerce, lead generation, SaaS, and multi-site installs"
       ]
     },
     {
       name: "Enterprise",
       price: "$1,995+",
       cadence: "/ month",
-      highlight: "For large-volume, multi-team or support",
+      highlight: "For large-volume, multi-team, or supported rollouts",
       features: [
-        "Support for advanced Meta signal strategy and performance measurement programs",
+        "Architecture support for larger routing programs",
         "Enterprise onboarding and architecture support",
         "Advanced billing support and invoice workflows",
         "Multi-user administration and operational policies",
@@ -46,16 +47,16 @@ export const pricingContent = {
   ],
   included: [
     "One event collection layer that can fan out to multiple destinations",
-    "Signal quality posture designed for stronger Meta matching and better conversion routing",
     "Routing rules, transformations, consent-aware delivery, and retries",
-    "Hosted dashboard access without a separate install step on the Free plan",
-    "Commercial billing model that starts free and scales linearly",
-    "Stripe Checkout, Stripe webhooks, invoices, reminders, and routing suspension controls"
+    "Hosted dashboard access on the Free plan",
+    "A pricing model that starts free and scales linearly",
+    "Stripe Checkout, Stripe webhooks, invoices, reminders, and routing suspension controls",
+    "Tools for teams that want cleaner event operations without extra platform sprawl"
   ],
   footnotes: [
     "The free allowance covers up to 1,000,000 routed events in a calendar month.",
     "Once usage exceeds the included monthly allowance, billing adds $5 for each started extra block of 1,000,000 events.",
-    "EVENTS Gateway is positioned to help performance teams send cleaner identifiers and conversion context to Meta for maximum Event Match Quality (EMQ) posture and more reliable mobile measurement.",
+    "The same pricing model applies whether you route events to one destination or many.",
     "Stripe is used for payment processing and payment-method handling so card data never lives on EVENTS Gateway servers.",
     "If an invoice remains unpaid for 15 days after due date, EVENTS Gateway can suspend event routing automatically until payment is resolved."
   ]
