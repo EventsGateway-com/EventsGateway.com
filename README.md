@@ -164,19 +164,21 @@ Run from the repository root:
 ```bash
 npm run deploy
 npm run deploy:public
+npm run deploy:hosted
 npm run deploy:dashboard
 npm run deploy:api
 npm run deploy:collector
 npm run deploy:forwarder
 ```
 
-Deploy the hosted public surface with root site, dashboard, API, and collector:
+Deploy the full hosted EventsGateway surface with root site, dashboard, API, collector, and forwarder:
 
 ```bash
 npm run deploy:public
+npm run deploy:hosted
 ```
 
-Or deploy the full public surface plus forwarder in sequence:
+Both commands currently map to the full deploy sequence:
 
 ```bash
 npm run deploy:all
