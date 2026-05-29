@@ -175,7 +175,6 @@ content = content.replace(/<NavLink className="eg-nav-link" style=\{\{ display: 
 // Since MyProfile requires a siteContext, let's fix the route in the ProtectedOutlet.
 // It seems the link was hardcoded to `/app/profile`, but the user has to be in the context of a site. 
 // I replaced `/app/profile` with `/app/sites/alpha/profile` as a fallback or rather let's replace it with a dynamically generated route using `bootstrap.accessible_sites[0].id`
-const profileDropdownRegex = /<NavLink className="eg-nav-link" style=\{\{ display: "block", marginBottom: "0\.5rem" \}\} to="\/app\/profile">/;
 // The Topbar has access to bootstrap, let's dynamically set the route if bootstrap is present.
 // Actually, earlier we replaced it with `/app/sites/alpha/profile`, let's just make it dynamic:
 content = content.replace(/<NavLink className="eg-nav-link" style=\{\{ display: "block", marginBottom: "0\.5rem" \}\} to="\/app\/sites\/alpha\/profile">/, '{bootstrap?.accessible_sites?.[0] ? <NavLink className="eg-nav-link" style={{ display: "block", marginBottom: "0.5rem" }} to={`/app/orgs/${bootstrap.accessible_sites[0].org_id}/projects/${bootstrap.accessible_sites[0].project_id}/sites/${bootstrap.accessible_sites[0].id}/profile`}>My Profile</NavLink> : null}');

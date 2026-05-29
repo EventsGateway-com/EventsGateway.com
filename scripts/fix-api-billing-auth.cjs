@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const apiWorkerPath = path.join(__dirname, '../apps/api-worker/src/index.ts');
-let content = fs.readFileSync(apiWorkerPath, 'utf8');
+fs.readFileSync(apiWorkerPath, 'utf8');
 
 // The issue: When we are at the bottom of index.ts, around line 567, we authorize the request:
 // const authorization = await authorizeRequest(request, env);

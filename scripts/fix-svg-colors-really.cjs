@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const logosDir = path.join(__dirname, '../public/integrations/logos');
-const files = fs.readdirSync(logosDir);
+fs.readdirSync(logosDir);
 
 // Ah... the SVGs from managed-components didn't have fills on the paths, they just rendered black when the background was removed.
 // We need to restore them EXACTLY to their original form (from 80a36d08573441ccde48138fc05497492ab62476) and then we'll keep the white filter since the icons are indeed white-on-dark in their native form.
