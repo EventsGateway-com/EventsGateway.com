@@ -46,11 +46,13 @@ export const pricingContent = {
     "One event collection layer that can fan out to multiple destinations",
     "Routing rules, transformations, consent-aware delivery, and retries",
     "Install guidance for Cloudflare Workers, dashboard, and collector domains",
-    "Commercial billing model that starts free and scales linearly"
+    "Commercial billing model that starts free and scales linearly",
+    "Stripe Checkout, Stripe webhooks, invoices, reminders, and routing suspension controls"
   ],
   footnotes: [
     "The free allowance covers up to 1,000,000 routed events in a calendar month.",
     "Once usage exceeds the included monthly allowance, billing adds $5 for each started extra block of 1,000,000 events.",
-    "Stripe is used for payment processing and payment-method handling so card data never lives on EventsGateway servers."
+    "Stripe is used for payment processing and payment-method handling so card data never lives on EventsGateway servers.",
+    "If an invoice remains unpaid for 15 days after due date, EventsGateway can suspend event routing automatically until payment is resolved."
   ]
 } as const;

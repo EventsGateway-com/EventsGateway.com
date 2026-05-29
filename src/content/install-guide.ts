@@ -111,6 +111,7 @@ set VITE_STRIPE_PUBLISHABLE_KEY=pk_test_replace_me`
     "GitHub repository cloned or forked into your own account",
     "Cloudflare Workers deployed for collector, API, and forwarding runtime",
     "Collector subdomain mapped on your domain",
+    "Stripe publishable key, secret key, and webhook secret configured",
     "Tracker snippet added to the target site",
     "At least one destination configured in the dashboard",
     "Live events verified from the production domain"

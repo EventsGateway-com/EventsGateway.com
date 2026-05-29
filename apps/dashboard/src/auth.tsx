@@ -71,16 +71,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void restoreSession();
   }, []);
 
-  const register = useCallback(async ({ name, email, password }: RegisterInput) => {
-    const result = await registerDashboardUser({ name, email, password });
+  const register = useCallback(async ({ name, email, password, captcha_token }: RegisterInput) => {
+    const result = await registerDashboardUser({ name, email, password, captcha_token });
     writeSessionToken(result.session.token);
     const nextBootstrap = await fetchDashboardBootstrap();
     setBootstrap(nextBootstrap);
     setUser(nextBootstrap.user);
   }, []);
 
-  const login = useCallback(async ({ email, password }: LoginInput) => {
-    const result = await loginDashboardUser({ email, password });
+  const login = useCallback(async ({ email, password, captcha_token }: LoginInput) => {
+    const result = await loginDashboardUser({ email, password, captcha_token });
     writeSessionToken(result.session.token);
     const nextBootstrap = await fetchDashboardBootstrap();
     setBootstrap(nextBootstrap);
