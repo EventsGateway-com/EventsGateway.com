@@ -26,6 +26,18 @@
 	},
 	"account_id": "63e37d6abff509f43d4d9a722361d03a",
 	"workers_dev": false,
+	"routes": [
+		{
+			"pattern": "eventsgateway.com",
+			"custom_domain": true,
+			"zone_id": "dc8513a03681904c320e4ab0517f312e"
+		},
+		{
+			"pattern": "www.eventsgateway.com",
+			"custom_domain": true,
+			"zone_id": "dc8513a03681904c320e4ab0517f312e"
+		}
+	],
 	"env": {
 		"production": {
 			"d1_databases": [
