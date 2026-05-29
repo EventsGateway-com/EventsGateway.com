@@ -2,10 +2,10 @@ export const homeContent = {
   eyebrow: "Commercial Event Gateway",
   title: "The best-priced event gateway for marketers who want&nbsp;<span style=\"color: var(--color-accent);\">less ad spend</span> and better performance.",
   description:
-    "EVENTS Gateway is built for advertisers who care about Meta signal quality, Event Match Quality (EMQ), cleaner conversion routing, stronger targeting, and lower tracking cost. Replace scattered pixels and expensive stacks with one event gateway that helps Meta receive the strongest possible data while the same event stream also feeds GA4, Google Ads, TikTok, and custom destinations, with cleaner mobile tracking and far better resilience on iOS devices.",
+    "EVENTS Gateway is built for advertisers who care about Meta signal quality and Event Match Quality (EMQ). Replace scattered pixels and expensive CDPs with one clean event stream. Feed Meta, GA4, Google Ads, and TikTok simultaneously—with better resilience on iOS. Stop losing conversions to browser restrictions and start driving higher ROAS.",
   trustMarks: [
     "Maximum Event Match Quality (EMQ) posture",
-    "One setup, many destinations",
+    "Built for high-volume ecommerce & lead-gen",
     "More reliable on mobile and iOS"
   ],
   stats: [

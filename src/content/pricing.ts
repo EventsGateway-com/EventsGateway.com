@@ -1,8 +1,8 @@
 export const pricingContent = {
   eyebrow: "Transparent Pricing",
-  title: "Start free, then pay only when routed volume grows.",
+  title: "Stop paying for bloated CDPs. Pay only when volume grows.",
   intro:
-    "EVENTS Gateway is priced for performance teams that want stronger Meta signal quality, higher Event Match Quality (EMQ) posture, cleaner mobile and iOS tracking, and lower software cost. The Free plan includes up to 1,000,000 events per month, and every additional 1,000,000-event block is billed at $5.",
+    "EVENTS Gateway is priced for performance teams that want stronger Meta signal quality, higher Event Match Quality (EMQ) posture, cleaner mobile tracking, and lower software cost. The Free plan includes up to 1,000,000 events per month. Every additional 1,000,000-event block is just $5.",
   plans: [
     {
       name: "Free",
@@ -25,8 +25,8 @@ export const pricingContent = {
       highlight: "Linear overage, no plan cliff",
       features: [
         "Each additional 1,000,000-event block adds $5",
-        "Billing stays transparent as volume grows",
-        "No forced migration to a separate enterprise-only setup",
+        "Scale to 50M+ events seamlessly",
+        "Enterprise is only for custom SLA and architecture support",
         "Designed for advertisers, ecommerce teams, lead generation, mobile funnels, and multi-site installs"
       ]
     },

@@ -52,7 +52,7 @@ const items = [
     slug: "facebook-pixel",
     label: "Facebook Pixel",
     title: "Facebook Pixel integration",
-    summary: "Improve Meta attribution and optimization with cleaner browser and server-side conversion signals.",
+    summary: "Fix your Meta EMQ score and feed the algorithm the exact data it needs to lower your CPA.",
     hero:
       "Use the Facebook Pixel managed component to send stronger purchase, lead, and identity data into Meta without rebuilding separate event logic for every funnel.",
     repository: "https://github.com/managed-components/facebook-pixel",
@@ -90,7 +90,7 @@ const items = [
     slug: "google-ads",
     label: "Google Ads",
     title: "Google Ads integration",
-    summary: "Send cleaner conversion actions into Google Ads and improve attribution without rebuilding tracking for every funnel.",
+    summary: "Stop double-counting conversions between GA4 and Google Ads. Send cleaner conversion actions and improve attribution.",
     hero:
       "Use one cleaner event layer for Google Ads so conversion actions, remarketing inputs, and campaign optimization data stay consistent across funnels.",
     repository: "https://github.com/managed-components/google-ads",
@@ -565,9 +565,9 @@ const items = [
 
 export const integrationsContent = {
   eyebrow: "Integrations",
-  title: "Connect the full integration catalog inside EVENTS Gateway.",
+  title: "One tracker. Every destination. Send your clean data anywhere.",
   intro:
-    "EVENTS Gateway lists the full integration catalog so teams can evaluate, configure, and connect a broader destination surface from one place.",
+    "EVENTS Gateway lists the full integration catalog so teams can evaluate, configure, and connect a broader destination surface from one place. No coding required.",
   items
 } as const;
 

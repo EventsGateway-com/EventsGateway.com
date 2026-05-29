@@ -2,7 +2,7 @@ export const compareContent = {
   title: "EVENTS Gateway Comparisons",
   eyebrow: "Tracker Comparisons",
   intro:
-    "Compare EVENTS Gateway with Cloudflare Zaraz, RudderStack, Segment, GTM server-side setups, PostHog, JENTIS, Stape-based setups, Plausible, Matomo, GA4 plus GTM, Mixpanel, Amplitude, Heap, Snowplow, Adobe Analytics, Simple Analytics, Fathom, Piwik PRO, direct Meta Pixel setups, and direct TikTok Pixel setups. These pages are written for performance teams that care about Meta signal quality, Event Match Quality (EMQ) posture, cost clarity, and one clean event stream that can feed every channel.",
+    "See why performance teams are abandoning bloated CDPs and fragile GTM setups for a routing-first event gateway. Compare EVENTS Gateway with Cloudflare Zaraz, RudderStack, Segment, GTM server-side setups, PostHog, JENTIS, Stape-based setups, Plausible, Matomo, GA4 plus GTM, Mixpanel, Amplitude, Heap, Snowplow, Adobe Analytics, Simple Analytics, Fathom, Piwik PRO, direct Meta Pixel setups, and direct TikTok Pixel setups. These pages are written for performance teams that care about Meta signal quality, Event Match Quality (EMQ) posture, cost clarity, and one clean event stream that can feed every channel.",
   cards: [
     {
       slug: "cloudflare-zaraz",
@@ -35,7 +35,7 @@ export const compareContent = {
     {
       slug: "gtm-server-side",
       title: "EVENTS Gateway vs GTM Server-Side",
-      text: "Compare container-heavy tagging with a dedicated routing-first event layer built for cleaner ad signal.",
+      text: "Compare container-heavy tagging and server maintenance headaches with a managed, routing-first event layer built for cleaner ad signal.",
       eyebrow: "Tagging comparison",
       category: "Tag Manager"
     },
