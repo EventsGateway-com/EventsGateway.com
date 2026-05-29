@@ -482,19 +482,6 @@ p {
   font-size: 0.78rem;
 }
 
-.eg-brand__mark {
-  width: 2.2rem;
-  height: 2.2rem;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(125, 211, 252, 0.28);
-  border-radius: 0.8rem;
-  background: linear-gradient(135deg, rgba(125, 211, 252, 0.18), rgba(167, 139, 250, 0.16));
-  color: var(--eg-accent);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
 .eg-sidebar__close {
   margin-left: auto;
 }

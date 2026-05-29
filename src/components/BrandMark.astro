@@ -8,9 +8,7 @@ const { showTagline = true } = Astro.props as {
 ---
 
 <a class="brand" href="/" aria-label={`${siteConfig.name} home`}>
-  <span class="brand__glyph">
-    <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="26" height="26" />
-  </span>
+  <img src="/eventsgateway-icon-symbol-only.svg" alt="EventsGateway" width="38" height="38" />
   <span class="brand__text">
     <strong>{siteConfig.name}</strong>
     {showTagline && <small>{siteConfig.tagline}</small>}
@@ -23,20 +21,6 @@ const { showTagline = true } = Astro.props as {
     align-items: center;
     gap: 0.82rem;
     min-width: 0;
-  }
-
-  .brand__glyph {
-    width: 2.85rem;
-    height: 2.85rem;
-    display: grid;
-    place-items: center;
-    border-radius: 0.95rem;
-    border: 1px solid rgba(125, 211, 252, 0.28);
-    background:
-      linear-gradient(140deg, rgba(125, 211, 252, 0.28), rgba(167, 139, 250, 0.22)),
-      rgba(255, 255, 255, 0.05);
-    color: var(--color-text);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .brand__text {
