@@ -7,7 +7,20 @@ export type DestinationRecord = {
   id: string;
   site_id: string;
   name: string;
-  kind: "meta" | "ga4" | "google_ads" | "webhook";
+  kind:
+    | "meta"
+    | "ga4"
+    | "google_ads"
+    | "webhook"
+    | "facebook-pixel"
+    | "google-analytics-4"
+    | "tiktok"
+    | "segment"
+    | "ziprecruiter"
+    | "upward"
+    | "tatari"
+    | "taboola"
+    | "snapchat";
   status: "active" | "paused" | "disabled";
   secret_preview: string;
   config: Record<string, unknown>;
@@ -589,6 +602,45 @@ export function getTransformation(site_id: string, transformId: string): Transfo
   return clone(state.transformations.find((item) => item.site_id === site_id && item.id === transformId));
 }
 
+export function createTransformation(
+  site_id: string,
+  transformation: Omit<TransformationRecord, "id" | "site_id" | "version">
+): TransformationRecord {
+  const created: TransformationRecord = {
+    ...transformation,
+    id: createId("tf"),
+    site_id,
+    version: 1
+  };
+  state.transformations.push(created);
+  return clone(created);
+}
+
+export function updateTransformation(
+  site_id: string,
+  transformId: string,
+  patch: Partial<TransformationRecord>
+): TransformationRecord | undefined {
+  const transformation = state.transformations.find((item) => item.site_id === site_id && item.id === transformId);
+  if (!transformation) return undefined;
+  const nextVersion = patch.mapping && JSON.stringify(patch.mapping) !== JSON.stringify(transformation.mapping)
+    ? transformation.version + 1
+    : transformation.version;
+  Object.assign(transformation, patch, {
+    id: transformation.id,
+    site_id: transformation.site_id,
+    version: nextVersion
+  });
+  return clone(transformation);
+}
+
+export function deleteTransformation(site_id: string, transformId: string): boolean {
+  const next = state.transformations.filter((item) => !(item.site_id === site_id && item.id === transformId));
+  const changed = next.length !== state.transformations.length;
+  state.transformations = next;
+  return changed;
+}
+
 export function listEvents(site_id: string): EventGatewayEvent[] {
   initialSeed();
   return clone(state.events.filter((item) => item.site_id === site_id).slice(0, 50));
@@ -804,12 +856,14 @@ export function getConsent(site_id: string) {
 }
 
 export function getInstallConfig(site_id: string) {
+  const collectorUrl = "https://collector.eventsgateway.local/v1/collect";
   return {
     site_id,
-    collector_url: "https://collector.eventsgateway.local/v1/collect",
-    sdk_loader: "<script src=\"https://cdn.eventsgateway.local/tracker.js\" data-site-id=\"site_alpha\"></script>",
+    collector_url: collectorUrl,
+    loader_url: collectorUrl.replace(/\/v1\/collect$/, "/tracker.js"),
+    sdk_loader: "<script src=\"https://collector.eventsgateway.local/tracker.js\" data-site-id=\"site_alpha\" data-api-key=\"pk_demo_site_alpha\" data-endpoint=\"https://collector.eventsgateway.local/v1/collect\" async></script>",
     npm_package: "@eventsgateway/tracker-sdk",
-    sample_init: "tracker.init({ siteId: 'site_alpha', endpoint: 'https://collector.eventsgateway.local/v1/collect' })"
+    sample_init: "window.eventsgateway.track({ type: 'Purchase', ecommerce: { order_id: 'ORDER-1001', value: 249.99, currency: 'RON' } })"
   };
 }
 
