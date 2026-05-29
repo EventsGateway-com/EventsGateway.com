@@ -104,11 +104,11 @@ const Tag = href && !disabled ? "a" : "div";
   .premium-card__inner {
     position: relative;
     z-index: 1;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.9rem;
     height: 100%;
     padding: 1.45rem;
-    align-content: start;
   }
 
   .premium-card__header {

@@ -424,7 +424,7 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     display: none;
   }
 
-  .mobile-nav summary {
+  .mobile-nav > summary {
     list-style: none;
     display: grid;
     gap: 0.3rem;
@@ -438,11 +438,11 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
       rgba(255, 255, 255, 0.04);
   }
 
-  .mobile-nav summary::-webkit-details-marker {
+  .mobile-nav > summary::-webkit-details-marker {
     display: none;
   }
 
-  .mobile-nav summary span {
+  .mobile-nav > summary span {
     height: 1.5px;
     border-radius: 999px;
     background: var(--color-text);
@@ -535,16 +535,14 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     align-content: start;
   }
 
-  .nav-dropdown__label,
-  .mobile-nav__subgroup-label {
+  .nav-dropdown__label {
     color: var(--color-muted);
     font-size: 0.72rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
-  .nav-dropdown__panel a,
-  .mobile-nav__label {
+  .nav-dropdown__panel a {
     color: var(--color-muted);
   }
 
@@ -645,9 +643,9 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
   }
 
   .mobile-nav__label {
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 0.95rem;
+    color: var(--color-text);
+    font-weight: 500;
   }
 
   .desktop-cta {
@@ -675,19 +673,25 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
 </style>
 
 <script>
-  function initNav() {
-    document.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
+  const handleOutsideClick = (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
 
-      const openDetails = document.querySelectorAll<HTMLDetailsElement>("details[open].mobile-nav, details[open].desktop-dropdown");
-      
-      openDetails.forEach((details) => {
-        if (!details.contains(target)) {
-          details.removeAttribute("open");
-        }
-      });
+    const openDetails = document.querySelectorAll<HTMLDetailsElement>("details[open].mobile-nav, details[open].desktop-dropdown");
+    
+    openDetails.forEach((details) => {
+      if (!details.contains(target)) {
+        details.removeAttribute("open");
+      }
     });
+  };
+
+  function initNav() {
+    document.removeEventListener("click", handleOutsideClick);
+    document.removeEventListener("touchstart", handleOutsideClick);
+    
+    document.addEventListener("click", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick, { passive: true });
   }
 
   // Support for Astro View Transitions
