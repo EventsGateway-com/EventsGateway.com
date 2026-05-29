@@ -2,6 +2,7 @@ import type { DatabaseBinding, EnvironmentBindings } from "./index";
 import type { EventGatewayEvent, EventRoute } from "../../schemas/src/index";
 import { dispatchManagedDestination } from "./managed-destinations";
 import { compileRoutingConfig, routePlanFromCompiledConfig, simulateRoutes, type CompiledSiteRoutingConfig } from "../../routing-engine/src/index";
+import type { VisitorStateSnapshot } from "./visitor-state";
 import {
   listDestinations as listSeedDestinations,
   listRouteVersions as listSeedRouteVersions,
@@ -169,6 +170,8 @@ export type StoredCollectedEvent = {
   site_id: string;
   event_id: string;
   received_at: string;
+  visitor_state_snapshot?: VisitorStateSnapshot | null;
+  ledger_r2_key?: string | null;
 };
 
 export type OperationJobRecord = {
@@ -697,6 +700,57 @@ async function countRecords(db: DatabaseBinding, sql: string, ...params: unknown
   return Number(record?.count ?? 0);
 }
 
+const COLLECT_ACCESS_CACHE_TTL_SECONDS = 60 * 5;
+const COMPILED_ROUTING_CACHE_TTL_SECONDS = 60 * 10;
+
+type CollectAccessAuthorization = {
+  site_id: string;
+  site_name: string;
+  origin_domain: string | null;
+  site_key_id: string;
+};
+
+function buildCollectAccessCacheKey(siteId: string, keyHash: string, originDomain: string) {
+  return `collect-access:${siteId}:${keyHash}:${originDomain || "none"}`;
+}
+
+function buildCompiledRoutingCacheKey(siteId: string) {
+  return `compiled-routing:${siteId}`;
+}
+
+async function readJsonCache<T>(env: Pick<EnvironmentBindings, "CACHE"> | undefined, key: string): Promise<T | null> {
+  if (!env?.CACHE) {
+    return null;
+  }
+
+  try {
+    const raw = await env.CACHE.get<string>(key, "text");
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function writeJsonCache(
+  env: Pick<EnvironmentBindings, "CACHE"> | undefined,
+  key: string,
+  value: unknown,
+  expirationTtl: number
+) {
+  if (!env?.CACHE) {
+    return;
+  }
+
+  try {
+    await env.CACHE.put(key, JSON.stringify(value), { expirationTtl });
+  } catch {
+    return;
+  }
+}
+
 async function ensureDashboardUsersTableColumns(db: DatabaseBinding) {
   const columns = await allRecords(db, "PRAGMA table_info(dashboard_users)");
   const columnNames = new Set(columns.map((column) => asString(column.name)));
@@ -777,6 +831,15 @@ async function ensureOperationsTables(db: DatabaseBinding) {
   }
   if (!deliveryColumnNames.has("delivery_mode")) {
     await db.prepare("ALTER TABLE delivery_attempts ADD COLUMN delivery_mode TEXT").run();
+  }
+
+  const collectedEventColumns = await allRecords(db, "PRAGMA table_info(collected_events)");
+  const collectedEventColumnNames = new Set(collectedEventColumns.map((column) => asString(column.name)));
+  if (!collectedEventColumnNames.has("ledger_r2_key")) {
+    await db.prepare("ALTER TABLE collected_events ADD COLUMN ledger_r2_key TEXT").run();
+  }
+  if (!collectedEventColumnNames.has("visitor_state_json")) {
+    await db.prepare("ALTER TABLE collected_events ADD COLUMN visitor_state_json TEXT").run();
   }
 
   await db.prepare(
@@ -2807,9 +2870,19 @@ export async function listSiteRouteVersions(dbInput: DatabaseBinding | undefined
   return records.map(toSiteRouteVersion);
 }
 
-export async function getSiteCompiledRouting(dbInput: DatabaseBinding | undefined, siteId: string): Promise<CompiledSiteRoutingConfig> {
+export async function getSiteCompiledRouting(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  env?: Pick<EnvironmentBindings, "CACHE">
+): Promise<CompiledSiteRoutingConfig> {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
+  const cacheKey = buildCompiledRoutingCacheKey(siteId);
+  const cached = await readJsonCache<CompiledSiteRoutingConfig>(env, cacheKey);
+  if (cached) {
+    return cached;
+  }
+
   const activeRecord = await firstRecord(
     db,
     `
@@ -2822,14 +2895,22 @@ export async function getSiteCompiledRouting(dbInput: DatabaseBinding | undefine
     siteId
   );
   if (activeRecord) {
-    return toCompiledSiteRoutingConfig(activeRecord);
+    const compiled = toCompiledSiteRoutingConfig(activeRecord);
+    await writeJsonCache(env, cacheKey, compiled, COMPILED_ROUTING_CACHE_TTL_SECONDS);
+    return compiled;
   }
 
   const version = await nextSiteRoutingVersion(db, siteId);
-  return compileSiteRouting(db, siteId, Math.max(1, version - 1));
+  const compiled = await compileSiteRouting(db, siteId, Math.max(1, version - 1));
+  await writeJsonCache(env, cacheKey, compiled, COMPILED_ROUTING_CACHE_TTL_SECONDS);
+  return compiled;
 }
 
-export async function publishSiteRoutes(dbInput: DatabaseBinding | undefined, siteId: string) {
+export async function publishSiteRoutes(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  env?: Pick<EnvironmentBindings, "CACHE">
+) {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
   const version = await nextSiteRoutingVersion(db, siteId);
@@ -2846,10 +2927,16 @@ export async function publishSiteRoutes(dbInput: DatabaseBinding | undefined, si
     .bind(siteId, version, 1, JSON.stringify(config), createdAt)
     .run();
 
+  await writeJsonCache(env, buildCompiledRoutingCacheKey(siteId), config, COMPILED_ROUTING_CACHE_TTL_SECONDS);
   return { version, config };
 }
 
-export async function rollbackSiteRoutes(dbInput: DatabaseBinding | undefined, siteId: string, version?: number) {
+export async function rollbackSiteRoutes(
+  dbInput: DatabaseBinding | undefined,
+  siteId: string,
+  version?: number,
+  env?: Pick<EnvironmentBindings, "CACHE">
+) {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
   const active = await firstRecord(
@@ -2879,13 +2966,15 @@ export async function rollbackSiteRoutes(dbInput: DatabaseBinding | undefined, s
     );
 
   if (!target) {
-    const compiled = await getSiteCompiledRouting(db, siteId);
+    const compiled = await getSiteCompiledRouting(db, siteId, env);
     return { version: compiled.version, config: compiled };
   }
 
   await db.prepare("UPDATE site_route_versions SET active = 0 WHERE site_id = ?").bind(siteId).run();
   await db.prepare("UPDATE site_route_versions SET active = 1 WHERE site_id = ? AND version = ?").bind(siteId, asNumber(target.version)).run();
-  return { version: asNumber(target.version), config: toCompiledSiteRoutingConfig(target) };
+  const compiled = toCompiledSiteRoutingConfig(target);
+  await writeJsonCache(env, buildCompiledRoutingCacheKey(siteId), compiled, COMPILED_ROUTING_CACHE_TTL_SECONDS);
+  return { version: asNumber(target.version), config: compiled };
 }
 
 export async function simulateSiteRoute(
@@ -3155,15 +3244,28 @@ export async function getInstallConfigFromDb(dbInput: DatabaseBinding | undefine
 
 export async function validateCollectAccess(
   dbInput: DatabaseBinding | undefined,
-  input: { siteId: string; apiKey: string; origin?: string | null }
+  input: { siteId: string; apiKey: string; origin?: string | null },
+  env?: Pick<EnvironmentBindings, "CACHE">
 ) {
   const db = ensureDb(dbInput);
   await ensureControlPlane(db);
 
+  const normalizedOrigin = input.origin ? normalizeDomain(input.origin) : "";
+  const keyHash = await sha256Hex(input.apiKey);
+  const cacheKey = buildCollectAccessCacheKey(input.siteId, keyHash, normalizedOrigin);
+  const cached = await readJsonCache<CollectAccessAuthorization>(env, cacheKey);
+  if (cached) {
+    void db.prepare("UPDATE site_keys SET last_used_at = ? WHERE id = ?").bind(nowIso(), cached.site_key_id).run();
+    return {
+      site_id: cached.site_id,
+      site_name: cached.site_name,
+      origin_domain: cached.origin_domain
+    };
+  }
+
   const site = await firstRecord(db, "SELECT id, name FROM sites WHERE id = ? LIMIT 1", input.siteId);
   if (!site) return null;
 
-  const keyHash = await sha256Hex(input.apiKey);
   const key = await firstRecord(
     db,
     "SELECT id FROM site_keys WHERE site_id = ? AND key_hash = ? AND status = 'active' LIMIT 1",
@@ -3172,7 +3274,6 @@ export async function validateCollectAccess(
   );
   if (!key) return null;
 
-  const normalizedOrigin = input.origin ? normalizeDomain(input.origin) : "";
   if (normalizedOrigin) {
     const allowed = await firstRecord(
       db,
@@ -3184,11 +3285,21 @@ export async function validateCollectAccess(
   }
 
   await db.prepare("UPDATE site_keys SET last_used_at = ? WHERE id = ?").bind(nowIso(), asString(key.id)).run();
-  return {
+  const authorization = {
     site_id: asString(site.id),
     site_name: asString(site.name),
     origin_domain: normalizedOrigin || null
   };
+  await writeJsonCache(
+    env,
+    cacheKey,
+    {
+      ...authorization,
+      site_key_id: asString(key.id)
+    } satisfies CollectAccessAuthorization,
+    COLLECT_ACCESS_CACHE_TTL_SECONDS
+  );
+  return authorization;
 }
 
 export async function storeCollectedEvent(
@@ -3196,6 +3307,9 @@ export async function storeCollectedEvent(
   input: {
     siteId: string;
     originDomain?: string | null;
+    visitorStateSnapshot?: VisitorStateSnapshot | null;
+    ledgerR2Key?: string | null;
+    env?: Pick<EnvironmentBindings, "CACHE">;
     event: {
       event_id?: string;
       type: string;
@@ -3221,7 +3335,7 @@ export async function storeCollectedEvent(
     event_id: eventId
   });
   const explicitRouting = Array.isArray(runtimeEvent.routing?.destination_ids) && runtimeEvent.routing.destination_ids.length > 0;
-  const compiledConfig = explicitRouting ? null : await getSiteCompiledRouting(db, input.siteId);
+  const compiledConfig = explicitRouting ? null : await getSiteCompiledRouting(db, input.siteId, input.env);
   const routePlan = compiledConfig ? routePlanFromCompiledConfig(runtimeEvent, compiledConfig) : null;
   const persistedEvent: EventGatewayEvent = routePlan
     ? {
@@ -3269,8 +3383,10 @@ export async function storeCollectedEvent(
         consent_ads,
         consent_functional,
         payload_json,
+        visitor_state_json,
+        ledger_r2_key,
         received_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
   )
     .bind(
@@ -3292,6 +3408,8 @@ export async function storeCollectedEvent(
       input.event.consent?.ads ? 1 : 0,
       input.event.consent?.functional ? 1 : 0,
       JSON.stringify(persistedEvent),
+      input.visitorStateSnapshot ? JSON.stringify(input.visitorStateSnapshot) : null,
+      input.ledgerR2Key ?? null,
       receivedAt
     )
     .run();
@@ -3401,6 +3519,8 @@ export async function storeCollectedEvent(
     delivery_attempt_ids: deliveryAttemptIds,
     site_id: input.siteId,
     event_id: eventId,
-    received_at: receivedAt
+    received_at: receivedAt,
+    visitor_state_snapshot: input.visitorStateSnapshot ?? null,
+    ledger_r2_key: input.ledgerR2Key ?? null
   } satisfies StoredCollectedEvent;
 }

@@ -28,8 +28,9 @@ function buildArtifacts() {
   const databaseId = getValue("install-database-id") || "replace-with-your-d1-database-id";
   const databaseName = getValue("install-database-name") || "eventsgateway-control-plane";
   const kvNamespaceId = getValue("install-kv-namespace-id") || "replace-with-your-kv-namespace-id";
-  const r2BucketName = getValue("install-r2-bucket-name") || "eventsgateway-assets-production";
+  const r2BucketName = getValue("install-r2-bucket-name") || "eventsgateway-ledger-production";
   const queueName = getValue("install-queue-name") || "eventsgateway-ingest-production";
+  const visitorStateDoName = getValue("install-visitor-state-do-name") || "eventsgateway-visitor-state-production";
   const captchaProvider = getValue("install-captcha-provider") || "turnstile";
   const captchaSiteKey = getValue("install-captcha-site-key") || `replace-with-your-${captchaProvider}-site-key`;
   const captchaSecretKey = getValue("install-captcha-secret-key") || `replace-with-your-${captchaProvider}-secret-key`;
@@ -73,8 +74,9 @@ function buildArtifacts() {
       CONTROL_PLANE_DATABASE_ID: databaseId,
       CONTROL_PLANE_DATABASE_NAME: databaseName,
       CACHE_KV_NAMESPACE_ID: kvNamespaceId,
-      ASSETS_R2_BUCKET_NAME: r2BucketName,
-      EVENTS_QUEUE_NAME: queueName
+      LEDGER_R2_BUCKET_NAME: r2BucketName,
+      EVENTS_QUEUE_NAME: queueName,
+      VISITOR_STATE_DO_NAME: visitorStateDoName
     })
   );
 
@@ -89,8 +91,9 @@ function buildArtifacts() {
         database_id: databaseId,
         database_name: databaseName,
         kv_namespace_id: kvNamespaceId,
-        r2_bucket_name: r2BucketName,
-        queue_name: queueName
+        ledger_r2_bucket_name: r2BucketName,
+        queue_name: queueName,
+        visitor_state_do_name: visitorStateDoName
       },
       domains: {
         root: rootDomain,
@@ -132,8 +135,22 @@ function buildArtifacts() {
       ],
       r2_buckets: [
         {
-          binding: "ASSETS_BUCKET",
+          binding: "LEDGER_BUCKET",
           bucket_name: r2BucketName
+        }
+      ],
+      durable_objects: {
+        bindings: [
+          {
+            name: "VISITOR_STATE_DO",
+            class_name: "VisitorStateDurableObject"
+          }
+        ]
+      },
+      migrations: [
+        {
+          tag: "v1",
+          new_sqlite_classes: ["VisitorStateDurableObject"]
         }
       ],
       queues: {

@@ -194,11 +194,15 @@ const installJsonLd = {
             </label>
             <label class="wizard-field">
               <span>R2 bucket name</span>
-              <input id="install-r2-bucket-name" type="text" value="eventsgateway-assets-production" />
+              <input id="install-r2-bucket-name" type="text" value="eventsgateway-ledger-production" />
             </label>
             <label class="wizard-field">
               <span>Queue name</span>
               <input id="install-queue-name" type="text" value="eventsgateway-ingest-production" />
+            </label>
+            <label class="wizard-field">
+              <span>Durable Object name</span>
+              <input id="install-visitor-state-do-name" type="text" value="eventsgateway-visitor-state-production" />
             </label>
           </div>
         </div>
@@ -237,7 +241,7 @@ const installJsonLd = {
               The official repository ships with deployment defaults for the hosted EventsGateway instance. Replace them in your own copy during install.
             </div>
             <div class="wizard-note">
-              Create D1, KV, R2, and Queue resources manually in Cloudflare first, then paste the generated IDs and names below without changing the preset runtime names used by the project.
+              Create D1, KV, R2, Queue, and Durable Object resources manually in Cloudflare first, then paste the generated IDs and names below without changing the preset runtime names used by the project.
             </div>
             <div class="wizard-note">
               The secret key must stay only in private local files, CI secrets, or Cloudflare secret storage.

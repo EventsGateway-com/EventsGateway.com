@@ -57,8 +57,9 @@ const DEFAULT_INSTALL_INPUT: InstallWizardInput = {
   control_plane_database_id: "",
   control_plane_database_name: "eventsgateway-control-plane",
   cache_kv_namespace_id: "",
-  assets_r2_bucket_name: "eventsgateway-assets-production",
+  ledger_r2_bucket_name: "eventsgateway-ledger-production",
   events_queue_name: "eventsgateway-ingest-production",
+  visitor_state_do_name: "eventsgateway-visitor-state-production",
   captcha_provider: "turnstile",
   captcha_site_key: "",
   captcha_secret_key: ""
@@ -121,8 +122,9 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
       CONTROL_PLANE_DATABASE_ID: input.control_plane_database_id || "replace-with-your-d1-database-id",
       CONTROL_PLANE_DATABASE_NAME: input.control_plane_database_name || "eventsgateway-control-plane",
       CACHE_KV_NAMESPACE_ID: input.cache_kv_namespace_id || "replace-with-your-kv-namespace-id",
-      ASSETS_R2_BUCKET_NAME: input.assets_r2_bucket_name || "eventsgateway-assets-production",
-      EVENTS_QUEUE_NAME: input.events_queue_name || "eventsgateway-ingest-production"
+      LEDGER_R2_BUCKET_NAME: input.ledger_r2_bucket_name || "eventsgateway-ledger-production",
+      EVENTS_QUEUE_NAME: input.events_queue_name || "eventsgateway-ingest-production",
+      VISITOR_STATE_DO_NAME: input.visitor_state_do_name || "eventsgateway-visitor-state-production"
     },
     wrangler_private_values: {
       account_id: input.cloudflare_account_id || "replace-with-your-cloudflare-account-id",
@@ -130,8 +132,9 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
       database_id: input.control_plane_database_id || "replace-with-your-d1-database-id",
       database_name: input.control_plane_database_name || "eventsgateway-control-plane",
       kv_namespace_id: input.cache_kv_namespace_id || "replace-with-your-kv-namespace-id",
-      r2_bucket_name: input.assets_r2_bucket_name || "eventsgateway-assets-production",
+      ledger_r2_bucket_name: input.ledger_r2_bucket_name || "eventsgateway-ledger-production",
       queue_name: input.events_queue_name || "eventsgateway-ingest-production",
+      visitor_state_do_name: input.visitor_state_do_name || "eventsgateway-visitor-state-production",
       routes: {
         root: input.root_domain,
         root_www: `www.${input.root_domain}`,
@@ -157,8 +160,24 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
       ],
       r2_buckets: [
         {
-          binding: "ASSETS_BUCKET",
-          bucket_name: input.assets_r2_bucket_name || "eventsgateway-assets-production"
+          binding: "LEDGER_BUCKET",
+          bucket_name: input.ledger_r2_bucket_name || "eventsgateway-ledger-production"
+        }
+      ],
+      durable_objects: {
+        bindings: [
+          {
+            name: "VISITOR_STATE_DO",
+            class_name: "VisitorStateDurableObject"
+          }
+        ]
+      },
+      migrations: [
+        {
+          tag: "v1",
+          new_sqlite_classes: [
+            "VisitorStateDurableObject"
+          ]
         }
       ],
       queues: {
@@ -189,7 +208,7 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
       "npx wrangler d1 create eventsgateway-control-plane",
       "npx wrangler queues create eventsgateway-ingest-production",
       "npx wrangler kv namespace create EVENTSGATEWAY_CACHE",
-      "npx wrangler r2 bucket create eventsgateway-assets-production",
+      "npx wrangler r2 bucket create eventsgateway-ledger-production",
       "npm run deploy:dashboard",
       "npm run deploy:api",
       "npm run deploy:collector",
@@ -2708,11 +2727,15 @@ function SetupWizardSection({
             </label>
             <label className="eg-field">
               <span>R2 bucket name</span>
-              <input className="eg-input" onChange={(event) => updateField("assets_r2_bucket_name", event.target.value)} type="text" value={form.assets_r2_bucket_name} />
+              <input className="eg-input" onChange={(event) => updateField("ledger_r2_bucket_name", event.target.value)} type="text" value={form.ledger_r2_bucket_name} />
             </label>
             <label className="eg-field">
               <span>Queue name</span>
               <input className="eg-input" onChange={(event) => updateField("events_queue_name", event.target.value)} type="text" value={form.events_queue_name} />
+            </label>
+            <label className="eg-field">
+              <span>Durable Object name</span>
+              <input className="eg-input" onChange={(event) => updateField("visitor_state_do_name", event.target.value)} type="text" value={form.visitor_state_do_name} />
             </label>
           </div>
         </SurfaceCard>

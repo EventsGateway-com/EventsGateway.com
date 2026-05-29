@@ -225,16 +225,19 @@ For production, use Wrangler secrets instead of committing values into the repos
 
 The official repository keeps the active Cloudflare deployment identifiers required by the hosted EventsGateway instance.
 
-Use the install flow at `/setup` to prepare:
+Use the install flow at `/install` to prepare:
 
 - Cloudflare account ID
 - Cloudflare zone ID
 - D1 database ID and name
+- KV namespace ID
+- Durable Object name
+- R2 ledger bucket name
 - Queue name
 - captcha provider choice between Turnstile, reCAPTCHA, and hCaptcha
 - public captcha site key and private API secret key
 
-If you self-host, replace the default Wrangler values in your own copy and keep private secrets only in local configuration, secret managers, or private CI variables.
+If you self-host, create Cloudflare `KV`, `Durable Objects`, `D1`, `R2`, and `Queue` resources manually first, then replace the default Wrangler values in your own copy and keep private secrets only in local configuration, secret managers, or private CI variables.
 
 ## Current Behavior Notes
 

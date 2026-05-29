@@ -48,6 +48,41 @@ export type QueueSendBinding<T = unknown> = {
   send: (message: T) => Promise<void>;
 };
 
+export type KvNamespaceBinding = {
+  get: <T = string>(key: string, type?: "text" | "json") => Promise<T | string | null>;
+  put: (key: string, value: string, options?: { expirationTtl?: number }) => Promise<void>;
+  delete: (key: string) => Promise<void>;
+};
+
+export type DurableObjectStubBinding = {
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+};
+
+export type DurableObjectNamespaceBinding = {
+  idFromName: (name: string) => unknown;
+  get: (id: unknown) => DurableObjectStubBinding;
+};
+
+export type R2ObjectBinding = {
+  key: string;
+};
+
+export type R2ListResult = {
+  objects: R2ObjectBinding[];
+  truncated?: boolean;
+  cursor?: string;
+};
+
+export type R2BucketBinding = {
+  put: (
+    key: string,
+    value: ArrayBuffer | ArrayBufferView | Blob | string,
+    options?: { httpMetadata?: { contentType?: string } }
+  ) => Promise<void>;
+  delete: (keys: string | string[]) => Promise<void>;
+  list: (options?: { prefix?: string; limit?: number; cursor?: string }) => Promise<R2ListResult>;
+};
+
 export type QueueMessage<T = unknown> = {
   id: string;
   body: T;
@@ -82,6 +117,9 @@ export type EnvironmentBindings = {
   MANAGED_DESTINATIONS_CONFIG?: string;
   DB?: DatabaseBinding;
   EVENTS_QUEUE?: QueueSendBinding<DeliveryQueueMessage>;
+  CACHE?: KvNamespaceBinding;
+  LEDGER_BUCKET?: R2BucketBinding;
+  VISITOR_STATE_DO?: DurableObjectNamespaceBinding;
 };
 
 export function createRequestContext(request: Request): WorkerRequestContext {

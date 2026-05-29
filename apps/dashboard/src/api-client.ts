@@ -82,8 +82,9 @@ export type InstallWizardInput = {
   control_plane_database_id: string;
   control_plane_database_name: string;
   cache_kv_namespace_id: string;
-  assets_r2_bucket_name: string;
+  ledger_r2_bucket_name: string;
   events_queue_name: string;
+  visitor_state_do_name: string;
   captcha_provider: CaptchaProvider;
   captcha_site_key: string;
   captcha_secret_key: string;

@@ -18,6 +18,12 @@
       "remote": true
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "__CACHE_KV_NAMESPACE_ID__"
+    }
+  ],
   "env": {
     "production": {
       "d1_databases": [
@@ -26,6 +32,12 @@
           "database_name": "eventsgateway-control-plane",
           "database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
           "remote": true
+        }
+      ],
+      "kv_namespaces": [
+        {
+          "binding": "CACHE",
+          "id": "__CACHE_KV_NAMESPACE_ID__"
         }
       ],
       "vars": {

@@ -10,7 +10,7 @@ export const installGuideContent = {
     },
     {
       title: "Cloudflare account",
-      text: "You need a Cloudflare account with access to Workers and the domain where the collector subdomain will run. Create D1, Queues, KV namespaces, and R2 buckets manually inside your own account, keep the official resource names, then define the generated IDs and names in Wrangler."
+      text: "You need a Cloudflare account with access to Workers and the domain where the collector subdomain will run. Create D1, Queues, KV namespaces, R2 buckets, and Durable Objects manually inside your own account, keep the official resource names, then define the generated IDs and names in Wrangler."
     },
     {
       title: "A target website",
@@ -30,7 +30,7 @@ export const installGuideContent = {
     {
       step: "02",
       title: "Create Cloudflare resources manually",
-      text: "Create the D1 database, queue, KV namespaces, and R2 buckets in your own Cloudflare account first. Keep the preset project names and copy the generated IDs and names because the next step defines them in Wrangler."
+      text: "Create the D1 database, queue, KV namespaces, R2 ledger bucket, and Durable Object resources in your own Cloudflare account first. Keep the preset project names and copy the generated IDs and names because the next step defines them in Wrangler."
     },
     {
       step: "03",
@@ -86,7 +86,7 @@ cd ../forwarder-worker && npm install`
       code: `npx wrangler d1 create eventsgateway-control-plane
 npx wrangler queues create eventsgateway-ingest-production
 npx wrangler kv namespace create EVENTSGATEWAY_CACHE
-npx wrangler r2 bucket create eventsgateway-assets-production`
+npx wrangler r2 bucket create eventsgateway-ledger-production`
     },
     {
       title: "Define resources in Wrangler",
@@ -106,8 +106,22 @@ npx wrangler r2 bucket create eventsgateway-assets-production`
 ],
 "r2_buckets": [
   {
-    "binding": "ASSETS_BUCKET",
-    "bucket_name": "eventsgateway-assets-production"
+    "binding": "LEDGER_BUCKET",
+    "bucket_name": "eventsgateway-ledger-production"
+  }
+],
+"durable_objects": {
+  "bindings": [
+    {
+      "name": "VISITOR_STATE_DO",
+      "class_name": "VisitorStateDurableObject"
+    }
+  ]
+},
+"migrations": [
+  {
+    "tag": "v1",
+    "new_sqlite_classes": ["VisitorStateDurableObject"]
   }
 ],
 "queues": {
@@ -152,7 +166,7 @@ set VITE_STRIPE_PUBLISHABLE_KEY=pk_test_replace_me`
   ],
   checklist: [
     "GitHub repository cloned or forked into your own account",
-    "Cloudflare D1, Queues, KV namespaces, and R2 buckets created manually in your own account",
+    "Cloudflare D1, Queues, KV namespaces, R2 ledger bucket, and Durable Object resources created manually in your own account",
     "Wrangler files updated with the real resource IDs and names before deploy",
     "Cloudflare Workers deployed for collector, API, and forwarding runtime",
     "Collector subdomain mapped on your domain",

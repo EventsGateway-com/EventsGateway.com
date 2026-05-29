@@ -560,7 +560,7 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
   }
 
   if (segments[3] === "compiled-routing" && method === "GET") {
-    if (env?.DB) return json(context, await getSiteCompiledRouting(env.DB, siteId));
+    if (env?.DB) return json(context, await getSiteCompiledRouting(env.DB, siteId, env));
     return json(context, getCompiledRouting(siteId));
   }
 
@@ -577,7 +577,7 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
   }
 
   if (segments[3] === "routes" && segments[4] === "publish" && method === "POST") {
-    if (env?.DB) return json(context, await publishSiteRoutes(env.DB, siteId));
+    if (env?.DB) return json(context, await publishSiteRoutes(env.DB, siteId, env));
     return json(context, publishRoutes(siteId));
   }
 
@@ -588,7 +588,7 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
 
   if (segments[3] === "routes" && segments[4] === "rollback" && method === "POST") {
     const body = await readJson<{ version?: number }>(request);
-    if (env?.DB) return json(context, await rollbackSiteRoutes(env.DB, siteId, body.version));
+    if (env?.DB) return json(context, await rollbackSiteRoutes(env.DB, siteId, body.version, env));
     return json(context, rollbackRoutes(siteId, body.version));
   }
 

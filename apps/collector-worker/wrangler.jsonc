@@ -16,6 +16,26 @@
       "remote": true
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "__CACHE_KV_NAMESPACE_ID__"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "LEDGER_BUCKET",
+      "bucket_name": "eventsgateway-ledger-production"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "VISITOR_STATE_DO",
+        "class_name": "VisitorStateDurableObject"
+      }
+    ]
+  },
   "queues": {
     "producers": [
       {
@@ -23,6 +43,9 @@
         "queue": "eventsgateway-ingest-production"
       }
     ]
+  },
+  "triggers": {
+    "crons": ["0 3 * * *"]
   },
   "env": {
     "production": {
@@ -34,6 +57,26 @@
           "remote": true
         }
       ],
+      "kv_namespaces": [
+        {
+          "binding": "CACHE",
+          "id": "__CACHE_KV_NAMESPACE_ID__"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "LEDGER_BUCKET",
+          "bucket_name": "eventsgateway-ledger-production"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "VISITOR_STATE_DO",
+            "class_name": "VisitorStateDurableObject"
+          }
+        ]
+      },
       "queues": {
         "producers": [
           {
@@ -41,6 +84,9 @@
             "queue": "eventsgateway-ingest-production"
           }
         ]
+      },
+      "triggers": {
+        "crons": ["0 3 * * *"]
       },
       "vars": {
         "CORS_ORIGIN": "*"
