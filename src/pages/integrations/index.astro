@@ -5,6 +5,19 @@ import Container from "../../components/Container.astro";
 import PremiumCard from "../../components/PremiumCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import { integrationsContent } from "../../content/integrations";
+
+const integrationGroups = [
+  {
+    title: "Official Managed Components",
+    description: "Open source managed components published by the official catalog.",
+    items: integrationsContent.items.filter((item) => (item as any).group === "Official Managed Components")
+  },
+  {
+    title: "Community Managed Components",
+    description: "Community-built managed components that expand the same destination model.",
+    items: integrationsContent.items.filter((item) => (item as any).group === "Community Managed Components")
+  }
+];
 ---
 
 <BaseLayout
@@ -18,6 +31,7 @@ import { integrationsContent } from "../../content/integrations";
         <span class="eyebrow">{integrationsContent.eyebrow}</span>
         <h1 class="page-title">{integrationsContent.title}</h1>
         <p class="page-copy">{integrationsContent.intro}</p>
+        <p class="page-copy">Browse {integrationsContent.items.length} managed component integrations in one catalog.</p>
         <div class="button-row">
           <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
           <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
@@ -26,24 +40,28 @@ import { integrationsContent } from "../../content/integrations";
     </Container>
   </section>
 
-  <section class="section section--tight">
-    <Container>
-      <SectionHeader
-        eyebrow="Available Integrations"
-        title="Choose the destinations that matter for your campaigns."
-        description="Every integration is built around the same idea: cleaner events, less tracking waste, and one setup reused across the rest of your growth stack."
-      />
-      <div class="card-grid">
-        {
-          integrationsContent.items.map((item) => (
-            <PremiumCard icon="layers" title={item.label} text={item.summary}>
-              <Button href={`/integrations/${item.slug}/`} variant="secondary" icon="arrow-right">Open integration</Button>
-            </PremiumCard>
-          ))
-        }
-      </div>
-    </Container>
-  </section>
+  {
+    integrationGroups.map((group) => (
+      <section class="section section--tight">
+        <Container>
+          <SectionHeader
+            eyebrow="Available Integrations"
+            title={group.title}
+            description={group.description}
+          />
+          <div class="card-grid">
+            {
+              group.items.map((item) => (
+                <PremiumCard icon="layers" title={item.label} text={item.summary}>
+                  <Button href={`/integrations/${item.slug}/`} variant="secondary" icon="arrow-right">Open integration</Button>
+                </PremiumCard>
+              ))
+            }
+          </div>
+        </Container>
+      </section>
+    ))
+  }
 
   <section class="section">
     <Container>

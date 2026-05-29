@@ -26,11 +26,14 @@ const { item } = Astro.props as {
   <section class="section page-hero">
     <Container>
       <div class="stack">
-        <span class="eyebrow">Integration</span>
+        <span class="eyebrow">{(item as any).group || "Integration"}</span>
         <h1 class="page-title">{item.title}</h1>
         <p class="page-copy">{item.hero}</p>
         <div class="button-row">
           <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
+          {(item as any).repository && (
+            <Button href={(item as any).repository} variant="secondary" icon="arrow-right">Open source component</Button>
+          )}
           <Button href="/integrations/" variant="secondary" icon="arrow-right">Back to integrations</Button>
         </div>
       </div>
@@ -41,7 +44,7 @@ const { item } = Astro.props as {
     <Container>
       <SectionHeader
         eyebrow="Why It Matters"
-        title={`Why marketers use ${item.label}.`}
+        title={`Why marketers use EventsGateway for ${item.label}?`}
         description="The goal is simple: cleaner data, better optimization inputs, and less wasted spend caused by fragmented tracking."
       />
       <div class="card-grid">

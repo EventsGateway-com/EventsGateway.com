@@ -94,7 +94,8 @@ main {
 }
 
 .section--tight {
-  padding: clamp(1.95rem, 3vw, 2.85rem) 0;
+  padding-top: 0;
+  padding-bottom: clamp(1.95rem, 3vw, 2.85rem);
 }
 
 .section--hero {

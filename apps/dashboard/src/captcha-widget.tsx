@@ -21,6 +21,8 @@ type CaptchaWindow = Window & {
   hcaptcha?: CaptchaApi;
 };
 
+const captchaScriptPromises = new Map<CaptchaProvider, Promise<void>>();
+
 function scriptUrlForProvider(provider: CaptchaProvider) {
   if (provider === "recaptcha") {
     return "https://www.google.com/recaptcha/api.js?render=explicit";
@@ -43,17 +45,72 @@ function getCaptchaApi(provider: CaptchaProvider) {
 }
 
 function ensureCaptchaScript(provider: CaptchaProvider) {
-  const existing = document.querySelector<HTMLScriptElement>(`script[data-captcha-provider="${provider}"]`);
-  if (existing) {
-    return;
+  if (getCaptchaApi(provider)) {
+    return Promise.resolve();
   }
 
-  const script = document.createElement("script");
-  script.src = scriptUrlForProvider(provider);
-  script.async = true;
-  script.defer = true;
-  script.dataset.captchaProvider = provider;
-  document.head.appendChild(script);
+  const existingPromise = captchaScriptPromises.get(provider);
+  if (existingPromise) {
+    return existingPromise;
+  }
+
+  let script = document.querySelector<HTMLScriptElement>(`script[data-captcha-provider="${provider}"]`);
+  if (!script) {
+    script = document.createElement("script");
+    script.src = scriptUrlForProvider(provider);
+    script.async = true;
+    script.defer = true;
+    script.dataset.captchaProvider = provider;
+    document.head.appendChild(script);
+  }
+
+  const promise = new Promise<void>((resolve, reject) => {
+    let settled = false;
+
+    const cleanup = () => {
+      script?.removeEventListener("load", handleLoad);
+      script?.removeEventListener("error", handleError);
+    };
+
+    const resolveWhenReady = () => {
+      if (settled) {
+        return;
+      }
+      if (getCaptchaApi(provider)) {
+        settled = true;
+        cleanup();
+        resolve();
+        return;
+      }
+      window.setTimeout(resolveWhenReady, 50);
+    };
+
+    const handleLoad = () => {
+      resolveWhenReady();
+    };
+
+    const handleError = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      captchaScriptPromises.delete(provider);
+      reject(new Error(`Failed to load captcha script for provider "${provider}".`));
+    };
+
+    if (getCaptchaApi(provider)) {
+      settled = true;
+      resolve();
+      return;
+    }
+
+    script?.addEventListener("load", handleLoad);
+    script?.addEventListener("error", handleError);
+  });
+
+  captchaScriptPromises.set(provider, promise);
+  return promise;
 }
 
 export function isCaptchaConfigured() {
@@ -70,6 +127,7 @@ export function CaptchaWidget({
   const containerId = useId().replace(/:/g, "_");
   const widgetIdRef = useRef<string | null>(null);
   const renderedRef = useRef(false);
+  const onTokenChangeRef = useRef(onTokenChange);
   const [isLoading, setIsLoading] = useState(!isCaptchaConfigured());
   const [config, setConfig] = useState(() => ({
     provider: readCaptchaProvider(),
@@ -94,36 +152,45 @@ export function CaptchaWidget({
   }, []);
 
   useEffect(() => {
+    onTokenChangeRef.current = onTokenChange;
+  }, [onTokenChange]);
+
+  useEffect(() => {
     const provider = config.provider;
     const siteKey = config.siteKey;
     if (!siteKey) {
-      onTokenChange("");
+      onTokenChangeRef.current("");
       return;
     }
 
-    ensureCaptchaScript(provider);
     let active = true;
     const mountWidget = () => {
-      if (!active || renderedRef.current) return;
+      if (!active || renderedRef.current) {
+        return;
+      }
       const api = getCaptchaApi(provider);
       const element = document.getElementById(containerId);
-      if (!api || !element) return;
+      if (!api || !element) {
+        return;
+      }
       renderedRef.current = true;
       widgetIdRef.current = api.render(element, {
         sitekey: siteKey,
         theme: "dark",
-        callback: (token) => onTokenChange(token),
-        "expired-callback": () => onTokenChange(""),
-        "error-callback": () => onTokenChange("")
+        callback: (token) => onTokenChangeRef.current(token),
+        "expired-callback": () => onTokenChangeRef.current(""),
+        "error-callback": () => onTokenChangeRef.current("")
       });
     };
 
-    mountWidget();
-    const intervalId = window.setInterval(mountWidget, 200);
+    void ensureCaptchaScript(provider).then(() => {
+      mountWidget();
+    }).catch(() => {
+      onTokenChangeRef.current("");
+    });
 
     return () => {
       active = false;
-      window.clearInterval(intervalId);
       const api = getCaptchaApi(provider);
       if (api && widgetIdRef.current) {
         api.remove(widgetIdRef.current);
@@ -131,14 +198,14 @@ export function CaptchaWidget({
       widgetIdRef.current = null;
       renderedRef.current = false;
     };
-  }, [config.provider, config.siteKey, containerId, onTokenChange]);
+  }, [config.provider, config.siteKey, containerId]);
 
   useEffect(() => {
-    const api = getCaptchaApi(readCaptchaProvider());
+    const api = getCaptchaApi(config.provider);
     if (!api || !widgetIdRef.current) return;
-    onTokenChange("");
+    onTokenChangeRef.current("");
     api.reset(widgetIdRef.current);
-  }, [onTokenChange, resetNonce]);
+  }, [config.provider, resetNonce]);
 
   if (isLoading) {
     return null;

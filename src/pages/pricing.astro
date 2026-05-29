@@ -33,22 +33,12 @@ const pricingJsonLd = {
         <span class="eyebrow">{pricingContent.eyebrow}</span>
         <h1 class="page-title">{pricingContent.title}</h1>
         <p class="page-copy">{pricingContent.intro}</p>
-        <div class="button-row">
-          <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
-          <Button href="https://dash.eventsgateway.com/login" variant="secondary" icon="arrow-right">Open Dashboard</Button>
-          <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
-        </div>
       </div>
     </Container>
   </section>
 
   <section class="section section--tight">
     <Container>
-      <SectionHeader
-        eyebrow="Plans"
-        title="Simple pricing from the first tracked event."
-        description="Start free, keep costs predictable as volume grows, and upgrade only when your team needs more support."
-      />
       <div class="card-grid">
         {
           pricingContent.plans.map((plan) => (

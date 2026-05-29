@@ -27,18 +27,11 @@ const compareLinks = [
     href: `/compare/${slug}/`
   }))
 ] as Array<{ label: string; href: string }>;
-const integrationsLinks = [
-  { label: "Integrations Home", href: "/integrations/" },
-  ...integrationsContent.items.map((item) => ({
-    label: item.label,
-    href: `/integrations/${item.slug}/`
-  }))
-] as Array<{ label: string; href: string }>;
 const integrationGroups = [
   {
     label: "Official Managed Components",
     items: integrationsContent.items
-      .filter((item) => item.group === "Official Managed Components")
+      .filter((item) => (item as any).group === "Official Managed Components")
       .map((item) => ({
         label: item.label,
         href: `/integrations/${item.slug}/`
@@ -47,7 +40,7 @@ const integrationGroups = [
   {
     label: "Community Managed Components",
     items: integrationsContent.items
-      .filter((item) => item.group === "Community Managed Components")
+      .filter((item) => (item as any).group === "Community Managed Components")
       .map((item) => ({
         label: item.label,
         href: `/integrations/${item.slug}/`

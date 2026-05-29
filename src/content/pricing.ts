@@ -34,7 +34,7 @@ export const pricingContent = {
       name: "Enterprise",
       price: "$1,995+",
       cadence: "/ month",
-      highlight: "For large-volume, multi-team, or custom support needs",
+      highlight: "For large-volume, multi-team or support",
       features: [
         "Support for advanced Meta signal strategy and performance measurement programs",
         "Enterprise onboarding and architecture support",
