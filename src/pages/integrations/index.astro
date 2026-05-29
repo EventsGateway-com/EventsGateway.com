@@ -18,7 +18,7 @@ import { integrationsContent } from "../../content/integrations";
         <span class="eyebrow">{integrationsContent.eyebrow}</span>
         <h1 class="page-title">{integrationsContent.title}</h1>
         <p class="page-copy">{integrationsContent.intro}</p>
-        <p class="page-copy">Browse {integrationsContent.items.length} integrations in one product catalog.</p>
+        <p class="page-copy">Browse {integrationsContent.items.length} integrations built to improve signal quality, reduce reporting drift, and keep launch work lighter.</p>
         <div class="button-row">
           <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
           <Button href="/contact/" variant="secondary" icon="mail">Talk to us</Button>
@@ -31,14 +31,14 @@ import { integrationsContent } from "../../content/integrations";
     <Container>
       <SectionHeader
         eyebrow="Available Integrations"
-        title="Choose the destinations that matter for your setup."
-        description="Every integration follows the same goal: cleaner events, less duplicated tracking, and one reusable routing layer across the rest of your stack."
+        title="Choose the destinations that unlock better data, not more setup."
+        description="Every integration is built to help you launch faster, reduce duplicate tagging, and keep every team working from the same conversion truth."
       />
       <div class="card-grid">
         {
           integrationsContent.items.map((item) => (
             <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={item.label} text={item.summary}>
-              <Button href={`/integrations/${item.slug}/`} variant="secondary" icon="arrow-right">Open integration</Button>
+              <Button href={`/integrations/${item.slug}/`} variant="secondary" icon="arrow-right">See use cases</Button>
             </PremiumCard>
           ))
         }
@@ -51,10 +51,10 @@ import { integrationsContent } from "../../content/integrations";
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
           <span class="eyebrow">Next Step</span>
-          <h2 class="section-title">Use one cleaner event stream across every important destination.</h2>
+          <h2 class="section-title">Stop rebuilding the same tracking logic for every destination.</h2>
           <p class="section-copy">
-            EVENTS Gateway helps marketers stop rebuilding the same purchase and lead tracking logic for every ad,
-            analytics, and reporting tool.
+            EVENTS Gateway helps your team collect once, route everywhere, and keep ads, analytics, CRM, and reporting
+            closer to the same clean conversion truth.
           </p>
           <div class="button-row">
             <Button href="/pricing/" variant="primary" icon="arrow-right">Open pricing</Button>

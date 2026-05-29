@@ -45,8 +45,8 @@ const { item } = Astro.props as {
     <Container>
       <SectionHeader
         eyebrow="Why It Matters"
-        title={`Why marketers use EVENTS Gateway for ${item.label}?`}
-        description="The goal is simple: cleaner data, better optimization inputs, and less wasted spend caused by fragmented tracking."
+        title={`Why teams connect ${item.label} through EVENTS Gateway`}
+        description="The value is practical: cleaner data, fewer mismatched numbers, and better optimization inputs without rebuilding tracking from scratch."
       />
       <div class="card-grid">
         {item.points.map((point) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={item.label} text={point} />)}
@@ -58,8 +58,8 @@ const { item } = Astro.props as {
     <Container>
       <SectionHeader
         eyebrow="Use Cases"
-        title="Where this integration helps most."
-        description="These are common situations where one cleaner event stream makes campaign tracking easier to trust."
+        title="Where this integration creates the biggest lift"
+        description="These are the situations where one shared event model usually saves the most time and prevents the most reporting drift."
       />
       <div class="card-grid">
         {item.useCases.map((point) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={item.label} text={point} />)}
@@ -72,10 +72,10 @@ const { item } = Astro.props as {
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
           <span class="eyebrow">Next Step</span>
-          <h2 class="section-title">Connect this integration without rebuilding tracking from scratch.</h2>
+          <h2 class="section-title">Connect this destination without multiplying tracking complexity.</h2>
           <p class="section-copy">
-            EVENTS Gateway lets your team keep one cleaner event setup while sending the same conversion truth to the
-            platforms that matter most.
+            EVENTS Gateway lets your team keep one cleaner event setup while sending the same lead, purchase, and
+            lifecycle truth to the platforms that matter most.
           </p>
           <div class="button-row">
             <Button href="/pricing/" variant="primary" icon="arrow-right">Open pricing</Button>
