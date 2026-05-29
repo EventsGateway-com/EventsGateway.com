@@ -18,6 +18,7 @@ const queryClient = new QueryClient({
 function FloatingFieldManager() {
   useEffect(() => {
     const cleanupCallbacks: Array<() => void> = [];
+    const syncCallbacks: Array<() => void> = [];
 
     const bindField = (field: Element) => {
       if (!(field instanceof HTMLElement) || field.dataset.floatingReady === "true") {
@@ -64,18 +65,24 @@ function FloatingFieldManager() {
         field.classList.remove("is-active");
         syncState();
       };
+      const handleAnimationStart = () => {
+        syncState();
+      };
 
       syncState();
       control.addEventListener("input", syncState);
       control.addEventListener("change", syncState);
       control.addEventListener("focus", handleFocus);
       control.addEventListener("blur", handleBlur);
+      control.addEventListener("animationstart", handleAnimationStart);
+      syncCallbacks.push(syncState);
 
       cleanupCallbacks.push(() => {
         control.removeEventListener("input", syncState);
         control.removeEventListener("change", syncState);
         control.removeEventListener("focus", handleFocus);
         control.removeEventListener("blur", handleBlur);
+        control.removeEventListener("animationstart", handleAnimationStart);
       });
     };
 
@@ -84,9 +91,13 @@ function FloatingFieldManager() {
     };
 
     scanFields();
+    const delayedSyncTimers = [0, 150, 400, 900].map((delay) => window.setTimeout(() => {
+      syncCallbacks.forEach((callback) => callback());
+    }, delay));
 
     const observer = new MutationObserver(() => {
       scanFields();
+      syncCallbacks.forEach((callback) => callback());
     });
 
     observer.observe(document.body, {
@@ -96,6 +107,7 @@ function FloatingFieldManager() {
 
     return () => {
       observer.disconnect();
+      delayedSyncTimers.forEach((timer) => window.clearTimeout(timer));
       cleanupCallbacks.forEach((cleanup) => cleanup());
     };
   }, []);

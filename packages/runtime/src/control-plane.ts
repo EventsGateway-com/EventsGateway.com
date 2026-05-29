@@ -66,6 +66,56 @@ export type SiteKey = {
   last_used_at: string | null;
 };
 
+export type SiteMemberRole = "admin" | "user";
+export type SiteMembershipStatus = "active" | "revoked";
+export type SiteInviteStatus = "pending" | "accepted" | "revoked" | "expired";
+
+export type SiteMembershipRecord = {
+  id: string;
+  site_id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  role: SiteMemberRole;
+  status: SiteMembershipStatus;
+  invited_by_user_id: string | null;
+  invited_by_name: string | null;
+  created_at: string;
+  updated_at: string;
+  joined_at: string;
+  last_login_at: string | null;
+};
+
+export type SiteInviteRecord = {
+  id: string;
+  site_id: string;
+  email: string;
+  invited_name: string | null;
+  role: SiteMemberRole;
+  status: SiteInviteStatus;
+  invited_by_user_id: string;
+  invited_by_name: string | null;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+  accepted_by_user_id: string | null;
+  revoked_at: string | null;
+};
+
+export type SiteAccess = {
+  site_id: string;
+  user_id: string;
+  role: SiteMemberRole;
+  is_global_admin: boolean;
+};
+
+export type SiteMembersPayload = {
+  site: DashboardSite;
+  current_membership: SiteAccess;
+  members: SiteMembershipRecord[];
+  invites: SiteInviteRecord[];
+};
+
 export type SiteDestinationKind =
   | "meta"
   | "ga4"
@@ -199,6 +249,7 @@ const DEFAULT_PROJECT_ID = "project_gateway";
 const DEFAULT_PROJECT_NAME = "Events Core";
 const DEFAULT_ENVIRONMENT = "production";
 const PASSWORD_RESET_TTL_MS = 1000 * 60 * 60;
+const SITE_INVITE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 const DEFAULT_PASSWORD_RESET_BASE_URL = "https://dash.eventsgateway.com/reset-password";
 const DEFAULT_DASHBOARD_URL = "https://dash.eventsgateway.com";
 
@@ -624,6 +675,27 @@ function toDashboardUserStatus(value: unknown): DashboardUserStatus {
   return value === "blocked" ? "blocked" : "active";
 }
 
+function toSiteMemberRole(value: unknown): SiteMemberRole {
+  return value === "admin" ? "admin" : "user";
+}
+
+function toSiteMembershipStatus(value: unknown): SiteMembershipStatus {
+  return value === "revoked" ? "revoked" : "active";
+}
+
+function toSiteInviteStatus(value: unknown): SiteInviteStatus {
+  switch (asString(value)) {
+    case "accepted":
+      return "accepted";
+    case "revoked":
+      return "revoked";
+    case "expired":
+      return "expired";
+    default:
+      return "pending";
+  }
+}
+
 function toDashboardUser(record: DatabaseRecord): DashboardUser {
   return {
     id: asString(record.id),
@@ -672,6 +744,46 @@ function toSiteKey(record: DatabaseRecord): SiteKey {
     status: asString(record.status),
     created_at: asString(record.created_at),
     last_used_at: typeof record.last_used_at === "string" ? record.last_used_at : null
+  };
+}
+
+function toSiteMembershipRecord(record: DatabaseRecord): SiteMembershipRecord {
+  return {
+    id: asString(record.id),
+    site_id: asString(record.site_id),
+    user_id: asString(record.user_id),
+    name: asString(record.name),
+    email: asString(record.email),
+    role: toSiteMemberRole(record.role),
+    status: toSiteMembershipStatus(record.status),
+    invited_by_user_id: asNullableString(record.invited_by_user_id),
+    invited_by_name: asNullableString(record.invited_by_name),
+    created_at: asString(record.created_at),
+    updated_at: asString(record.updated_at),
+    joined_at: asString(record.joined_at),
+    last_login_at: asNullableString(record.last_login_at)
+  };
+}
+
+function toSiteInviteRecord(record: DatabaseRecord): SiteInviteRecord {
+  const expiresAt = asString(record.expires_at);
+  const baseStatus = toSiteInviteStatus(record.status);
+  const effectiveStatus = baseStatus === "pending" && Date.parse(expiresAt) <= Date.now() ? "expired" : baseStatus;
+
+  return {
+    id: asString(record.id),
+    site_id: asString(record.site_id),
+    email: asString(record.email),
+    invited_name: asNullableString(record.invited_name),
+    role: toSiteMemberRole(record.role),
+    status: effectiveStatus,
+    invited_by_user_id: asString(record.invited_by_user_id),
+    invited_by_name: asNullableString(record.invited_by_name),
+    created_at: asString(record.created_at),
+    expires_at: expiresAt,
+    accepted_at: asNullableString(record.accepted_at),
+    accepted_by_user_id: asNullableString(record.accepted_by_user_id),
+    revoked_at: asNullableString(record.revoked_at)
   };
 }
 
@@ -1091,6 +1203,93 @@ async function ensurePasswordResetTable(db: DatabaseBinding) {
   ).run();
 }
 
+async function ensureSiteMembershipTables(db: DatabaseBinding) {
+  await db.prepare(
+    `
+      CREATE TABLE IF NOT EXISTS site_memberships (
+        id TEXT PRIMARY KEY,
+        site_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
+        status TEXT NOT NULL DEFAULT 'active',
+        invited_by_user_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        joined_at TEXT NOT NULL,
+        UNIQUE (site_id, user_id)
+      )
+    `
+  ).run();
+
+  await db.prepare(
+    `
+      CREATE TABLE IF NOT EXISTS site_invites (
+        id TEXT PRIMARY KEY,
+        site_id TEXT NOT NULL,
+        email TEXT NOT NULL,
+        invited_name TEXT,
+        role TEXT NOT NULL DEFAULT 'user',
+        status TEXT NOT NULL DEFAULT 'pending',
+        token_hash TEXT NOT NULL UNIQUE,
+        invited_by_user_id TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        accepted_at TEXT,
+        accepted_by_user_id TEXT,
+        revoked_at TEXT
+      )
+    `
+  ).run();
+}
+
+async function ensureDefaultSiteMemberships(db: DatabaseBinding) {
+  const defaultSite = await firstRecord(db, "SELECT id FROM sites WHERE id = ? LIMIT 1", DEFAULT_SITE_ID);
+  if (!defaultSite) {
+    return;
+  }
+
+  const users = await allRecords(
+    db,
+    `
+      SELECT id, role
+      FROM dashboard_users
+    `
+  );
+
+  for (const user of users) {
+    const existingMembership = await firstRecord(
+      db,
+      "SELECT id FROM site_memberships WHERE site_id = ? AND user_id = ? LIMIT 1",
+      DEFAULT_SITE_ID,
+      asString(user.id)
+    );
+    if (existingMembership) {
+      continue;
+    }
+
+    const now = nowIso();
+    await db.prepare(
+      `
+        INSERT INTO site_memberships (
+          id, site_id, user_id, role, status, invited_by_user_id, created_at, updated_at, joined_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `
+    )
+      .bind(
+        crypto.randomUUID(),
+        DEFAULT_SITE_ID,
+        asString(user.id),
+        toDashboardUserRole(user.role) === "global_admin" ? "admin" : "user",
+        "active",
+        null,
+        now,
+        now,
+        now
+      )
+      .run();
+  }
+}
+
 async function ensureDestinationsTable(db: DatabaseBinding) {
   await db.prepare(
     `
@@ -1298,9 +1497,11 @@ export async function ensureControlPlane(dbInput?: DatabaseBinding) {
       ensureDashboardUsersTableColumns(db),
       ensureOperationsTables(db),
       ensurePasswordResetTable(db),
+      ensureSiteMembershipTables(db),
       ensureDestinationsTable(db),
       ensureRoutingTables(db)
     ])
+      .then(() => ensureDefaultSiteMemberships(db))
       .then(() => seedControlPlaneRouting(db))
       .then(() => undefined);
   }
@@ -1407,6 +1608,45 @@ async function sendWelcomeEmail(
       ctaUrl: dashboardLoginUrl,
       note: "Keep this email for quick access. If you ever lose your password, you can request a secure reset from the dashboard login page.",
       closing: "We are glad to have you building with EventsGateway."
+    })
+  });
+}
+
+async function sendSiteInviteEmail(
+  env: Pick<EnvironmentBindings, "BREVO_API_KEY" | "BREVO_SENDER_EMAIL" | "PASSWORD_RESET_BASE_URL">,
+  input: {
+    email: string;
+    invited_name: string;
+    inviter_name: string;
+    site_name: string;
+    role: SiteMemberRole;
+    token: string;
+  }
+) {
+  const inviteUrl = resolveDashboardUrl(
+    `/accept-invite?token=${encodeURIComponent(input.token)}`,
+    env.PASSWORD_RESET_BASE_URL?.trim() || DEFAULT_PASSWORD_RESET_BASE_URL
+  );
+  const roleLabel = input.role === "admin" ? "admin" : "user";
+
+  await sendBrevoEmail(env, {
+    email: input.email,
+    name: input.invited_name,
+    subject: `You were invited to ${input.site_name} on EventsGateway`,
+    template: renderTransactionalEmail({
+      preheader: `Join ${input.site_name} on EventsGateway and activate your access.`,
+      eyebrow: "Workspace invitation",
+      heading: "You have been invited",
+      greeting: `Hello ${input.invited_name || "there"},`,
+      paragraphs: [
+        `${input.inviter_name} invited you to join ${input.site_name} on EventsGateway.`,
+        `Your access will be created with the ${roleLabel} role for this site.`,
+        "Use the secure button below to accept the invitation and finish account access."
+      ],
+      ctaLabel: "Accept invitation",
+      ctaUrl: inviteUrl,
+      note: "This invitation expires in 7 days. If you already have an account for this email address, confirm your current password on the invitation page.",
+      closing: "We are ready when you are."
     })
   });
 }
@@ -1816,6 +2056,26 @@ export async function createUserSession(
     .bind(userId, name, email, await sha256Hex(password), role, "active", createdAt, createdAt)
     .run();
 
+  await db.prepare(
+    `
+      INSERT INTO site_memberships (
+        id, site_id, user_id, role, status, invited_by_user_id, created_at, updated_at, joined_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      crypto.randomUUID(),
+      DEFAULT_SITE_ID,
+      userId,
+      role === "global_admin" ? "admin" : "user",
+      "active",
+      null,
+      createdAt,
+      createdAt,
+      createdAt
+    )
+    .run();
+
   try {
     await sendWelcomeEmail(env, {
       email,
@@ -1823,6 +2083,7 @@ export async function createUserSession(
       role
     });
   } catch (error) {
+    await db.prepare("DELETE FROM site_memberships WHERE user_id = ? AND site_id = ?").bind(userId, DEFAULT_SITE_ID).run();
     await db.prepare("DELETE FROM dashboard_users WHERE id = ?").bind(userId).run();
     throw error;
   }
@@ -2106,6 +2367,659 @@ export async function getDefaultSite(dbInput: DatabaseBinding | undefined) {
   }
 
   return toDashboardSite(site);
+}
+
+async function countSiteAdmins(db: DatabaseBinding, siteId: string) {
+  return countRecords(
+    db,
+    "SELECT COUNT(*) AS count FROM site_memberships WHERE site_id = ? AND status = 'active' AND role = 'admin'",
+    siteId
+  );
+}
+
+export async function getSiteAccess(
+  dbInput: DatabaseBinding | undefined,
+  userId: string,
+  siteId: string
+): Promise<SiteAccess | null> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const user = await firstRecord(
+    db,
+    `
+      SELECT id, role, status
+      FROM dashboard_users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    userId
+  );
+  if (!user || toDashboardUserStatus(user.status) !== "active") {
+    return null;
+  }
+
+  if (toDashboardUserRole(user.role) === "global_admin") {
+    return {
+      site_id: siteId,
+      user_id: userId,
+      role: "admin",
+      is_global_admin: true
+    };
+  }
+
+  const membership = await firstRecord(
+    db,
+    `
+      SELECT site_id, user_id, role
+      FROM site_memberships
+      WHERE site_id = ? AND user_id = ? AND status = 'active'
+      LIMIT 1
+    `,
+    siteId,
+    userId
+  );
+  if (!membership) {
+    return null;
+  }
+
+  return {
+    site_id: asString(membership.site_id),
+    user_id: asString(membership.user_id),
+    role: toSiteMemberRole(membership.role),
+    is_global_admin: false
+  };
+}
+
+export async function getSiteMembersPayload(
+  dbInput: DatabaseBinding | undefined,
+  actorUserId: string,
+  siteId: string
+): Promise<SiteMembersPayload> {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const siteRecord = await firstRecord(
+    db,
+    `
+      SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at
+      FROM sites
+      WHERE id = ?
+      LIMIT 1
+    `,
+    siteId
+  );
+  if (!siteRecord) {
+    throw new Error("Site not found.");
+  }
+
+  const currentMembership = await getSiteAccess(db, actorUserId, siteId);
+  if (!currentMembership) {
+    throw new Error("You do not have access to this site.");
+  }
+
+  const [memberRecords, inviteRecords] = await Promise.all([
+    allRecords(
+      db,
+      `
+        SELECT
+          m.id,
+          m.site_id,
+          m.user_id,
+          m.role,
+          m.status,
+          m.invited_by_user_id,
+          m.created_at,
+          m.updated_at,
+          m.joined_at,
+          u.name,
+          u.email,
+          u.last_login_at,
+          inviter.name AS invited_by_name
+        FROM site_memberships m
+        INNER JOIN dashboard_users u ON u.id = m.user_id
+        LEFT JOIN dashboard_users inviter ON inviter.id = m.invited_by_user_id
+        WHERE m.site_id = ? AND m.status = 'active'
+        ORDER BY
+          CASE WHEN m.role = 'admin' THEN 0 ELSE 1 END,
+          u.name ASC,
+          u.email ASC
+      `,
+      siteId
+    ),
+    allRecords(
+      db,
+      `
+        SELECT
+          i.id,
+          i.site_id,
+          i.email,
+          i.invited_name,
+          i.role,
+          i.status,
+          i.invited_by_user_id,
+          i.created_at,
+          i.expires_at,
+          i.accepted_at,
+          i.accepted_by_user_id,
+          i.revoked_at,
+          inviter.name AS invited_by_name
+        FROM site_invites i
+        LEFT JOIN dashboard_users inviter ON inviter.id = i.invited_by_user_id
+        WHERE i.site_id = ?
+        ORDER BY i.created_at DESC, i.email ASC
+      `,
+      siteId
+    )
+  ]);
+
+  return {
+    site: toDashboardSite(siteRecord),
+    current_membership: currentMembership,
+    members: memberRecords.map(toSiteMembershipRecord),
+    invites: inviteRecords.map(toSiteInviteRecord)
+  };
+}
+
+export async function createSiteInvite(
+  dbInput: DatabaseBinding | undefined,
+  env: Pick<EnvironmentBindings, "BREVO_API_KEY" | "BREVO_SENDER_EMAIL" | "PASSWORD_RESET_BASE_URL">,
+  actorUserId: string,
+  siteId: string,
+  input: { email: string; invited_name?: string; role?: SiteMemberRole }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const currentMembership = await getSiteAccess(db, actorUserId, siteId);
+  if (!currentMembership) {
+    throw new Error("You do not have access to this site.");
+  }
+
+  const siteRecord = await firstRecord(db, "SELECT id, name FROM sites WHERE id = ? LIMIT 1", siteId);
+  if (!siteRecord) {
+    throw new Error("Site not found.");
+  }
+
+  const inviterRecord = await firstRecord(db, "SELECT name FROM dashboard_users WHERE id = ? LIMIT 1", actorUserId);
+  const email = normalizeEmail(input.email);
+  const invitedName = (input.invited_name ?? "").trim();
+  const role = toSiteMemberRole(input.role);
+
+  if (!email.includes("@")) {
+    throw new Error("Enter a valid email address.");
+  }
+
+  const existingMembership = await firstRecord(
+    db,
+    `
+      SELECT m.id
+      FROM site_memberships m
+      INNER JOIN dashboard_users u ON u.id = m.user_id
+      WHERE m.site_id = ? AND m.status = 'active' AND u.email = ?
+      LIMIT 1
+    `,
+    siteId,
+    email
+  );
+  if (existingMembership) {
+    throw new Error("This user already has access to the site.");
+  }
+
+  const existingUser = await firstRecord(
+    db,
+    `
+      SELECT id, status
+      FROM dashboard_users
+      WHERE email = ?
+      LIMIT 1
+    `,
+    email
+  );
+  if (existingUser && toDashboardUserStatus(existingUser.status) === "blocked") {
+    throw new Error("This account is blocked.");
+  }
+
+  const createdAt = nowIso();
+  const expiresAt = new Date(Date.now() + SITE_INVITE_TTL_MS).toISOString();
+  const token = createPasswordResetToken();
+  const inviteId = crypto.randomUUID();
+  const tokenHash = await sha256Hex(token);
+
+  await db.prepare(
+    `
+      UPDATE site_invites
+      SET status = 'revoked', revoked_at = ?
+      WHERE site_id = ? AND email = ? AND status = 'pending'
+    `
+  )
+    .bind(createdAt, siteId, email)
+    .run();
+
+  await db.prepare(
+    `
+      INSERT INTO site_invites (
+        id, site_id, email, invited_name, role, status, token_hash, invited_by_user_id, created_at, expires_at, accepted_at, accepted_by_user_id, revoked_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  )
+    .bind(
+      inviteId,
+      siteId,
+      email,
+      invitedName || null,
+      role,
+      "pending",
+      tokenHash,
+      actorUserId,
+      createdAt,
+      expiresAt,
+      null,
+      null,
+      null
+    )
+    .run();
+
+  try {
+    await sendSiteInviteEmail(env, {
+      email,
+      invited_name: invitedName || email,
+      inviter_name: asString(inviterRecord?.name) || "A teammate",
+      site_name: asString(siteRecord.name) || "your site",
+      role,
+      token
+    });
+  } catch (error) {
+    await db.prepare("DELETE FROM site_invites WHERE id = ?").bind(inviteId).run();
+    throw error;
+  }
+
+  const inviteRecord = await firstRecord(
+    db,
+    `
+      SELECT
+        i.id,
+        i.site_id,
+        i.email,
+        i.invited_name,
+        i.role,
+        i.status,
+        i.invited_by_user_id,
+        i.created_at,
+        i.expires_at,
+        i.accepted_at,
+        i.accepted_by_user_id,
+        i.revoked_at,
+        inviter.name AS invited_by_name
+      FROM site_invites i
+      LEFT JOIN dashboard_users inviter ON inviter.id = i.invited_by_user_id
+      WHERE i.id = ?
+      LIMIT 1
+    `,
+    inviteId
+  );
+  if (!inviteRecord) {
+    throw new Error("Invite not found after creation.");
+  }
+
+  return toSiteInviteRecord(inviteRecord);
+}
+
+export async function updateSiteMembershipRole(
+  dbInput: DatabaseBinding | undefined,
+  actorUserId: string,
+  siteId: string,
+  membershipId: string,
+  nextRole: SiteMemberRole
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const currentMembership = await getSiteAccess(db, actorUserId, siteId);
+  if (!currentMembership || (!currentMembership.is_global_admin && currentMembership.role !== "admin")) {
+    throw new Error("Site admin access is required.");
+  }
+
+  const membership = await firstRecord(
+    db,
+    `
+      SELECT id, user_id, role, status
+      FROM site_memberships
+      WHERE id = ? AND site_id = ?
+      LIMIT 1
+    `,
+    membershipId,
+    siteId
+  );
+  if (!membership || toSiteMembershipStatus(membership.status) !== "active") {
+    throw new Error("Membership not found.");
+  }
+
+  const role = toSiteMemberRole(nextRole);
+  const currentRole = toSiteMemberRole(membership.role);
+  if (currentRole === "admin" && role !== "admin") {
+    const adminCount = await countSiteAdmins(db, siteId);
+    if (adminCount <= 1) {
+      throw new Error("At least one site admin must remain.");
+    }
+  }
+
+  if (
+    asString(membership.user_id) === actorUserId &&
+    currentMembership.role === "admin" &&
+    !currentMembership.is_global_admin &&
+    role !== "admin"
+  ) {
+    throw new Error("You cannot remove your own site admin role.");
+  }
+
+  await db.prepare(
+    "UPDATE site_memberships SET role = ?, updated_at = ? WHERE id = ? AND site_id = ?"
+  )
+    .bind(role, nowIso(), membershipId, siteId)
+    .run();
+
+  const updated = await firstRecord(
+    db,
+    `
+      SELECT
+        m.id,
+        m.site_id,
+        m.user_id,
+        m.role,
+        m.status,
+        m.invited_by_user_id,
+        m.created_at,
+        m.updated_at,
+        m.joined_at,
+        u.name,
+        u.email,
+        u.last_login_at,
+        inviter.name AS invited_by_name
+      FROM site_memberships m
+      INNER JOIN dashboard_users u ON u.id = m.user_id
+      LEFT JOIN dashboard_users inviter ON inviter.id = m.invited_by_user_id
+      WHERE m.id = ? AND m.site_id = ?
+      LIMIT 1
+    `,
+    membershipId,
+    siteId
+  );
+  if (!updated) {
+    throw new Error("Membership not found after update.");
+  }
+
+  return toSiteMembershipRecord(updated);
+}
+
+export async function deleteSiteMembership(
+  dbInput: DatabaseBinding | undefined,
+  actorUserId: string,
+  siteId: string,
+  membershipId: string
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const currentMembership = await getSiteAccess(db, actorUserId, siteId);
+  if (!currentMembership || (!currentMembership.is_global_admin && currentMembership.role !== "admin")) {
+    throw new Error("Site admin access is required.");
+  }
+
+  const membership = await firstRecord(
+    db,
+    `
+      SELECT id, user_id, role, status
+      FROM site_memberships
+      WHERE id = ? AND site_id = ?
+      LIMIT 1
+    `,
+    membershipId,
+    siteId
+  );
+  if (!membership || toSiteMembershipStatus(membership.status) !== "active") {
+    return false;
+  }
+
+  if (asString(membership.user_id) === actorUserId && !currentMembership.is_global_admin) {
+    throw new Error("You cannot remove your own access.");
+  }
+
+  if (toSiteMemberRole(membership.role) === "admin") {
+    const adminCount = await countSiteAdmins(db, siteId);
+    if (adminCount <= 1) {
+      throw new Error("At least one site admin must remain.");
+    }
+  }
+
+  await db.prepare("DELETE FROM site_memberships WHERE id = ? AND site_id = ?").bind(membershipId, siteId).run();
+  return true;
+}
+
+export async function revokeSiteInvite(
+  dbInput: DatabaseBinding | undefined,
+  actorUserId: string,
+  siteId: string,
+  inviteId: string
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const currentMembership = await getSiteAccess(db, actorUserId, siteId);
+  if (!currentMembership || (!currentMembership.is_global_admin && currentMembership.role !== "admin")) {
+    throw new Error("Site admin access is required.");
+  }
+
+  const invite = await firstRecord(
+    db,
+    `
+      SELECT id, status
+      FROM site_invites
+      WHERE id = ? AND site_id = ?
+      LIMIT 1
+    `,
+    inviteId,
+    siteId
+  );
+  if (!invite) {
+    return false;
+  }
+
+  if (toSiteInviteStatus(invite.status) !== "pending") {
+    return false;
+  }
+
+  await db.prepare(
+    "UPDATE site_invites SET status = 'revoked', revoked_at = ? WHERE id = ? AND site_id = ?"
+  )
+    .bind(nowIso(), inviteId, siteId)
+    .run();
+  return true;
+}
+
+export async function acceptSiteInvite(
+  dbInput: DatabaseBinding | undefined,
+  input: { token: string; name?: string; password: string }
+) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+
+  const token = input.token.trim();
+  const password = input.password;
+  const name = (input.name ?? "").trim();
+
+  if (!token) {
+    throw new Error("The invite link is missing a token.");
+  }
+  if (password.length < 8) {
+    throw new Error("Password must contain at least 8 characters.");
+  }
+
+  const invite = await firstRecord(
+    db,
+    `
+      SELECT
+        i.id,
+        i.site_id,
+        i.email,
+        i.invited_name,
+        i.role,
+        i.status,
+        i.invited_by_user_id,
+        i.created_at,
+        i.expires_at,
+        i.accepted_at,
+        i.accepted_by_user_id,
+        i.revoked_at
+      FROM site_invites i
+      WHERE i.token_hash = ?
+      LIMIT 1
+    `,
+    await sha256Hex(token)
+  );
+  if (!invite) {
+    throw new Error("This invite is invalid or expired.");
+  }
+
+  if (toSiteInviteStatus(invite.status) !== "pending") {
+    throw new Error("This invite is no longer active.");
+  }
+  if (Date.parse(asString(invite.expires_at)) <= Date.now()) {
+    await db.prepare("UPDATE site_invites SET status = 'expired' WHERE id = ?").bind(asString(invite.id)).run();
+    throw new Error("This invite is invalid or expired.");
+  }
+
+  const email = normalizeEmail(asString(invite.email));
+  let userRecord = await firstRecord(
+    db,
+    `
+      SELECT id, name, email, role, status, password_hash, created_at, last_login_at, password_changed_at
+      FROM dashboard_users
+      WHERE email = ?
+      LIMIT 1
+    `,
+    email
+  );
+
+  let userId = asString(userRecord?.id);
+  if (userRecord) {
+    if (toDashboardUserStatus(userRecord.status) === "blocked") {
+      throw new Error("This account is blocked.");
+    }
+    if (await sha256Hex(password) !== asString(userRecord.password_hash)) {
+      throw new Error("Enter the current password for this email to accept the invitation.");
+    }
+  } else {
+    const nextName = name || asString(invite.invited_name);
+    if (nextName.trim().length < 2) {
+      throw new Error("Name must contain at least 2 characters.");
+    }
+
+    const createdAt = nowIso();
+    userId = crypto.randomUUID();
+    const passwordHash = await sha256Hex(password);
+    await db.prepare(
+      `
+        INSERT INTO dashboard_users (
+          id,
+          name,
+          email,
+          password_hash,
+          role,
+          status,
+          created_at,
+          password_changed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `
+    )
+      .bind(userId, nextName, email, passwordHash, "member", "active", createdAt, createdAt)
+      .run();
+
+    userRecord = {
+      id: userId,
+      name: nextName,
+      email,
+      role: "member",
+      status: "active",
+      password_hash: passwordHash,
+      created_at: createdAt,
+      last_login_at: null,
+      password_changed_at: createdAt
+    };
+  }
+
+  const acceptedAt = nowIso();
+  const existingMembership = await firstRecord(
+    db,
+    `
+      SELECT id
+      FROM site_memberships
+      WHERE site_id = ? AND user_id = ?
+      LIMIT 1
+    `,
+    asString(invite.site_id),
+    userId
+  );
+
+  if (existingMembership) {
+    await db.prepare(
+      `
+        UPDATE site_memberships
+        SET role = ?, status = 'active', invited_by_user_id = ?, updated_at = ?, joined_at = ?
+        WHERE id = ?
+      `
+    )
+      .bind(
+        toSiteMemberRole(invite.role),
+        asNullableString(invite.invited_by_user_id),
+        acceptedAt,
+        acceptedAt,
+        asString(existingMembership.id)
+      )
+      .run();
+  } else {
+    await db.prepare(
+      `
+        INSERT INTO site_memberships (
+          id, site_id, user_id, role, status, invited_by_user_id, created_at, updated_at, joined_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `
+    )
+      .bind(
+        crypto.randomUUID(),
+        asString(invite.site_id),
+        userId,
+        toSiteMemberRole(invite.role),
+        "active",
+        asNullableString(invite.invited_by_user_id),
+        acceptedAt,
+        acceptedAt,
+        acceptedAt
+      )
+      .run();
+  }
+
+  await db.prepare(
+    `
+      UPDATE site_invites
+      SET status = 'accepted', accepted_at = ?, accepted_by_user_id = ?
+      WHERE id = ?
+    `
+  )
+    .bind(acceptedAt, userId, asString(invite.id))
+    .run();
+
+  await db.prepare(
+    `
+      UPDATE site_invites
+      SET status = 'revoked', revoked_at = ?
+      WHERE site_id = ? AND email = ? AND id != ? AND status = 'pending'
+    `
+  )
+    .bind(acceptedAt, asString(invite.site_id), email, asString(invite.id))
+    .run();
+
+  return createSession(db, userId, userRecord);
 }
 
 export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId: string): Promise<BootstrapPayload> {

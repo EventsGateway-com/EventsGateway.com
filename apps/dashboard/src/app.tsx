@@ -15,10 +15,12 @@ import {
   readCaptchaSiteKey,
   requestDashboardPasswordReset,
   resetDashboardPassword,
+  writeSessionToken,
   type CaptchaProvider,
   type DestinationCreateInput,
   type InstallWizardInput,
   type RouteUpdateInput,
+  type SiteMemberRole,
   type TagManagerConsentRule,
   type TagManagerData,
   type TagManagerScriptRule,
@@ -996,6 +998,102 @@ function ResetPasswordPage() {
 
         <button className="eg-button eg-button--primary" disabled={isSubmitting || !token} type="submit">
           {isSubmitting ? "Updating password..." : "Update password"}
+        </button>
+      </form>
+    </AuthShell>
+  );
+}
+
+function AcceptInvitePage() {
+  const { user } = useAuth();
+  const location = useLocation();
+  const token = useMemo(() => new URLSearchParams(location.search).get("token")?.trim() ?? "", [location.search]);
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (user) {
+    return <Navigate replace to={sitePath("overview")} />;
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    if (!token) {
+      setError("The invitation link is missing a token.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords must match.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await dashboardApi.acceptInvite({
+        token,
+        name: name.trim() || undefined,
+        password
+      });
+      writeSessionToken(result.session.token);
+      window.location.assign(sitePath("overview"));
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to accept invitation.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <AuthShell
+      title="Accept your invitation"
+      description="Create your access or confirm your current password to join this site on EventsGateway."
+      footer={
+        <>
+          <span>Already want to sign in?</span>
+          <NavLink className="eg-inline-link" to="/login">
+            Back to login
+          </NavLink>
+        </>
+      }
+    >
+      <form className="eg-auth-form" onSubmit={handleSubmit}>
+        <label className="eg-field">
+          <span>Name</span>
+          <input
+            autoComplete="name"
+            className="eg-input"
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Your full name"
+            type="text"
+            value={name}
+          />
+        </label>
+
+        <PasswordField
+          autoComplete="new-password"
+          label="Password"
+          onChange={setPassword}
+          placeholder="Use your current password if you already have an account"
+          value={password}
+        />
+
+        <PasswordField
+          autoComplete="new-password"
+          label="Confirm password"
+          onChange={setConfirmPassword}
+          placeholder="Repeat the password"
+          value={confirmPassword}
+        />
+
+        {!token ? <p className="eg-form-error">This invitation link is invalid.</p> : null}
+        {error ? <p className="eg-form-error">{error}</p> : null}
+
+        <button className="eg-button eg-button--primary" disabled={isSubmitting || !token} type="submit">
+          {isSubmitting ? "Accepting invitation..." : "Accept invitation"}
         </button>
       </form>
     </AuthShell>
@@ -3138,15 +3236,104 @@ function ApiKeysPage() {
 
 function MembersPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [inviteDraft, setInviteDraft] = useState({
+    email: "",
+    invited_name: "",
+    role: "user" as SiteMemberRole
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const membersQuery = useQuery({
+    queryKey: qk.members(currentContext.siteId),
+    queryFn: dashboardApi.fetchMembers
+  });
+  const refreshMembers = async () => {
+    await queryClient.invalidateQueries({ queryKey: qk.members(currentContext.siteId) });
+  };
+  const inviteMutation = useMutation({
+    mutationFn: (input: { email: string; invited_name?: string; role?: SiteMemberRole }) => dashboardApi.createInvite(input),
+    onSuccess: async () => {
+      setInviteDraft({ email: "", invited_name: "", role: "user" });
+      setError("");
+      setSuccess("Invitation sent successfully.");
+      setShowInviteForm(false);
+      await refreshMembers();
+    },
+    onError: (mutationError) => {
+      setSuccess("");
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to send the invitation.");
+    }
+  });
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: ({ membershipId, role }: { membershipId: string; role: SiteMemberRole }) =>
+      dashboardApi.updateMemberRole(membershipId, { role }),
+    onSuccess: async () => {
+      setError("");
+      setSuccess("Member role updated.");
+      await refreshMembers();
+    },
+    onError: (mutationError) => {
+      setSuccess("");
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to update the member role.");
+    }
+  });
+  const deleteMemberMutation = useMutation({
+    mutationFn: (membershipId: string) => dashboardApi.deleteMember(membershipId),
+    onSuccess: async () => {
+      setError("");
+      setSuccess("Member access removed.");
+      await refreshMembers();
+    },
+    onError: (mutationError) => {
+      setSuccess("");
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to remove member access.");
+    }
+  });
+  const revokeInviteMutation = useMutation({
+    mutationFn: (inviteId: string) => dashboardApi.revokeInvite(inviteId),
+    onSuccess: async () => {
+      setError("");
+      setSuccess("Invitation revoked.");
+      await refreshMembers();
+    },
+    onError: (mutationError) => {
+      setSuccess("");
+      setError(mutationError instanceof Error ? mutationError.message : "Unable to revoke invitation.");
+    }
+  });
+
+  function handleInviteSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    inviteMutation.mutate({
+      email: inviteDraft.email.trim(),
+      invited_name: inviteDraft.invited_name.trim() || undefined,
+      role: inviteDraft.role
+    });
+  }
+
+  const canManageMembers =
+    membersQuery.data?.current_membership.is_global_admin ||
+    membersQuery.data?.current_membership.role === "admin";
 
   return (
     <div className="eg-page">
       <PageIntro
         title="Members"
-        description="Current dashboard account and the access posture attached to this control plane."
+        description="Invite teammates, review active access, and manage who can work inside this site."
+        action={
+          <button className="eg-button eg-button--primary" onClick={() => setShowInviteForm((current) => !current)} type="button">
+            {showInviteForm ? "Close add user" : "Add user"}
+          </button>
+        }
       />
+      {success ? <p className="eg-form-success">{success}</p> : null}
+      {error ? <p className="eg-form-error">{error}</p> : null}
       <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Current operator" subtitle="Live account resolved from the D1-backed auth session">
+        <SurfaceCard title="Your access" subtitle="Current operator resolved from the active dashboard session">
           <div className="eg-list">
             <div className="eg-list__row">
               <div>
@@ -3154,21 +3341,152 @@ function MembersPage() {
                 <span>{user?.email ?? "No active email"}</span>
               </div>
               <div className="eg-inline-actions">
-                <StatusBadge status={user?.role === "global_admin" ? "healthy" : "pending"}>{user?.role ?? "member"}</StatusBadge>
+                <StatusBadge status={membersQuery.data?.current_membership.role === "admin" ? "healthy" : "pending"}>
+                  {membersQuery.data?.current_membership.role ?? "user"}
+                </StatusBadge>
                 <StatusBadge status={user?.status === "active" ? "healthy" : "warning"}>{user?.status ?? "active"}</StatusBadge>
               </div>
             </div>
           </div>
         </SurfaceCard>
 
-        <SurfaceCard title="Current team context" subtitle="Open source control plane baseline for this site">
+        <SurfaceCard title="Current site" subtitle="The active team context attached to this dashboard route">
           <div className="eg-stack">
-            <ActionLine title="Organization" text={currentContext.orgName} />
-            <ActionLine title="Project" text={currentContext.projectName} />
-            <ActionLine title="Site" text={currentContext.siteName} />
+            <ActionLine title="Organization" text={membersQuery.data?.site.org_name ?? currentContext.orgName} />
+            <ActionLine title="Project" text={membersQuery.data?.site.project_name ?? currentContext.projectName} />
+            <ActionLine title="Site" text={membersQuery.data?.site.name ?? currentContext.siteName} />
           </div>
         </SurfaceCard>
       </section>
+
+      {showInviteForm ? (
+        <SurfaceCard title="Add user" subtitle="Send a secure invitation and choose the site role before access is activated">
+          <form className="eg-auth-form" onSubmit={handleInviteSubmit}>
+            <label className="eg-field">
+              <span>Name</span>
+              <input
+                className="eg-input"
+                onChange={(event) => setInviteDraft((current) => ({ ...current, invited_name: event.target.value }))}
+                placeholder="Teammate name"
+                type="text"
+                value={inviteDraft.invited_name}
+              />
+            </label>
+            <label className="eg-field">
+              <span>Email</span>
+              <input
+                className="eg-input"
+                onChange={(event) => setInviteDraft((current) => ({ ...current, email: event.target.value }))}
+                placeholder="teammate@company.com"
+                required
+                type="email"
+                value={inviteDraft.email}
+              />
+            </label>
+            <label className="eg-field">
+              <span>Role</span>
+              <select
+                className="eg-input"
+                onChange={(event) => setInviteDraft((current) => ({ ...current, role: event.target.value as SiteMemberRole }))}
+                value={inviteDraft.role}
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <button className="eg-button eg-button--primary" disabled={inviteMutation.isPending} type="submit">
+              {inviteMutation.isPending ? "Sending invite..." : "Send invite"}
+            </button>
+          </form>
+        </SurfaceCard>
+      ) : null}
+
+      {!membersQuery.data ? (
+        <StateCard title="Loading members" description="Collecting active members and pending invitations for this site." />
+      ) : (
+        <section className="eg-stack">
+          <SurfaceCard title="Active users" subtitle="Everyone who can currently access this site">
+            {membersQuery.data.members.length ? (
+              <div className="eg-list">
+                {membersQuery.data.members.map((member) => {
+                  const isCurrentUser = member.user_id === user?.id;
+                  return (
+                    <div className="eg-list__row" key={member.id}>
+                      <div>
+                        <strong>{member.name}</strong>
+                        <span>{member.email}</span>
+                        <span>Joined {formatDateTime(member.joined_at)} · Last login {formatDateTime(member.last_login_at)}</span>
+                      </div>
+                      <div className="eg-inline-actions">
+                        <StatusBadge status={member.role === "admin" ? "healthy" : "pending"}>{member.role}</StatusBadge>
+                        {canManageMembers ? (
+                          <>
+                            <button
+                              className="eg-button eg-button--compact"
+                              disabled={updateMemberRoleMutation.isPending || (isCurrentUser && member.role === "admin")}
+                              onClick={() =>
+                                updateMemberRoleMutation.mutate({
+                                  membershipId: member.id,
+                                  role: member.role === "admin" ? "user" : "admin"
+                                })}
+                              type="button"
+                            >
+                              {member.role === "admin" ? "Set as user" : "Set as admin"}
+                            </button>
+                            <button
+                              className="eg-button eg-button--compact"
+                              disabled={deleteMemberMutation.isPending || isCurrentUser}
+                              onClick={() => deleteMemberMutation.mutate(member.id)}
+                              type="button"
+                            >
+                              Remove access
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <StateCard title="No active users" description="Invite the first teammate to give this site shared access." compact />
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard title="Pending invitations" subtitle="Invites that are waiting to be accepted">
+            {membersQuery.data.invites.filter((invite) => invite.status === "pending").length ? (
+              <div className="eg-list">
+                {membersQuery.data.invites
+                  .filter((invite) => invite.status === "pending")
+                  .map((invite) => (
+                    <div className="eg-list__row" key={invite.id}>
+                      <div>
+                        <strong>{invite.invited_name || invite.email}</strong>
+                        <span>{invite.email}</span>
+                        <span>Role {invite.role} · Expires {formatDateTime(invite.expires_at)}</span>
+                      </div>
+                      <div className="eg-inline-actions">
+                        <StatusBadge status="pending">{invite.status}</StatusBadge>
+                        {canManageMembers ? (
+                          <button
+                            className="eg-button eg-button--compact"
+                            disabled={revokeInviteMutation.isPending}
+                            onClick={() => revokeInviteMutation.mutate(invite.id)}
+                            type="button"
+                          >
+                            Revoke
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <StateCard title="No pending invitations" description="New invitations will appear here until they are accepted or revoked." compact />
+            )}
+          </SurfaceCard>
+        </section>
+      )}
     </div>
   );
 }
@@ -6660,6 +6978,7 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route path="/app/orgs/:orgId/projects/:projectId/sites/:siteId" element={<ProtectedAppShell />}>
         <Route index element={<Navigate replace to="overview" />} />
         <Route path="overview" element={<OverviewPage />} />

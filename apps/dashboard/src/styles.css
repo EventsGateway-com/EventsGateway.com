@@ -174,6 +174,7 @@ p {
 .eg-field--floating.eg-field--select > span,
 .eg-field--floating.eg-field--textarea > span,
 .eg-field--floating.is-filled > span,
+.eg-field--floating:has(> .eg-input:-webkit-autofill) > span,
 .eg-field--floating.is-active > span,
 .eg-field--floating:focus-within > span {
   top: 0.22rem;
@@ -216,6 +217,12 @@ p {
   color: transparent;
 }
 
+.eg-field--floating > .eg-input:-webkit-autofill,
+.eg-field--floating > .eg-input:-webkit-autofill:hover,
+.eg-field--floating > .eg-input:-webkit-autofill:focus {
+  animation: eg-autofill-sync 0s 1;
+}
+
 .eg-field--password {
   position: relative;
 }
@@ -239,7 +246,7 @@ p {
   background: transparent;
   color: var(--eg-muted);
   cursor: pointer;
-  transform: translateY(-20%);
+  transform: translateY(-50%);
   transition: color 0.18s ease, opacity 0.18s ease;
 }
 
@@ -266,6 +273,15 @@ p {
 .eg-captcha-widget {
   display: flex;
   justify-content: center;
+}
+
+@keyframes eg-autofill-sync {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .eg-auth-card__footer {

@@ -171,8 +171,6 @@ The dashboard uses public Vite variables because they are embedded into the brow
 
 ```env
 VITE_API_BASE_URL=https://api.eventsgateway.com
-VITE_CAPTCHA_PROVIDER=turnstile
-VITE_CAPTCHA_SITE_KEY=replace-with-your-captcha-site-key
 ```
 
 Example files:
@@ -189,6 +187,7 @@ The API Worker supports:
 ```env
 API_TOKEN=replace-with-a-long-random-token
 CAPTCHA_PROVIDER=turnstile
+CAPTCHA_SITE_KEY=replace-with-your-captcha-site-key
 CAPTCHA_SECRET_KEY=replace-with-your-captcha-secret-key
 ```
 

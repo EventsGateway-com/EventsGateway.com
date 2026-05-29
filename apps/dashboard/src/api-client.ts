@@ -44,6 +44,10 @@ type ErrorEnvelope = {
 };
 
 export type CaptchaProvider = "turnstile" | "recaptcha" | "hcaptcha";
+export type CaptchaConfig = {
+  provider: CaptchaProvider;
+  site_key: string;
+};
 
 export type DashboardUser = {
   id: string;
@@ -123,6 +127,53 @@ export type SiteKeyRecord = {
   status: string;
   created_at: string;
   last_used_at: string | null;
+};
+
+export type SiteMemberRole = "admin" | "user";
+export type SiteInviteStatus = "pending" | "accepted" | "revoked" | "expired";
+
+export type SiteMembershipRecord = {
+  id: string;
+  site_id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  role: SiteMemberRole;
+  status: "active" | "revoked";
+  invited_by_user_id: string | null;
+  invited_by_name: string | null;
+  created_at: string;
+  updated_at: string;
+  joined_at: string;
+  last_login_at: string | null;
+};
+
+export type SiteInviteRecord = {
+  id: string;
+  site_id: string;
+  email: string;
+  invited_name: string | null;
+  role: SiteMemberRole;
+  status: SiteInviteStatus;
+  invited_by_user_id: string;
+  invited_by_name: string | null;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+  accepted_by_user_id: string | null;
+  revoked_at: string | null;
+};
+
+export type SiteMembersPayload = {
+  site: DashboardBootstrap["site"];
+  current_membership: {
+    site_id: string;
+    user_id: string;
+    role: SiteMemberRole;
+    is_global_admin: boolean;
+  };
+  members: SiteMembershipRecord[];
+  invites: SiteInviteRecord[];
 };
 
 export type TagManagerTag = {
@@ -416,14 +467,31 @@ const API_BASE_URL = (
   (import.meta.env.PROD ? "https://api.eventsgateway.com" : "")
 ).replace(/\/$/, "");
 const API_TOKEN = (import.meta.env.VITE_API_TOKEN as string | undefined) ?? "";
-const CAPTCHA_PROVIDER = ((import.meta.env.VITE_CAPTCHA_PROVIDER as string | undefined)?.trim().toLowerCase() || "turnstile") as CaptchaProvider;
-const CAPTCHA_SITE_KEY = (
-  (import.meta.env.VITE_CAPTCHA_SITE_KEY as string | undefined) ??
-  (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) ??
-  ""
-).trim();
 const SESSION_TOKEN_STORAGE_KEY = "eventsgateway-dashboard-session-token-v2";
 const TAG_MANAGER_STORAGE_PREFIX = "eventsgateway-dashboard-tag-manager-v1";
+let captchaConfigLoaded = false;
+let captchaConfigPromise: Promise<CaptchaConfig> | null = null;
+
+function normalizeCaptchaProvider(value?: string): CaptchaProvider {
+  const provider = value?.trim().toLowerCase();
+  if (provider === "recaptcha" || provider === "hcaptcha") {
+    return provider;
+  }
+  return "turnstile";
+}
+
+function normalizeCaptchaSiteKey(value?: string) {
+  const siteKey = value?.trim() ?? "";
+  if (!siteKey || siteKey.toLowerCase().includes("replace-with")) {
+    return "";
+  }
+  return siteKey;
+}
+
+let captchaConfig: CaptchaConfig = {
+  provider: "turnstile",
+  site_key: ""
+};
 
 export function readSessionToken() {
   if (typeof window === "undefined") return "";
@@ -441,11 +509,38 @@ export function writeSessionToken(token: string | null) {
 }
 
 export function readCaptchaSiteKey() {
-  return CAPTCHA_SITE_KEY;
+  return captchaConfig.site_key;
 }
 
 export function readCaptchaProvider() {
-  return CAPTCHA_PROVIDER;
+  return captchaConfig.provider;
+}
+
+export async function loadCaptchaConfig(force = false) {
+  if (captchaConfigLoaded && !force) {
+    return captchaConfig;
+  }
+
+  if (!captchaConfigPromise || force) {
+    captchaConfigPromise = requestJson<{ provider?: string; site_key?: string }>("/v1/auth/captcha-config")
+      .then((runtimeConfig) => {
+        captchaConfig = {
+          provider: normalizeCaptchaProvider(runtimeConfig.provider || captchaConfig.provider),
+          site_key: normalizeCaptchaSiteKey(runtimeConfig.site_key) || captchaConfig.site_key
+        };
+        captchaConfigLoaded = true;
+        return captchaConfig;
+      })
+      .catch(() => {
+        captchaConfigLoaded = true;
+        return captchaConfig;
+      })
+      .finally(() => {
+        captchaConfigPromise = null;
+      });
+  }
+
+  return captchaConfigPromise;
 }
 
 function createLocalId(prefix: string) {
@@ -872,6 +967,13 @@ export function resetDashboardPassword(input: { token: string; password: string 
   });
 }
 
+export function acceptDashboardInvite(input: { token: string; name?: string; password: string }) {
+  return requestJson<{ user: DashboardUser; session: DashboardSession }>("/v1/auth/accept-invite", {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
 export function fetchDashboardBootstrap() {
   return requestJson<DashboardBootstrap>("/v1/bootstrap");
 }
@@ -1173,6 +1275,36 @@ export function deleteDomain(siteId: string, domainId: string) {
 
 export function fetchApiKeys(siteId: string) {
   return requestJson<SiteKeyRecord[]>(`/v1/sites/${siteId}/settings/api-keys`);
+}
+
+export function fetchSiteMembers(siteId: string) {
+  return requestJson<SiteMembersPayload>(`/v1/sites/${siteId}/settings/members`);
+}
+
+export function createSiteInviteRecord(siteId: string, input: { email: string; invited_name?: string; role?: SiteMemberRole }) {
+  return requestJson<SiteInviteRecord>(`/v1/sites/${siteId}/settings/members`, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export function updateSiteMembershipRecord(siteId: string, membershipId: string, input: { role: SiteMemberRole }) {
+  return requestJson<SiteMembershipRecord>(`/v1/sites/${siteId}/settings/members/${membershipId}`, {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export function deleteSiteMembershipRecord(siteId: string, membershipId: string) {
+  return requestJson<{ deleted: boolean }>(`/v1/sites/${siteId}/settings/members/${membershipId}`, {
+    method: "DELETE"
+  });
+}
+
+export function revokeSiteInviteRecord(siteId: string, inviteId: string) {
+  return requestJson<{ deleted: boolean }>(`/v1/sites/${siteId}/settings/members/invites/${inviteId}`, {
+    method: "DELETE"
+  });
 }
 
 export function fetchAdminOverview() {

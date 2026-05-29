@@ -39,6 +39,35 @@ CREATE TABLE IF NOT EXISTS sites (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS site_memberships (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user',
+  status TEXT NOT NULL DEFAULT 'active',
+  invited_by_user_id TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  joined_at TEXT NOT NULL,
+  UNIQUE (site_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS site_invites (
+  id TEXT PRIMARY KEY,
+  site_id TEXT NOT NULL,
+  email TEXT NOT NULL,
+  invited_name TEXT,
+  role TEXT NOT NULL DEFAULT 'user',
+  status TEXT NOT NULL DEFAULT 'pending',
+  token_hash TEXT NOT NULL UNIQUE,
+  invited_by_user_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  accepted_at TEXT,
+  accepted_by_user_id TEXT,
+  revoked_at TEXT
+);
+
 CREATE TABLE IF NOT EXISTS site_domains (
   id TEXT PRIMARY KEY,
   site_id TEXT NOT NULL,

@@ -112,7 +112,9 @@ export type EnvironmentBindings = {
   STRIPE_BILLING_RETURN_URL?: string;
   PASSWORD_RESET_BASE_URL?: string;
   CAPTCHA_PROVIDER?: string;
+  CAPTCHA_SITE_KEY?: string;
   CAPTCHA_SECRET_KEY?: string;
+  TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
   MANAGED_DESTINATIONS_CONFIG?: string;
   DB?: DatabaseBinding;

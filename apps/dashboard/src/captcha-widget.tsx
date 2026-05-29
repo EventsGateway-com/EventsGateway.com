@@ -1,5 +1,5 @@
-import { useEffect, useId, useRef } from "react";
-import { readCaptchaProvider, readCaptchaSiteKey, type CaptchaProvider } from "./api-client";
+import { useEffect, useId, useRef, useState } from "react";
+import { loadCaptchaConfig, readCaptchaProvider, readCaptchaSiteKey, type CaptchaProvider } from "./api-client";
 
 type CaptchaRenderOptions = {
   sitekey: string;
@@ -70,10 +70,32 @@ export function CaptchaWidget({
   const containerId = useId().replace(/:/g, "_");
   const widgetIdRef = useRef<string | null>(null);
   const renderedRef = useRef(false);
+  const [isLoading, setIsLoading] = useState(!isCaptchaConfigured());
+  const [config, setConfig] = useState(() => ({
+    provider: readCaptchaProvider(),
+    siteKey: readCaptchaSiteKey()
+  }));
 
   useEffect(() => {
-    const provider = readCaptchaProvider();
-    const siteKey = readCaptchaSiteKey();
+    let active = true;
+    void loadCaptchaConfig().then((nextConfig) => {
+      if (!active) {
+        return;
+      }
+      setConfig({
+        provider: nextConfig.provider,
+        siteKey: nextConfig.site_key
+      });
+      setIsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const provider = config.provider;
+    const siteKey = config.siteKey;
     if (!siteKey) {
       onTokenChange("");
       return;
@@ -109,7 +131,7 @@ export function CaptchaWidget({
       widgetIdRef.current = null;
       renderedRef.current = false;
     };
-  }, [containerId, onTokenChange]);
+  }, [config.provider, config.siteKey, containerId, onTokenChange]);
 
   useEffect(() => {
     const api = getCaptchaApi(readCaptchaProvider());
@@ -118,7 +140,11 @@ export function CaptchaWidget({
     api.reset(widgetIdRef.current);
   }, [onTokenChange, resetNonce]);
 
-  if (!isCaptchaConfigured()) {
+  if (isLoading) {
+    return null;
+  }
+
+  if (!config.siteKey) {
     return <p className="eg-form-error">Captcha is not configured for this deployment yet. Finish the install setup first.</p>;
   }
 

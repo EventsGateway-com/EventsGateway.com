@@ -45,8 +45,6 @@ function buildArtifacts() {
     "install-output-dashboard-env",
     [
       `VITE_API_BASE_URL=${apiBaseUrl}`,
-      `VITE_CAPTCHA_PROVIDER=${captchaProvider}`,
-      `VITE_CAPTCHA_SITE_KEY=${captchaSiteKey}`,
       `VITE_STRIPE_PUBLISHABLE_KEY=${stripePublishableKey}`
     ].join("\n")
   );

@@ -35,9 +35,11 @@ import {
   validateEvent
 } from "../../../packages/platform-data/src/index";
 import {
+  acceptSiteInvite,
   addSiteDomain,
   adminSetUserPassword,
   backfillAttributionJob,
+  createSiteInvite,
   createAdminSite,
   createAdminSiteKey,
   requestUserPasswordReset,
@@ -55,7 +57,9 @@ import {
   getOperationJob,
   getOperationsHealth,
   getOperationsQueues,
+  getSiteAccess,
   getSiteCompiledRouting,
+  getSiteMembersPayload,
   getSiteDestination,
   getSiteRoute,
   getSiteTransformation,
@@ -78,11 +82,13 @@ import {
   resetUserPasswordWithToken,
   revokeSession,
   revokeAdminSiteKey,
+  revokeSiteInvite,
   rollbackSiteRoutes,
   rotateSiteDestinationSecret,
   simulateSiteRoute,
   testSiteDestination,
   createSiteRoute,
+  deleteSiteMembership,
   updateSiteRoute,
   deleteSiteRoute,
   duplicateSiteRoute,
@@ -90,7 +96,8 @@ import {
   updateSiteTransformation,
   deleteSiteTransformation,
   updateSiteDestination,
-  updateAdminUser
+  updateAdminUser,
+  updateSiteMembershipRole
 } from "../../../packages/runtime/src/control-plane";
 import {
   createSiteBillingCheckoutSession,
@@ -150,6 +157,10 @@ function resolveCaptchaProvider(env: Pick<EnvironmentBindings, "CAPTCHA_PROVIDER
 
 function resolveCaptchaSecret(env: Pick<EnvironmentBindings, "CAPTCHA_SECRET_KEY" | "TURNSTILE_SECRET_KEY"> | undefined) {
   return env?.CAPTCHA_SECRET_KEY?.trim() || env?.TURNSTILE_SECRET_KEY?.trim() || "";
+}
+
+function resolveCaptchaSiteKey(env: Pick<EnvironmentBindings, "CAPTCHA_SITE_KEY" | "TURNSTILE_SITE_KEY"> | undefined) {
+  return env?.CAPTCHA_SITE_KEY?.trim() || env?.TURNSTILE_SITE_KEY?.trim() || "";
 }
 
 function captchaVerifyEndpoint(provider: CaptchaProvider) {
@@ -289,6 +300,13 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
   }
 
   if (segments[0] === "v1" && segments[1] === "auth") {
+    if (segments[2] === "captcha-config" && method === "GET") {
+      return json(context, {
+        provider: resolveCaptchaProvider(env),
+        site_key: resolveCaptchaSiteKey(env)
+      });
+    }
+
     if (!env?.DB) {
       return errorResponse(context, "missing_database", "D1 database binding is not configured.", 500);
     }
@@ -349,6 +367,21 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
           context,
           "password_reset_failed",
           error instanceof Error ? error.message : "Unable to reset password.",
+          400
+        );
+      }
+    }
+
+    if (segments[2] === "accept-invite" && method === "POST") {
+      try {
+        const body = await readJson<{ token: string; name?: string; password: string }>(request);
+        const result = await acceptSiteInvite(env.DB, body);
+        return json(context, result);
+      } catch (error) {
+        return errorResponse(
+          context,
+          "invite_accept_failed",
+          error instanceof Error ? error.message : "Unable to accept invite.",
           400
         );
       }
@@ -521,6 +554,12 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
   }
 
   const siteId = siteIdFromSegments(segments);
+  if (env?.DB && authorization.kind === "session") {
+    const siteAccess = await getSiteAccess(env.DB, authorization.user.id, siteId);
+    if (!siteAccess) {
+      return errorResponse(context, "forbidden", "You do not have access to this site.", 403);
+    }
+  }
 
   if (segments[3] === "overview" && method === "GET") {
     const range = (context.url.searchParams.get("range") ?? "24h") as DateRangePreset;
@@ -771,6 +810,68 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
       }
     }
     return json(context, getInstallConfig(siteId));
+  }
+
+  if (segments[3] === "settings" && segments[4] === "members" && segments.length === 5) {
+    if (!env?.DB || authorization.kind !== "session") {
+      return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+    }
+
+    if (method === "GET") {
+      try {
+        return json(context, await getSiteMembersPayload(env.DB, authorization.user.id, siteId));
+      } catch (error) {
+        return errorResponse(context, "members_fetch_failed", error instanceof Error ? error.message : "Unable to load members.", 400);
+      }
+    }
+
+    if (method === "POST") {
+      try {
+        const body = await readJson<{ email: string; invited_name?: string; role?: "admin" | "user" }>(request);
+        return json(context, await createSiteInvite(env.DB, env, authorization.user.id, siteId, body), { status: 201 });
+      } catch (error) {
+        return errorResponse(context, "invite_create_failed", error instanceof Error ? error.message : "Unable to create invite.", 400);
+      }
+    }
+  }
+
+  if (segments[3] === "settings" && segments[4] === "members" && segments[5] && method === "PATCH") {
+    if (!env?.DB || authorization.kind !== "session") {
+      return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+    }
+
+    try {
+      const body = await readJson<{ role: "admin" | "user" }>(request);
+      return json(context, await updateSiteMembershipRole(env.DB, authorization.user.id, siteId, segments[5], body.role));
+    } catch (error) {
+      return errorResponse(context, "membership_update_failed", error instanceof Error ? error.message : "Unable to update member role.", 400);
+    }
+  }
+
+  if (segments[3] === "settings" && segments[4] === "members" && segments[5] && method === "DELETE") {
+    if (!env?.DB || authorization.kind !== "session") {
+      return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+    }
+
+    try {
+      const deleted = await deleteSiteMembership(env.DB, authorization.user.id, siteId, segments[5]);
+      return deleted ? json(context, { deleted: true }) : notFound(context, `Membership ${segments[5]} not found`);
+    } catch (error) {
+      return errorResponse(context, "membership_delete_failed", error instanceof Error ? error.message : "Unable to remove member.", 400);
+    }
+  }
+
+  if (segments[3] === "settings" && segments[4] === "members" && segments[5] === "invites" && segments[6] && method === "DELETE") {
+    if (!env?.DB || authorization.kind !== "session") {
+      return errorResponse(context, "unauthorized", "Missing or invalid session token.", 401);
+    }
+
+    try {
+      const deleted = await revokeSiteInvite(env.DB, authorization.user.id, siteId, segments[6]);
+      return deleted ? json(context, { deleted: true }) : notFound(context, `Invite ${segments[6]} not found`);
+    } catch (error) {
+      return errorResponse(context, "invite_revoke_failed", error instanceof Error ? error.message : "Unable to revoke invite.", 400);
+    }
   }
 
   if (segments[3] === "settings" && segments[4] === "domains" && segments.length === 5) {
