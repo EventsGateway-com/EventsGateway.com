@@ -42,6 +42,7 @@ export const docsContent = {
   notes: [
     "Use one canonical event name in the browser and let EventsGateway route and transform per destination.",
     "Pass value, currency, content IDs, and transaction identifiers whenever they exist.",
+    "For Lead events, send both value and currency so downstream ad platforms receive commercial context, not only a generic form completion.",
     "For Google Ads, EventsGateway maps canonical events to conversion actions and remarketing-friendly payloads because Google Ads does not use one single standard event list across all use cases.",
     "For Meta and TikTok, prefer standard events whenever possible because ad platforms optimize and report better on recognized event names."
   ],
@@ -181,7 +182,7 @@ export const docsContent = {
     {
       category: "Lead Gen",
       event: "Lead",
-      trigger: "Lead form or request is submitted.",
+      trigger: "Lead form or request is submitted, always with value and currency.",
       payload: "value, currency, lead_type, form_id",
       meta: "Lead",
       google: "Lead conversion",

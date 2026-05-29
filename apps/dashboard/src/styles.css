@@ -788,6 +788,86 @@ p {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.eg-billing-hero,
+.eg-billing-kpi-grid,
+.eg-report-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.eg-billing-hero {
+  padding: 0.2rem 0;
+}
+
+.eg-billing-hero__lead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top left, rgba(125, 211, 252, 0.14), transparent 42%),
+    linear-gradient(180deg, rgba(167, 139, 250, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.eg-billing-hero__value {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: clamp(1.7rem, 5vw, 2.5rem);
+  letter-spacing: -0.08em;
+}
+
+.eg-billing-hero__copy {
+  margin-top: 0.45rem;
+  max-width: 54ch;
+  color: var(--eg-muted);
+  line-height: 1.5;
+}
+
+.eg-billing-kpi-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.eg-report-row {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.78rem 0.82rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.eg-report-row__content {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.eg-report-row__content span {
+  color: var(--eg-muted);
+  line-height: 1.45;
+}
+
+.eg-report-bar {
+  position: relative;
+  overflow: hidden;
+  min-height: 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.eg-report-bar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(125, 211, 252, 0.96), rgba(96, 165, 250, 0.9));
+}
+
+.eg-report-bar--accent .eg-report-bar__fill {
+  background: linear-gradient(90deg, rgba(167, 139, 250, 0.96), rgba(125, 211, 252, 0.92));
+}
+
 .eg-version-strip {
   display: flex;
   flex-wrap: wrap;
@@ -929,6 +1009,12 @@ p {
     justify-content: space-between;
   }
 
+  .eg-billing-hero__lead,
+  .eg-report-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
   .eg-list__row,
   .eg-stream__row,
   .eg-action-line,
@@ -986,6 +1072,10 @@ p {
 
 @media (max-width: 720px) {
   .eg-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .eg-billing-kpi-grid {
     grid-template-columns: 1fr;
   }
 }

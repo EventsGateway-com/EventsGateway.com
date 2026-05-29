@@ -4103,8 +4103,90 @@ function BillingPage() {
   }
 
   const { customer, subscription, suspension } = billingQuery.data;
+  const invoices = invoicesQuery.data ?? billingQuery.data.invoices;
   const usagePercent = Math.min(100, Math.round((subscription.monthly_events_used / Math.max(subscription.included_events, 1)) * 100));
+  const usageRemaining = Math.max(subscription.included_events - subscription.monthly_events_used, 0);
+  const overageEvents = Math.max(subscription.monthly_events_used - subscription.included_events, 0);
+  const overageProjectionUsd = overageEvents > 0
+    ? Math.ceil(overageEvents / Math.max(subscription.overage_block_events, 1)) * subscription.overage_block_price_usd
+    : 0;
+  const openInvoices = invoices.filter((invoice) => invoice.status !== "paid" && invoice.status !== "void");
+  const outstandingAmountUsd = openInvoices.reduce((sum, invoice) => sum + invoice.total_usd, 0);
+  const nextDueInvoice = [...openInvoices].sort((left, right) => {
+    if (!left.due_at) return 1;
+    if (!right.due_at) return -1;
+    return new Date(left.due_at).getTime() - new Date(right.due_at).getTime();
+  })[0] ?? null;
+  const paidTransactions = billingQuery.data.transactions
+    .filter((transaction) => transaction.status === "succeeded")
+    .sort((left, right) => new Date(right.paid_at || right.created_at).getTime() - new Date(left.paid_at || left.created_at).getTime());
+  const latestPaidTransaction = paidTransactions[0] ?? null;
+  const nextReminder = [...billingQuery.data.reminders]
+    .filter((reminder) => reminder.status === "scheduled")
+    .sort((left, right) => new Date(left.scheduled_for).getTime() - new Date(right.scheduled_for).getTime())[0] ?? null;
+  const billingHealthLabel = suspension.is_suspended ? "Suspended" : subscription.status === "past_due" ? "Recovery" : "Healthy";
+  const billingHealthTone = suspension.is_suspended ? "danger" : subscription.status === "past_due" ? "warning" : "success";
   const checkoutState = new URLSearchParams(location.search).get("checkout");
+  const exportBillingLedger = () => {
+    downloadDataFile(
+      `billing-ledger-${currentContext.siteId}.csv`,
+      createCsv([
+        ...invoices.map((invoice) => ({
+          record_type: "invoice",
+          invoice_number: invoice.invoice_number,
+          status: invoice.status,
+          amount_usd: invoice.total_usd.toFixed(2),
+          period_start: invoice.period_start,
+          period_end: invoice.period_end,
+          due_at: invoice.due_at ?? "",
+          paid_at: invoice.paid_at ?? "",
+          hosted_invoice_url: invoice.hosted_invoice_url ?? invoice.pdf_url ?? ""
+        })),
+        ...billingQuery.data.transactions.map((transaction) => ({
+          record_type: "transaction",
+          invoice_number: "",
+          status: transaction.status,
+          amount_usd: transaction.amount_usd.toFixed(2),
+          period_start: "",
+          period_end: "",
+          due_at: "",
+          paid_at: transaction.paid_at ?? transaction.created_at,
+          hosted_invoice_url: transaction.stripe_payment_intent_id ?? transaction.stripe_charge_id ?? ""
+        }))
+      ]),
+      "text/csv;charset=utf-8;"
+    );
+  };
+  const exportBillingSnapshot = () => {
+    downloadDataFile(
+      `billing-snapshot-${currentContext.siteId}.json`,
+      JSON.stringify(
+        {
+          generated_at: new Date().toISOString(),
+          site_id: currentContext.siteId,
+          customer,
+          subscription,
+          suspension,
+          summary: {
+            outstanding_amount_usd: outstandingAmountUsd,
+            next_due_invoice: nextDueInvoice?.invoice_number ?? null,
+            next_due_at: nextDueInvoice?.due_at ?? null,
+            latest_paid_amount_usd: latestPaidTransaction?.amount_usd ?? null,
+            latest_paid_at: latestPaidTransaction?.paid_at ?? latestPaidTransaction?.created_at ?? null,
+            scheduled_reminder_at: nextReminder?.scheduled_for ?? null,
+            included_usage_remaining: usageRemaining,
+            projected_overage_amount_usd: overageProjectionUsd
+          },
+          invoices,
+          reminders: billingQuery.data.reminders,
+          transactions: billingQuery.data.transactions
+        },
+        null,
+        2
+      ),
+      "application/json;charset=utf-8;"
+    );
+  };
 
   return (
     <div className="eg-page">
@@ -4118,6 +4200,12 @@ function BillingPage() {
             </button>
             <button className="eg-button" onClick={() => portalMutation.mutate()} type="button">
               Open billing portal
+            </button>
+            <button className="eg-button eg-button--compact" onClick={exportBillingLedger} type="button">
+              Export ledger CSV
+            </button>
+            <button className="eg-button eg-button--compact" onClick={exportBillingSnapshot} type="button">
+              Export JSON
             </button>
           </div>
         }
@@ -4146,6 +4234,62 @@ function BillingPage() {
           <p>Routing remains active until {formatDateTime(suspension.grace_period_ends_at)}, then the platform suspends delivery automatically.</p>
         </div>
       ) : null}
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Billing command center" subtitle="Commercial readiness, collections exposure, and latest payment posture">
+          <div className="eg-billing-hero">
+            <div className="eg-billing-hero__lead">
+              <div>
+                <span className="eyebrow">Billing health</span>
+                <strong className="eg-billing-hero__value">{formatCurrencyDetailed(outstandingAmountUsd)}</strong>
+                <p className="eg-billing-hero__copy">
+                  {outstandingAmountUsd > 0
+                    ? `${openInvoices.length} open billing item${openInvoices.length === 1 ? "" : "s"} still need attention for this site.`
+                    : "No outstanding invoice balance is currently open for this site."}
+                </p>
+              </div>
+              <div className="eg-inline-actions">
+                <span className={`eg-pill eg-pill--${billingHealthTone}`}>{billingHealthLabel}</span>
+                <span className="eg-pill eg-pill--accent">{subscription.plan_code}</span>
+              </div>
+            </div>
+            <div className="eg-billing-kpi-grid">
+              <MetricMini label="Usage remaining" value={formatCompactNumber(usageRemaining)} />
+              <MetricMini label="Projected overage" value={formatCurrencyDetailed(overageProjectionUsd)} />
+              <MetricMini label="Latest successful payment" value={latestPaidTransaction ? formatCurrencyDetailed(latestPaidTransaction.amount_usd) : "No payments"} />
+              <MetricMini label="Open invoices" value={openInvoices.length} />
+            </div>
+          </div>
+        </SurfaceCard>
+        <SurfaceCard title="Renewal timeline" subtitle="What finance and operations should expect next for this site">
+          <div className="eg-report-list">
+            <div className="eg-report-row">
+              <div>
+                <strong>Next due invoice</strong>
+                <span>{nextDueInvoice ? `${nextDueInvoice.invoice_number} · ${formatDateTime(nextDueInvoice.due_at)}` : "No open invoice due right now."}</span>
+              </div>
+              <span className={`eg-pill ${nextDueInvoice ? "eg-pill--warning" : "eg-pill--success"}`}>
+                {nextDueInvoice ? formatCurrencyDetailed(nextDueInvoice.total_usd) : "Clear"}
+              </span>
+            </div>
+            <div className="eg-report-row">
+              <div>
+                <strong>Next reminder slot</strong>
+                <span>{nextReminder ? `${nextReminder.days_before_due} day reminder scheduled for ${formatDateTime(nextReminder.scheduled_for)}` : "No scheduled reminder pending."}</span>
+              </div>
+              <span className="eg-pill">{nextReminder ? nextReminder.status : "idle"}</span>
+            </div>
+            <div className="eg-report-row">
+              <div>
+                <strong>Payment method posture</strong>
+                <span>{customer.payment_method_summary || "No payment method saved yet. Stripe Checkout can attach one now."}</span>
+              </div>
+              <span className={`eg-pill ${customer.payment_method_summary ? "eg-pill--success" : "eg-pill--warning"}`}>
+                {customer.payment_method_summary ? "Stored" : "Missing"}
+              </span>
+            </div>
+          </div>
+        </SurfaceCard>
+      </section>
       <section className="eg-metric-grid">
         <MetricCard label="Plan" value={subscription.plan_code} detail="Current commercial plan code attached to this site" />
         <MetricCard label="Monthly usage" value={subscription.monthly_events_used.toLocaleString("en-US")} detail="Routed events counted in the current billing period" />
@@ -4181,7 +4325,7 @@ function BillingPage() {
       </section>
       <section className="eg-grid eg-grid--two">
         <SurfaceCard title="Invoices" subtitle="Issued invoices, billing periods, and downloadable invoice links">
-          {!invoicesQuery.data?.length ? (
+          {!invoices.length ? (
             <StateCard compact title="No invoices yet" description="The billing ledger will populate as soon as the first monthly cycle or manual invoice exists." />
           ) : (
             <div className="eg-table">
@@ -4191,7 +4335,7 @@ function BillingPage() {
                 <span className="eg-table__cell">Amount</span>
                 <span className="eg-table__cell">Period</span>
               </div>
-              {invoicesQuery.data.map((invoice) => (
+              {invoices.map((invoice) => (
                 <div className="eg-table__row" key={invoice.id}>
                   <span className="eg-table__cell" data-label="Invoice">
                     <strong>{invoice.invoice_number}</strong>
@@ -4377,14 +4521,175 @@ function AdminBillingPage() {
     const matchesStatus = statusFilter === "all" || transaction.status === statusFilter || (statusFilter === "past_due" && transaction.status === "failed");
     return matchesSearch && matchesStatus;
   });
+  const successfulTransactions = filteredTransactions.filter((transaction) => transaction.status === "succeeded");
+  const failedTransactions = filteredTransactions.filter((transaction) => transaction.status === "failed");
+  const visibleRevenueUsd = successfulTransactions.reduce((sum, transaction) => sum + transaction.amount_usd, 0);
+  const visibleFailedAmountUsd = failedTransactions.reduce((sum, transaction) => sum + transaction.amount_usd, 0);
+  const averageSuccessfulPaymentUsd = successfulTransactions.length ? visibleRevenueUsd / successfulTransactions.length : 0;
+  const atRiskSubscriptions = filteredSubscriptions.filter((subscription) => subscription.status === "past_due" || subscription.status === "suspended");
+  const maxMonthlyRevenueUsd = Math.max(...overviewQuery.data.monthly_revenue.map((item) => item.total_usd), 1);
+  const maxQuarterlyRevenueUsd = Math.max(...overviewQuery.data.quarterly_revenue.map((item) => item.total_usd), 1);
+  const financeSnapshot = {
+    generated_at: new Date().toISOString(),
+    filters: {
+      search_term: searchTerm,
+      status_filter: statusFilter
+    },
+    overview_totals: overviewQuery.data.totals,
+    visible_scope: {
+      subscriptions: filteredSubscriptions.length,
+      at_risk_subscriptions: atRiskSubscriptions.length,
+      transactions: filteredTransactions.length,
+      successful_transactions: successfulTransactions.length,
+      failed_transactions: failedTransactions.length,
+      successful_revenue_usd: visibleRevenueUsd,
+      failed_attempt_value_usd: visibleFailedAmountUsd,
+      average_successful_payment_usd: averageSuccessfulPaymentUsd
+    },
+    revenue: {
+      monthly: overviewQuery.data.monthly_revenue,
+      quarterly: overviewQuery.data.quarterly_revenue
+    }
+  };
+  const exportSubscriptionsCsv = () => {
+    downloadDataFile(
+      "finance-subscriptions.csv",
+      createCsv(
+        filteredSubscriptions.map((subscription) => ({
+          company_name: subscription.company_name,
+          billing_email: subscription.billing_email,
+          site_id: subscription.site_id,
+          plan_code: subscription.plan_code,
+          status: subscription.status,
+          monthly_events_used: subscription.monthly_events_used,
+          included_events: subscription.included_events,
+          overage_block_price_usd: subscription.overage_block_price_usd.toFixed(2),
+          current_period_end: subscription.current_period_end,
+          grace_period_ends_at: subscription.grace_period_ends_at ?? "",
+          suspension_reason: subscription.suspension_reason ?? ""
+        }))
+      ),
+      "text/csv;charset=utf-8;"
+    );
+  };
+  const exportTransactionsCsv = () => {
+    downloadDataFile(
+      "finance-transactions.csv",
+      createCsv(
+        filteredTransactions.map((transaction) => ({
+          company_name: transaction.company_name,
+          billing_email: transaction.billing_email,
+          invoice_number: transaction.invoice_number ?? "",
+          status: transaction.status,
+          amount_usd: transaction.amount_usd.toFixed(2),
+          payment_method_brand: transaction.payment_method_brand ?? "",
+          payment_method_last4: transaction.payment_method_last4 ?? "",
+          paid_at: transaction.paid_at ?? "",
+          created_at: transaction.created_at
+        }))
+      ),
+      "text/csv;charset=utf-8;"
+    );
+  };
+  const exportRevenueCsv = () => {
+    downloadDataFile(
+      "finance-revenue.csv",
+      createCsv([
+        ...overviewQuery.data.monthly_revenue.map((item) => ({
+          report_type: "monthly",
+          period: item.month,
+          total_usd: item.total_usd.toFixed(2)
+        })),
+        ...overviewQuery.data.quarterly_revenue.map((item) => ({
+          report_type: "quarterly",
+          period: item.quarter,
+          total_usd: item.total_usd.toFixed(2)
+        }))
+      ]),
+      "text/csv;charset=utf-8;"
+    );
+  };
+  const exportFinanceJson = () => {
+    downloadDataFile("finance-snapshot.json", JSON.stringify(financeSnapshot, null, 2), "application/json;charset=utf-8;");
+  };
 
   return (
     <div className="eg-page">
       <PageIntro
         title="Billing Admin"
         description="Global finance operations for subscriptions, transactions, manual invoices, and suspension control."
+        action={
+          <div className="eg-inline-actions">
+            <button className="eg-button eg-button--compact" onClick={exportSubscriptionsCsv} type="button">
+              Subscriptions CSV
+            </button>
+            <button className="eg-button eg-button--compact" onClick={exportTransactionsCsv} type="button">
+              Transactions CSV
+            </button>
+            <button className="eg-button eg-button--compact" onClick={exportRevenueCsv} type="button">
+              Revenue CSV
+            </button>
+            <button className="eg-button eg-button--compact" onClick={exportFinanceJson} type="button">
+              Finance JSON
+            </button>
+          </div>
+        }
       />
       {error ? <p className="eg-form-error">{error}</p> : null}
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Finance cockpit" subtitle="Executive read on collections quality inside the current filtered scope">
+          <div className="eg-billing-hero">
+            <div className="eg-billing-hero__lead">
+              <div>
+                <span className="eyebrow">Visible recovered revenue</span>
+                <strong className="eg-billing-hero__value">{formatCurrencyDetailed(visibleRevenueUsd)}</strong>
+                <p className="eg-billing-hero__copy">
+                  {atRiskSubscriptions.length > 0
+                    ? `${atRiskSubscriptions.length} subscription${atRiskSubscriptions.length === 1 ? "" : "s"} in the current scope are in recovery or suspended status.`
+                    : "No recovery pressure is visible in the current billing filter scope."}
+                </p>
+              </div>
+              <div className="eg-inline-actions">
+                <span className={`eg-pill ${atRiskSubscriptions.length ? "eg-pill--warning" : "eg-pill--success"}`}>
+                  {atRiskSubscriptions.length ? "Risk detected" : "Low risk"}
+                </span>
+              </div>
+            </div>
+            <div className="eg-billing-kpi-grid">
+              <MetricMini label="At-risk subscriptions" value={atRiskSubscriptions.length} />
+              <MetricMini label="Failed attempt value" value={formatCurrencyDetailed(visibleFailedAmountUsd)} />
+              <MetricMini label="Average successful payment" value={formatCurrencyDetailed(averageSuccessfulPaymentUsd)} />
+              <MetricMini label="Collection success rate" value={`${Math.round((successfulTransactions.length / Math.max(filteredTransactions.length, 1)) * 100)}%`} />
+            </div>
+          </div>
+        </SurfaceCard>
+        <SurfaceCard title="Revenue timing" subtitle="Monthly and quarterly curves generated from the billing ledger">
+          <div className="eg-report-list">
+            {overviewQuery.data.monthly_revenue.map((item) => (
+              <div className="eg-report-row" key={item.month}>
+                <div className="eg-report-row__content">
+                  <strong>{item.month}</strong>
+                  <span>{formatCurrencyDetailed(item.total_usd)} collected in this monthly bucket.</span>
+                </div>
+                <div className="eg-report-bar">
+                  <span className="eg-report-bar__fill" style={{ width: `${Math.max(12, Math.round((item.total_usd / maxMonthlyRevenueUsd) * 100))}%` }}></span>
+                </div>
+              </div>
+            ))}
+            {overviewQuery.data.quarterly_revenue.map((item) => (
+              <div className="eg-report-row" key={item.quarter}>
+                <div className="eg-report-row__content">
+                  <strong>{item.quarter}</strong>
+                  <span>{formatCurrencyDetailed(item.total_usd)} collected in this quarterly bucket.</span>
+                </div>
+                <div className="eg-report-bar eg-report-bar--accent">
+                  <span className="eg-report-bar__fill" style={{ width: `${Math.max(12, Math.round((item.total_usd / maxQuarterlyRevenueUsd) * 100))}%` }}></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SurfaceCard>
+      </section>
       <section className="eg-grid eg-grid--two">
         <SurfaceCard title="Search and filters" subtitle="Narrow down subscriptions and transactions by company, email, site, invoice, or risk state">
           <div className="eg-filter-grid">
@@ -4462,30 +4767,44 @@ function AdminBillingPage() {
             <button className="eg-button eg-button--primary" type="submit">Issue invoice</button>
           </form>
         </SurfaceCard>
-        <SurfaceCard title="Revenue reports" subtitle="Monthly and quarterly snapshots generated from paid invoices">
-          <div className="eg-list">
-            {overviewQuery.data.monthly_revenue.map((item) => (
-              <div className="eg-list__row" key={item.month}>
-                <div>
-                  <strong>{item.month}</strong>
-                  <span>Monthly recognized revenue</span>
-                </div>
-                <div className="eg-inline-actions">
-                  <span className="eg-pill">${item.total_usd.toFixed(2)}</span>
-                </div>
+        <SurfaceCard title="Reports and exports" subtitle="Operational downloads and quick finance snapshots for external analysis">
+          <div className="eg-report-list">
+            <div className="eg-report-row">
+              <div className="eg-report-row__content">
+                <strong>Subscription ledger export</strong>
+                <span>Download company, billing contact, plan, status, usage, grace period, and suspension context.</span>
               </div>
-            ))}
-            {overviewQuery.data.quarterly_revenue.map((item) => (
-              <div className="eg-list__row" key={item.quarter}>
-                <div>
-                  <strong>{item.quarter}</strong>
-                  <span>Quarterly recognized revenue</span>
-                </div>
-                <div className="eg-inline-actions">
-                  <span className="eg-pill">${item.total_usd.toFixed(2)}</span>
-                </div>
+              <button className="eg-button eg-button--compact" onClick={exportSubscriptionsCsv} type="button">
+                Export CSV
+              </button>
+            </div>
+            <div className="eg-report-row">
+              <div className="eg-report-row__content">
+                <strong>Transaction ledger export</strong>
+                <span>Download finance-ready payment rows with invoice references and Stripe payment method details.</span>
               </div>
-            ))}
+              <button className="eg-button eg-button--compact" onClick={exportTransactionsCsv} type="button">
+                Export CSV
+              </button>
+            </div>
+            <div className="eg-report-row">
+              <div className="eg-report-row__content">
+                <strong>Revenue timeline export</strong>
+                <span>Download monthly and quarterly recognized revenue series for spreadsheet or BI tooling.</span>
+              </div>
+              <button className="eg-button eg-button--compact" onClick={exportRevenueCsv} type="button">
+                Export CSV
+              </button>
+            </div>
+            <div className="eg-report-row">
+              <div className="eg-report-row__content">
+                <strong>Finance snapshot export</strong>
+                <span>Download filters, KPI summary, and revenue series as JSON for automation and archival.</span>
+              </div>
+              <button className="eg-button eg-button--compact" onClick={exportFinanceJson} type="button">
+                Export JSON
+              </button>
+            </div>
           </div>
         </SurfaceCard>
       </section>
@@ -4537,69 +4856,77 @@ function AdminBillingPage() {
       </section>
       <section className="eg-grid eg-grid--two">
         <SurfaceCard title="Subscriptions" subtitle="Plan codes, usage posture, and suspension controls">
-          <div className="eg-stack">
-            {filteredSubscriptions.map((subscription) => (
-              <div className="eg-admin-user" key={subscription.id}>
-                <div className="eg-admin-user__meta">
-                  <ActionLine title="Company" text={subscription.company_name} />
-                  <ActionLine title="Billing email" text={subscription.billing_email} />
-                  <ActionLine title="Site ID" text={subscription.site_id} />
-                  <ActionLine title="Plan" text={subscription.plan_code} />
-                  <ActionLine title="Status" text={subscription.status} />
-                  <ActionLine title="Usage" text={`${subscription.monthly_events_used.toLocaleString("en-US")} / ${subscription.included_events.toLocaleString("en-US")}`} />
-                </div>
-                <div className="eg-admin-user__actions">
-                  <div className="eg-inline-actions">
-                    <StatusBadge status={subscription.status === "active" ? "healthy" : subscription.status === "suspended" ? "warning" : "pending"}>
-                      {subscription.status}
-                    </StatusBadge>
-                    <StatusBadge status={subscription.plan_code === "enterprise" ? "healthy" : subscription.plan_code === "growth" ? "pending" : "info"}>
-                      {subscription.plan_code}
-                    </StatusBadge>
+          {!filteredSubscriptions.length ? (
+            <StateCard compact title="No subscriptions in scope" description="Adjust the search term or status filter to inspect another finance slice." />
+          ) : (
+            <div className="eg-stack">
+              {filteredSubscriptions.map((subscription) => (
+                <div className="eg-admin-user" key={subscription.id}>
+                  <div className="eg-admin-user__meta">
+                    <ActionLine title="Company" text={subscription.company_name} />
+                    <ActionLine title="Billing email" text={subscription.billing_email} />
+                    <ActionLine title="Site ID" text={subscription.site_id} />
+                    <ActionLine title="Plan" text={subscription.plan_code} />
+                    <ActionLine title="Status" text={subscription.status} />
+                    <ActionLine title="Usage" text={`${subscription.monthly_events_used.toLocaleString("en-US")} / ${subscription.included_events.toLocaleString("en-US")}`} />
                   </div>
-                  <div className="eg-inline-actions">
-                    <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: subscription.plan_code === "free" ? "growth" : "free" } })} type="button">
-                      Toggle plan
-                    </button>
-                    <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: "enterprise" } })} type="button">
-                      Enterprise
-                    </button>
-                    <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { status: subscription.status === "suspended" ? "active" : "suspended" } })} type="button">
-                      {subscription.status === "suspended" ? "Reactivate" : "Suspend"}
-                    </button>
+                  <div className="eg-admin-user__actions">
+                    <div className="eg-inline-actions">
+                      <StatusBadge status={subscription.status === "active" ? "healthy" : subscription.status === "suspended" ? "warning" : "pending"}>
+                        {subscription.status}
+                      </StatusBadge>
+                      <StatusBadge status={subscription.plan_code === "enterprise" ? "healthy" : subscription.plan_code === "growth" ? "pending" : "info"}>
+                        {subscription.plan_code}
+                      </StatusBadge>
+                    </div>
+                    <div className="eg-inline-actions">
+                      <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: subscription.plan_code === "free" ? "growth" : "free" } })} type="button">
+                        Toggle plan
+                      </button>
+                      <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: "enterprise" } })} type="button">
+                        Enterprise
+                      </button>
+                      <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { status: subscription.status === "suspended" ? "active" : "suspended" } })} type="button">
+                        {subscription.status === "suspended" ? "Reactivate" : "Suspend"}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </SurfaceCard>
         <SurfaceCard title="Transactions" subtitle="All recorded payment attempts and payment-method outcomes">
-          <div className="eg-table">
-            <div className="eg-table__head eg-table__row">
-              <span className="eg-table__cell">Company</span>
-              <span className="eg-table__cell">Invoice</span>
-              <span className="eg-table__cell">Amount</span>
-              <span className="eg-table__cell">Status</span>
-            </div>
-            {filteredTransactions.map((transaction) => (
-              <div className="eg-table__row" key={transaction.id}>
-                <span className="eg-table__cell" data-label="Company">
-                  <strong>{transaction.company_name}</strong>
-                  <small>{transaction.billing_email}</small>
-                </span>
-                <span className="eg-table__cell" data-label="Invoice">{transaction.invoice_number || "n/a"}</span>
-                <span className="eg-table__cell" data-label="Amount">${transaction.amount_usd.toFixed(2)}</span>
-                <span className="eg-table__cell" data-label="Method">
-                  {transaction.payment_method_brand ? `${transaction.payment_method_brand.toUpperCase()} •••• ${transaction.payment_method_last4 || "----"}` : "Stripe-managed"}
-                </span>
-                <div className="eg-table__cell" data-label="Status">
-                  <StatusBadge status={transaction.status === "succeeded" ? "healthy" : transaction.status === "failed" ? "warning" : "pending"}>
-                    {transaction.status}
-                  </StatusBadge>
-                </div>
+          {!filteredTransactions.length ? (
+            <StateCard compact title="No transactions in scope" description="No payment rows match the current filter context." />
+          ) : (
+            <div className="eg-table">
+              <div className="eg-table__head eg-table__row">
+                <span className="eg-table__cell">Company</span>
+                <span className="eg-table__cell">Invoice</span>
+                <span className="eg-table__cell">Amount</span>
+                <span className="eg-table__cell">Status</span>
               </div>
-            ))}
-          </div>
+              {filteredTransactions.map((transaction) => (
+                <div className="eg-table__row" key={transaction.id}>
+                  <span className="eg-table__cell" data-label="Company">
+                    <strong>{transaction.company_name}</strong>
+                    <small>{transaction.billing_email}</small>
+                  </span>
+                  <span className="eg-table__cell" data-label="Invoice">{transaction.invoice_number || "n/a"}</span>
+                  <span className="eg-table__cell" data-label="Amount">${transaction.amount_usd.toFixed(2)}</span>
+                  <span className="eg-table__cell" data-label="Method">
+                    {transaction.payment_method_brand ? `${transaction.payment_method_brand.toUpperCase()} •••• ${transaction.payment_method_last4 || "----"}` : "Stripe-managed"}
+                  </span>
+                  <div className="eg-table__cell" data-label="Status">
+                    <StatusBadge status={transaction.status === "succeeded" ? "healthy" : transaction.status === "failed" ? "warning" : "pending"}>
+                      {transaction.status}
+                    </StatusBadge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </SurfaceCard>
       </section>
     </div>
@@ -5995,6 +6322,53 @@ function formatCurrency(value: number) {
     currency: "USD",
     maximumFractionDigits: 0
   }).format(value);
+}
+
+function formatCurrencyDetailed(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+function formatCompactNumber(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1
+  }).format(value);
+}
+
+function createCsv(rows: Array<Record<string, unknown>>) {
+  if (!rows.length) {
+    return "";
+  }
+
+  const headers = Array.from(rows.reduce((set, row) => {
+    Object.keys(row).forEach((key) => set.add(key));
+    return set;
+  }, new Set<string>()));
+  const lines = rows.map((row) => headers.map((header) => escapeCsvCell(row[header])).join(","));
+  return [headers.join(","), ...lines].join("\n");
+}
+
+function escapeCsvCell(value: unknown) {
+  const normalized = value === null || value === undefined ? "" : String(value);
+  const escaped = normalized.replace(/"/g, "\"\"");
+  return `"${escaped}"`;
+}
+
+function downloadDataFile(filename: string, contents: string, mimeType: string) {
+  const blob = new Blob([contents], { type: mimeType });
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  window.URL.revokeObjectURL(url);
 }
 
 function JsonPanel({ value }: { value: unknown }) {

@@ -57,9 +57,11 @@ window.e_g("Purchase", {
     description:
       "A clean event model for forms, contact intents, booked calls, qualified applications, and ad-platform optimization.",
     summary:
-      "Lead generation works best when the canonical event layer separates raw form submissions from higher-quality milestones such as booked calls or qualified applications.",
+      "Lead generation works best when the canonical event layer separates raw form submissions from higher-quality milestones such as booked calls or qualified applications, while every Lead event carries both value and currency for downstream optimization.",
     events: ["PageView", "ViewContent", "Lead", "Contact", "Schedule", "SubmitApplication", "CompleteRegistration"],
     code: `window.e_g("Lead", {
+  value: 120,
+  currency: "USD",
   properties: {
     form_id: "pricing-demo-form",
     lead_type: "demo_request",
@@ -81,6 +83,7 @@ window.e_g("SubmitApplication", {
   }
 });`,
     recommendations: [
+      "Always send value and currency on Lead so ad platforms can optimize and report against commercial intent.",
       "Do not collapse every form into one generic lead event if the business values differ.",
       "Use Schedule for booked calls and demos because it is stronger than a simple form submit.",
       "Map qualified milestones into Google Ads conversion actions separately when value differs."
