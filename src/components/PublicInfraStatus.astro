@@ -1,0 +1,287 @@
+---
+const { endpoint = "/api/infrastructure-status" } = Astro.props;
+
+const cards = [
+  {
+    key: "kv",
+    label: "KV items",
+    description: "Published edge configuration and hot read caches."
+  },
+  {
+    key: "do",
+    label: "DO items",
+    description: "Live visitor state snapshots held by Durable Objects."
+  },
+  {
+    key: "d1",
+    label: "D1 rows",
+    description: "Operational rows for routing, identity, billing, and recent events."
+  },
+  {
+    key: "r2",
+    label: "R2 items",
+    description: "Raw ledger objects archived beyond the hot operational layer."
+  }
+];
+---
+
+<section class="infra-status surface-panel" data-infra-status data-endpoint={endpoint}>
+  <div class="surface-panel__inner infra-status__inner">
+    <div class="infra-status__hero">
+      <div class="infra-status__copy">
+        <span class="eyebrow">Realtime Infrastructure</span>
+        <h2 class="section-title">Watch the active storage layers update from the edge.</h2>
+        <p class="section-copy">
+          This board tracks the live footprint across `KV`, `Durable Objects`, `D1`, and `R2`, with animated counters
+          and continuously refreshed edge telemetry.
+        </p>
+      </div>
+      <div class="infra-status__summary">
+        <div class="infra-orb">
+          <div class="infra-orb__ring infra-orb__ring--outer"></div>
+          <div class="infra-orb__ring infra-orb__ring--inner"></div>
+          <div class="infra-orb__core"></div>
+        </div>
+        <div class="infra-status__meta">
+          <span class="status-pill">Refreshes every 3 seconds</span>
+          <strong data-infra-updated>Waiting for first edge snapshot...</strong>
+          <p data-infra-summary>
+            The public worker will hydrate live counts as soon as the infrastructure snapshot endpoint responds.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="infra-status__grid">
+      {
+        cards.map((card) => (
+          <article class="infra-card" data-infra-card data-card-key={card.key}>
+            <div class="infra-card__header">
+              <span class="kicker">{card.label}</span>
+              <span class="infra-card__state status-pill" data-card-state>Waiting</span>
+            </div>
+            <strong class="infra-card__value" data-card-value>0</strong>
+            <p class="infra-card__copy" data-card-description>{card.description}</p>
+            <div class="infra-card__spark" data-card-spark></div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .infra-status__inner {
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.4rem;
+  }
+
+  .infra-status__hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(18rem, 0.88fr);
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .infra-status__summary {
+    position: relative;
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+    min-height: 100%;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.3rem;
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.11), rgba(255, 255, 255, 0.03)),
+      rgba(7, 13, 23, 0.78);
+    overflow: hidden;
+  }
+
+  .infra-status__summary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(125, 211, 252, 0.09), transparent 58%);
+    pointer-events: none;
+  }
+
+  .infra-status__meta {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .infra-status__meta strong {
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .infra-status__meta p {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.7;
+  }
+
+  .infra-orb {
+    position: relative;
+    width: 8.2rem;
+    height: 8.2rem;
+    margin-inline: auto;
+  }
+
+  .infra-orb__ring,
+  .infra-orb__core {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+  }
+
+  .infra-orb__ring--outer {
+    border: 1px solid rgba(125, 211, 252, 0.28);
+    animation: infra-spin 14s linear infinite;
+  }
+
+  .infra-orb__ring--inner {
+    inset: 0.85rem;
+    border: 1px solid rgba(167, 139, 250, 0.32);
+    animation: infra-spin-reverse 9s linear infinite;
+  }
+
+  .infra-orb__core {
+    inset: 2rem;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.9), rgba(125, 211, 252, 0.88) 38%, rgba(167, 139, 250, 0.74));
+    box-shadow: 0 0 40px rgba(125, 211, 252, 0.28);
+    animation: infra-pulse 2.6s ease-in-out infinite;
+  }
+
+  .infra-status__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .infra-card {
+    display: grid;
+    gap: 0.95rem;
+    min-height: 100%;
+    padding: 1.1rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.25rem;
+    background:
+      linear-gradient(180deg, rgba(125, 211, 252, 0.1), rgba(255, 255, 255, 0.02)),
+      rgba(7, 12, 21, 0.86);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .infra-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .infra-card__value {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 4vw, 3.6rem);
+    letter-spacing: -0.06em;
+    line-height: 0.92;
+  }
+
+  .infra-card__copy {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.65;
+    min-height: 4.8rem;
+  }
+
+  .infra-card__spark {
+    display: grid;
+    grid-template-columns: repeat(18, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.28rem;
+    min-height: 5rem;
+  }
+
+  .infra-card__spark span {
+    display: block;
+    min-height: 0.55rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(125, 211, 252, 0.94), rgba(167, 139, 250, 0.94));
+    box-shadow: 0 0 18px rgba(125, 211, 252, 0.16);
+    transition: height 0.38s ease, opacity 0.38s ease, transform 0.38s ease;
+  }
+
+  .infra-card[data-card-status="ready"] .infra-card__state,
+  .infra-card[data-card-status="warming"] .infra-card__state {
+    border-color: rgba(52, 211, 153, 0.22);
+    color: #b9f8d9;
+  }
+
+  .infra-card[data-card-status="waiting"] .infra-card__state {
+    border-color: rgba(251, 191, 36, 0.24);
+    color: #ffe29a;
+  }
+
+  .infra-card[data-card-status="error"] .infra-card__state,
+  .infra-card[data-card-status="disabled"] .infra-card__state {
+    border-color: rgba(251, 113, 133, 0.22);
+    color: #ffb7c4;
+  }
+
+  @keyframes infra-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes infra-spin-reverse {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+
+  @keyframes infra-pulse {
+    0%,
+    100% {
+      transform: scale(0.96);
+      opacity: 0.92;
+    }
+    50% {
+      transform: scale(1.02);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .infra-status__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .infra-status__hero {
+      grid-template-columns: 1fr;
+    }
+
+    .infra-status__summary {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .infra-status__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

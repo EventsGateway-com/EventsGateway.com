@@ -21,6 +21,13 @@
 			"remote": true
 		}
 	],
+	"kv_namespaces": [
+		{
+			"binding": "CACHE",
+			"id": "c6906c939d8a44e9978254f9073b7434",
+			"remote": true
+		}
+	],
 	"vars": {
 		"PUBLIC_STATS_SITE_ID": "site_alpha"
 	},
@@ -45,6 +52,13 @@
 					"binding": "DB",
 					"database_name": "eventsgateway-control-plane",
 					"database_id": "f2b6aefa-e18f-417f-abf7-a877866de76a",
+					"remote": true
+				}
+			],
+			"kv_namespaces": [
+				{
+					"binding": "CACHE",
+					"id": "c6906c939d8a44e9978254f9073b7434",
 					"remote": true
 				}
 			],

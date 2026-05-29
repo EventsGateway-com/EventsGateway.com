@@ -19,7 +19,7 @@
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      "id": "__CACHE_KV_NAMESPACE_ID__"
+      "id": "c6906c939d8a44e9978254f9073b7434"
     }
   ],
   "r2_buckets": [
@@ -60,7 +60,7 @@
       "kv_namespaces": [
         {
           "binding": "CACHE",
-          "id": "__CACHE_KV_NAMESPACE_ID__"
+          "id": "c6906c939d8a44e9978254f9073b7434"
         }
       ],
       "r2_buckets": [
@@ -77,6 +77,12 @@
           }
         ]
       },
+      "migrations": [
+        {
+          "tag": "v1",
+          "new_sqlite_classes": ["VisitorStateDurableObject"]
+        }
+      ],
       "queues": {
         "producers": [
           {

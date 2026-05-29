@@ -10,6 +10,12 @@ function json(data, init = {}) {
   });
 }
 
+const INFRA_STATUS_CACHE_MS = 8000;
+let infraStatusCache = {
+  expiresAt: 0,
+  payload: null
+};
+
 function roundUsd(value) {
   return Math.round((Number(value) || 0) * 100) / 100;
 }
@@ -157,6 +163,259 @@ async function handleLiveStats(env) {
   }
 }
 
+async function countKvItems(namespace) {
+  if (!namespace?.list) {
+    return { count: 0, status: "disabled" };
+  }
+
+  let count = 0;
+  let cursor;
+
+  do {
+    const page = await namespace.list({
+      limit: 1000,
+      cursor
+    });
+    count += Array.isArray(page.keys) ? page.keys.length : 0;
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+
+  return { count, status: "ready" };
+}
+
+async function countSingleRow(db, sql, ...params) {
+  const row = await db.prepare(sql).bind(...params).first();
+  return Number(row?.count ?? 0);
+}
+
+function buildSparkline(seed, value) {
+  const safeValue = Math.max(Number(value) || 0, 1);
+  return Array.from({ length: 18 }, (_, index) => {
+    const wave = Math.sin((index + 1) * 0.7 + seed) * 0.25 + 0.75;
+    const drift = 0.6 + index / 30;
+    return Math.max(8, Math.round(Math.log10(safeValue + 10) * 22 * wave * drift));
+  });
+}
+
+async function queryInfrastructureSnapshot(env) {
+  const kvMetrics = await countKvItems(env.CACHE);
+
+  if (!env.DB) {
+    return {
+      updated_at: new Date().toISOString(),
+      refresh_seconds: 3,
+      totals: {
+        kv_items: kvMetrics.count,
+        do_items: 0,
+        d1_rows: 0,
+        r2_items: 0
+      },
+      cards: [
+        {
+          key: "kv",
+          label: "KV items",
+          value: kvMetrics.count,
+          status: kvMetrics.status,
+          description: "Published edge configuration and cache records available in KV.",
+          sparkline: buildSparkline(1, kvMetrics.count)
+        },
+        {
+          key: "do",
+          label: "DO items",
+          value: 0,
+          status: "waiting",
+          description: "Visitor state snapshots are not available because D1 is not bound on this edge.",
+          sparkline: buildSparkline(2, 0)
+        },
+        {
+          key: "d1",
+          label: "D1 rows",
+          value: 0,
+          status: "waiting",
+          description: "Operational storage is not currently readable from the public worker.",
+          sparkline: buildSparkline(3, 0)
+        },
+        {
+          key: "r2",
+          label: "R2 items",
+          value: 0,
+          status: "waiting",
+          description: "Ledger object counts will appear after R2 is enabled and events are archived.",
+          sparkline: buildSparkline(4, 0)
+        }
+      ]
+    };
+  }
+
+  const [
+    sitesCount,
+    domainsCount,
+    keysCount,
+    collectedEventsCount,
+    identityCount,
+    deliveryCount,
+    routeCount,
+    destinationCount,
+    transformationCount,
+    routeVersionCount,
+    billingCustomerCount,
+    billingSubscriptionCount,
+    billingInvoiceCount,
+    billingTransactionCount,
+    billingReminderCount,
+    visitorStateCount,
+    ledgerItemCount
+  ] = await Promise.all([
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM sites"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM site_domains"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM site_keys"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM collected_events"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM identity_profiles"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM delivery_attempts"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM site_routes"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM site_destinations"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM site_transformations"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM site_route_versions"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM billing_customers"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM billing_subscriptions"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM billing_invoices"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM billing_transactions"),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM billing_reminders"),
+    countSingleRow(
+      env.DB,
+      "SELECT COUNT(DISTINCT json_extract(visitor_state_json, '$.visitor_key')) AS count FROM collected_events WHERE visitor_state_json IS NOT NULL"
+    ),
+    countSingleRow(env.DB, "SELECT COUNT(*) AS count FROM collected_events WHERE ledger_r2_key IS NOT NULL")
+  ]);
+
+  const d1Rows = [
+    sitesCount,
+    domainsCount,
+    keysCount,
+    collectedEventsCount,
+    identityCount,
+    deliveryCount,
+    routeCount,
+    destinationCount,
+    transformationCount,
+    routeVersionCount,
+    billingCustomerCount,
+    billingSubscriptionCount,
+    billingInvoiceCount,
+    billingTransactionCount,
+    billingReminderCount
+  ].reduce((sum, value) => sum + value, 0);
+
+  return {
+    updated_at: new Date().toISOString(),
+    refresh_seconds: 3,
+    totals: {
+      kv_items: kvMetrics.count,
+      do_items: visitorStateCount,
+      d1_rows: d1Rows,
+      r2_items: ledgerItemCount
+    },
+    cards: [
+      {
+        key: "kv",
+        label: "KV items",
+        value: kvMetrics.count,
+        status: kvMetrics.status,
+        description: "Published edge configuration and hot cache records currently stored in KV.",
+        sparkline: buildSparkline(1, kvMetrics.count)
+      },
+      {
+        key: "do",
+        label: "DO items",
+        value: visitorStateCount,
+        status: visitorStateCount > 0 ? "ready" : "warming",
+        description: "Live visitor state snapshots mirrored from Durable Objects through the ingestion path.",
+        sparkline: buildSparkline(2, visitorStateCount)
+      },
+      {
+        key: "d1",
+        label: "D1 rows",
+        value: d1Rows,
+        status: d1Rows > 0 ? "ready" : "warming",
+        description: "Operational rows across routing, identity, deliveries, billing, and recent event history.",
+        sparkline: buildSparkline(3, d1Rows)
+      },
+      {
+        key: "r2",
+        label: "R2 items",
+        value: ledgerItemCount,
+        status: ledgerItemCount > 0 ? "ready" : "waiting",
+        description: ledgerItemCount > 0
+          ? "Raw ledger objects successfully archived for longer-lived event history."
+          : "Ledger writes have not started yet or R2 is not enabled on this account.",
+        sparkline: buildSparkline(4, ledgerItemCount)
+      }
+    ]
+  };
+}
+
+async function handleInfrastructureStatus(env) {
+  const now = Date.now();
+  if (infraStatusCache.payload && infraStatusCache.expiresAt > now) {
+    return json(infraStatusCache.payload);
+  }
+
+  try {
+    const payload = await queryInfrastructureSnapshot(env);
+    infraStatusCache = {
+      payload,
+      expiresAt: now + INFRA_STATUS_CACHE_MS
+    };
+    return json(payload);
+  } catch {
+    const payload = {
+      updated_at: new Date().toISOString(),
+      refresh_seconds: 3,
+      totals: {
+        kv_items: 0,
+        do_items: 0,
+        d1_rows: 0,
+        r2_items: 0
+      },
+      cards: [
+        {
+          key: "kv",
+          label: "KV items",
+          value: 0,
+          status: "error",
+          description: "The public worker could not query infrastructure telemetry right now.",
+          sparkline: buildSparkline(1, 0)
+        },
+        {
+          key: "do",
+          label: "DO items",
+          value: 0,
+          status: "error",
+          description: "The public worker could not query infrastructure telemetry right now.",
+          sparkline: buildSparkline(2, 0)
+        },
+        {
+          key: "d1",
+          label: "D1 rows",
+          value: 0,
+          status: "error",
+          description: "The public worker could not query infrastructure telemetry right now.",
+          sparkline: buildSparkline(3, 0)
+        },
+        {
+          key: "r2",
+          label: "R2 items",
+          value: 0,
+          status: "error",
+          description: "The public worker could not query infrastructure telemetry right now.",
+          sparkline: buildSparkline(4, 0)
+        }
+      ]
+    };
+    return json(payload, { status: 200 });
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -168,6 +427,10 @@ export default {
 
     if (url.pathname === "/api/live-stats") {
       return handleLiveStats(env);
+    }
+
+    if (url.pathname === "/api/infrastructure-status") {
+      return handleInfrastructureStatus(env);
     }
 
     return env.ASSETS.fetch(request);

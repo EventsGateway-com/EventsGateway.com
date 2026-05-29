@@ -21,7 +21,7 @@
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      "id": "__CACHE_KV_NAMESPACE_ID__"
+      "id": "c6906c939d8a44e9978254f9073b7434"
     }
   ],
   "env": {
@@ -37,7 +37,7 @@
       "kv_namespaces": [
         {
           "binding": "CACHE",
-          "id": "__CACHE_KV_NAMESPACE_ID__"
+          "id": "c6906c939d8a44e9978254f9073b7434"
         }
       ],
       "vars": {

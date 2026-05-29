@@ -1,0 +1,80 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Button from "../components/Button.astro";
+import Container from "../components/Container.astro";
+import PublicInfraStatus from "../components/PublicInfraStatus.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { siteConfig } from "../config/site";
+
+const pageDescription =
+  "Live public infrastructure board for EventsGateway, showing current KV items, Durable Object snapshots, D1 rows, and R2 ledger items.";
+
+const pageJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "EventsGateway Realtime Infrastructure Status",
+  description: pageDescription
+};
+---
+
+<BaseLayout
+  title="Realtime Infrastructure Status"
+  description={pageDescription}
+  canonicalPath="/status/"
+  jsonLd={pageJsonLd}
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">Public Status</span>
+        <h1 class="page-title">Realtime infrastructure visibility across the active storage stack.</h1>
+        <p class="page-copy">
+          Watch the live footprint of `KV`, `Durable Objects`, `D1`, and `R2` as EventsGateway processes state,
+          routing, and ledger activity through the Cloudflare runtime.
+        </p>
+        <div class="button-row">
+          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href={siteConfig.social.github} variant="secondary" icon="arrow-right">Open GitHub</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <PublicInfraStatus />
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Interpretation"
+        title="What each live counter means."
+        description="The board is meant to show how the storage tiers fill in sequence, from hot configuration and visitor state to operational rows and raw ledger objects."
+      />
+      <div class="card-grid">
+        <div class="surface-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">KV</span>
+            <p class="section-copy">Published settings and edge cache entries that support fast read paths.</p>
+          </div>
+        </div>
+        <div class="surface-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">Durable Objects</span>
+            <p class="section-copy">Current visitor state snapshots that power the live hot path and identity continuity.</p>
+          </div>
+        </div>
+        <div class="surface-panel">
+          <div class="surface-panel__inner stack">
+            <span class="kicker">D1 And R2</span>
+            <p class="section-copy">D1 keeps the operational window, while R2 grows the raw ledger for longer-lived history.</p>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<script is:inline src="/scripts/infrastructure-status.js" defer></script>
