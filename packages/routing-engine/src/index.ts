@@ -11,7 +11,21 @@ import { createId, hashString } from "../../shared/src/index";
 
 export type CompiledDestination = {
   id: string;
-  kind: "meta" | "ga4" | "google_ads" | "webhook" | "custom";
+  kind:
+    | "meta"
+    | "ga4"
+    | "google_ads"
+    | "webhook"
+    | "custom"
+    | "facebook-pixel"
+    | "google-analytics-4"
+    | "tiktok"
+    | "segment"
+    | "ziprecruiter"
+    | "upward"
+    | "tatari"
+    | "taboola"
+    | "snapchat";
   name: string;
   enabled: boolean;
   config?: Record<string, unknown>;

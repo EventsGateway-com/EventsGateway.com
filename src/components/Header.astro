@@ -26,6 +26,12 @@ const pathname = Astro.url.pathname;
       </div>
       <div class="desktop-cta">
         <span class="header-status">Open source</span>
+        <Button href={siteConfig.auth.login.href} variant="ghost">
+          {siteConfig.auth.login.label}
+        </Button>
+        <Button href={siteConfig.auth.register.href} variant="secondary">
+          {siteConfig.auth.register.label}
+        </Button>
         <Button href={siteConfig.social.github} variant="ghost" icon="arrow-right">
           GitHub
         </Button>
@@ -50,6 +56,12 @@ const pathname = Astro.url.pathname;
             ))
           }
         </nav>
+        <Button href={siteConfig.auth.login.href} variant="ghost">
+          {siteConfig.auth.login.label}
+        </Button>
+        <Button href={siteConfig.auth.register.href} variant="secondary">
+          {siteConfig.auth.register.label}
+        </Button>
         <Button href={siteConfig.social.github} variant="secondary" icon="arrow-right">
           GitHub
         </Button>

@@ -51,7 +51,7 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
   if (path === "/v1/flush") {
     const methodResponse = ensureMethod(context, ["POST"]);
     if (methodResponse) return methodResponse;
-    const processed = await flushPendingDeliveries(env.DB, siteId);
+    const processed = await flushPendingDeliveries(env.DB, siteId, 25, env);
     return json(context, {
       processed,
       queue: await getOperationsQueues(env.DB, siteId)
@@ -84,7 +84,7 @@ export default {
         await processQueuedDeliveryAttempt(env.DB, {
           deliveryAttemptId: message.body.delivery_attempt_id,
           siteId: message.body.site_id
-        });
+        }, env);
         message.ack();
       } catch {
         message.retry();

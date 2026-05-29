@@ -10,7 +10,7 @@ import { siteConfig } from "../config/site";
 
 <BaseLayout
   title={`Download ${siteConfig.name}`}
-  description="Installation overview for EventsGateway, including tracker setup, Cloudflare Workers deployment, and domain install guidance."
+  description="Download guidance, release notes, and self-hosting direction for the EventsGateway public site."
   canonicalPath="/download/"
 >
   <section class="section page-hero">
@@ -20,8 +20,7 @@ import { siteConfig } from "../config/site";
         <h1 class="page-title">{downloadContent.title}</h1>
         <p class="page-copy">{downloadContent.intro}</p>
         <div class="button-row">
-          <Button href="/install/" variant="primary" icon="arrow-right">Open domain install guide</Button>
-          <Button href="/contact/" variant="secondary" icon="mail">Contact</Button>
+          <Button href={siteConfig.social.github} variant="primary" icon="arrow-right">View GitHub</Button>
           <Button href="/" variant="ghost" icon="arrow-right">View platform overview</Button>
         </div>
       </div>
@@ -37,7 +36,9 @@ import { siteConfig } from "../config/site";
             {
               downloadContent.platforms.map((platform) => (
                 <PremiumCard icon="download" title={platform.name} text={platform.detail} eyebrow={platform.status}>
-                  <Button href="/install/" variant="secondary" icon="arrow-right">Read install guide</Button>
+                  <Button href={siteConfig.social.github} variant="secondary" icon="arrow-right">
+                    Open source assets
+                  </Button>
                 </PremiumCard>
               ))
             }
@@ -52,9 +53,9 @@ import { siteConfig } from "../config/site";
       <div class="two-column">
         <div>
           <SectionHeader
-            eyebrow="Install Path"
-            title="Installation starts from GitHub and ends on your own domain."
-            description="Use this page as the high-level overview, then follow the dedicated guide for the full GitHub to domain setup flow."
+            eyebrow="Release Notes"
+            title="Public release notes focus on architecture and deployment clarity."
+            description="This page is positioned around source access, self-hosting readiness, and the product surface described by the site."
           />
           <ul class="simple-list">
             {downloadContent.releaseNotes.map((item) => <li>{item}</li>)}
@@ -62,9 +63,9 @@ import { siteConfig } from "../config/site";
         </div>
         <div>
           <SectionHeader
-            eyebrow="Deployment Requirements"
-            title="What you need to put the project on a live domain."
-            description="EventsGateway is designed for a lightweight install path, but it still needs a clear runtime and domain setup."
+            eyebrow="System Requirements"
+            title="Baseline requirements for running and shipping the public site."
+            description="The gateway platform grows beyond this static surface, but the public site remains simple to build and deploy."
           />
           <ul class="simple-list">
             {downloadContent.requirements.map((item) => <li>{item}</li>)}
@@ -78,13 +79,12 @@ import { siteConfig } from "../config/site";
     <Container>
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
-          <span class="eyebrow">Deployment help</span>
-          <h2 class="section-title">Need help installing EventsGateway on your domain?</h2>
+          <span class="eyebrow">Next step</span>
+          <h2 class="section-title">Need help with routing architecture or self-hosting decisions?</h2>
           <p class="section-copy">
-            Reach out if you want help with Cloudflare Workers deployment, collector subdomain mapping, or tracker installation on the live site.
+            Reach out if you want to discuss destination strategy, collector design, attribution requirements, or deployment posture.
           </p>
           <div class="button-row">
-            <Button href="/install/" variant="secondary" icon="arrow-right">Read install guide</Button>
             <Button href="/contact/" variant="primary" icon="mail">Contact</Button>
           </div>
         </div>

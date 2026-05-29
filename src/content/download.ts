@@ -1,24 +1,22 @@
 export const downloadContent = {
-  title: "Install",
-  status: "Cloudflare-native and small-site friendly",
+  title: "Download",
+  status: "Open source distribution",
   intro:
-    "EventsGateway is designed to install quickly on any site. Use the browser tracker, point it to the collector, and run the event gateway on Cloudflare services with a pricing model that can stay free for many small sites.",
-  version: "Deployment model: tracker plus Cloudflare-native runtime",
+    "Get the public site package, review the architecture, and prepare self-hosted deployment paths for the full EventsGateway platform.",
+  version: "Version channel: public foundation release",
   platforms: [
-    { name: "Script tag", detail: "Fast install path for marketing sites, landing pages, and stores", status: "Ready" },
-    { name: "JavaScript SDK", detail: "Use the tracker package for custom event collection flows", status: "Ready" },
-    { name: "Cloudflare Workers runtime", detail: "Deploy collector, API, and forwarding logic on the edge", status: "Ready" }
+    { name: "Marketing Site", detail: "Static Astro site for eventsgateway.com with Cloudflare deployment flow", status: "Available" },
+    { name: "Gateway Docs", detail: "Technical guidance for collector, routing, attribution, and destination architecture", status: "Available" },
+    { name: "Self-hosting Path", detail: "Cloudflare-first deployment model for public site and gateway services", status: "In progress" }
   ],
   releaseNotes: [
-    "Install the tracker on any site and send events to one endpoint.",
-    "Run routing and delivery logic through a Cloudflare Workers-based event gateway.",
-    "Keep many small-site setups inside Cloudflare free-tier limits before the $5/month paid plan is needed.",
-    "Control routing, schemas, destinations, and operations from the dashboard."
+    "The public site positions EventsGateway as an open source tracking and event routing platform.",
+    "Download guidance focuses on self-hosting, source review, and architecture visibility rather than closed beta access.",
+    "Future releases will expand with dashboard, collector, forwarder, and destination-specific packages."
   ],
   requirements: [
-    "A website where a small script or SDK snippet can be added",
-    "A Cloudflare Workers deployment for the collector and event routing runtime",
-    "Destination credentials for tools such as Meta, GA4, Google Ads, or custom webhooks",
-    "Traffic and storage volume that match the Cloudflare free tier if you want to keep runtime cost at zero"
+    "Node.js 22+ for local development and build verification",
+    "Cloudflare account for production deployment of the static public site",
+    "Technical familiarity with event routing, analytics destinations, or self-hosted infrastructure"
   ]
 } as const;
