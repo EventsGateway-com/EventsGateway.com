@@ -83,6 +83,10 @@ const pricingJsonLd = {
               <label class="pricing-field">
                 <span>Estimated monthly routed events</span>
                 <input id="pricing-events" type="range" min="0" max="20000000" step="50000" value="1000000" />
+                <div class="pricing-range-scale" aria-hidden="true">
+                  <span>0</span>
+                  <span>20,000,000</span>
+                </div>
               </label>
               <label class="pricing-field">
                 <span>Exact value</span>
@@ -90,8 +94,8 @@ const pricingJsonLd = {
               </label>
               <div class="pricing-summary-grid">
                 <div class="pricing-summary-card">
-                  <span>Included free</span>
-                  <strong>1,000,000 events</strong>
+                  <span>Selected volume</span>
+                  <strong id="pricing-selected">1,000,000</strong>
                 </div>
                 <div class="pricing-summary-card">
                   <span>Estimated monthly bill</span>
@@ -103,7 +107,7 @@ const pricingJsonLd = {
                 </div>
               </div>
               <div class="pricing-breakdown">
-                <div><span>Free allowance</span><strong id="pricing-included">1,000,000</strong></div>
+                <div><span>Included</span><strong id="pricing-included">1,000,000</strong></div>
                 <div><span>Overage events</span><strong id="pricing-overage">0</strong></div>
                 <div><span>Billing rule</span><strong>$5 per extra 1M events</strong></div>
               </div>
@@ -145,7 +149,6 @@ const pricingJsonLd = {
       </div>
       <div class="button-row button-row--center">
         <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Create free account</Button>
-        <Button href="/docs/stripe-billing/" variant="secondary" icon="arrow-right">Stripe Billing Docs</Button>
         <Button href="https://dash.eventsgateway.com/login" variant="secondary" icon="arrow-right">Go to Billing Dashboard</Button>
       </div>
     </Container>
@@ -198,11 +201,75 @@ const pricingJsonLd = {
   .pricing-field input[type="number"] {
     width: 100%;
     min-height: 3rem;
+    color: var(--color-text);
+  }
+
+  .pricing-field input[type="number"] {
     padding: 0.75rem 0.9rem;
     border: 1px solid var(--color-border);
     border-radius: 1rem;
     background: rgba(5, 10, 24, 0.9);
-    color: var(--color-text);
+  }
+
+  .pricing-field input[type="range"] {
+    min-height: 1.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    appearance: none;
+    -webkit-appearance: none;
+    background:
+      linear-gradient(90deg, rgba(125, 211, 252, 0.95) 0%, rgba(125, 211, 252, 0.95) var(--range-progress, 5%), rgba(255, 255, 255, 0.12) var(--range-progress, 5%), rgba(255, 255, 255, 0.12) 100%);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .pricing-field input[type="range"]::-webkit-slider-runnable-track {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .pricing-field input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: -0.325rem;
+    border: 0;
+    border-radius: 999px;
+    background: #d8f3ff;
+    box-shadow: 0 0 0 4px rgba(125, 211, 252, 0.22);
+  }
+
+  .pricing-field input[type="range"]::-moz-range-track {
+    height: 0.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+  }
+
+  .pricing-field input[type="range"]::-moz-range-progress {
+    height: 0.5rem;
+    border-radius: 999px;
+    background: rgba(125, 211, 252, 0.95);
+  }
+
+  .pricing-field input[type="range"]::-moz-range-thumb {
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 0;
+    border-radius: 999px;
+    background: #d8f3ff;
+    box-shadow: 0 0 0 4px rgba(125, 211, 252, 0.22);
+  }
+
+  .pricing-range-scale {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--color-subtle);
+    font-size: 0.78rem;
   }
 
   .pricing-summary-grid {

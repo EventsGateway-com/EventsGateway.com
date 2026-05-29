@@ -32,22 +32,22 @@ export const contactContent = {
       icon: "mail",
       title: "Sales and plans",
       text: "Questions about Free, usage expansion, Enterprise scope, or commercial fit.",
-      actionLabel: "Contact sales",
-      href: "mailto:contact@eventsgateway.com?subject=EventsGateway%20sales"
+      actionLabel: "Use contact form",
+      href: "#contact-form"
     },
     {
       icon: "spark",
       title: "Cloudflare deployment",
       text: "Discuss edge deployment, routing architecture, and how the platform fits into your Cloudflare setup.",
-      actionLabel: "Discuss deployment",
-      href: "mailto:contact@eventsgateway.com?subject=EventsGateway%20deployment"
+      actionLabel: "Use contact form",
+      href: "#contact-form"
     },
     {
       icon: "terminal",
       title: "Technical integration",
       text: "Talk about Meta, GA4, Google Ads, webhooks, and custom event routing requirements.",
-      actionLabel: "Discuss technical fit",
-      href: "mailto:contact@eventsgateway.com?subject=EventsGateway%20technical%20integration"
+      actionLabel: "Use contact form",
+      href: "#contact-form"
     }
   ],
   inquiryTypes: [

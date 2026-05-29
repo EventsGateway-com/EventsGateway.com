@@ -5,11 +5,10 @@ import Container from "../components/Container.astro";
 import PremiumCard from "../components/PremiumCard.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import { contactContent } from "../content/contact";
-import { siteConfig } from "../config/site";
 ---
 
 <BaseLayout
-  title={`Contact ${siteConfig.name}`}
+  title="Contact EventsGateway"
   description="General inquiries, private demo requests, and technical partnership contact paths."
   canonicalPath="/contact/"
 >
@@ -43,7 +42,7 @@ import { siteConfig } from "../config/site";
         description="This form sends the inquiry through Brevo so the team receives structured contact requests without exposing direct inbox handling in the UI."
       />
       <div class="two-column contact-form-layout">
-        <form class="surface-panel contact-form-panel" data-contact-form>
+        <form id="contact-form" class="surface-panel contact-form-panel" data-contact-form>
           <div class="surface-panel__inner contact-form">
             <label class="contact-field">
               <span>Department</span>
@@ -111,12 +110,10 @@ import { siteConfig } from "../config/site";
           />
           <div class="surface-panel cta-panel">
             <div class="surface-panel__inner stack">
-              <span class="kicker">Direct email</span>
-              <a class="contact-email" href={`mailto:${siteConfig.email}`}>
-                {siteConfig.email}
-              </a>
+              <span class="kicker">Form-first contact</span>
+              <h3 class="contact-focus-title">Use the structured contact form for every inquiry.</h3>
               <p class="section-copy">
-                Share product context, deployment posture, timing, and what outcome you want from the conversation.
+                Share product context, deployment posture, timing, and the destination mix you need so the right department receives the request.
               </p>
             </div>
           </div>
@@ -144,13 +141,13 @@ import { siteConfig } from "../config/site";
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
           <span class="eyebrow">Private conversations</span>
-          <h2 class="section-title">For demos, partnerships, and early access, email is the live channel.</h2>
+          <h2 class="section-title">For demos, partnerships, and early access, start with the contact form.</h2>
           <p class="section-copy">
-            This version keeps the entire site static. Contact stays explicit, controlled, and easy to verify.
+            The form is the public entry point for commercial, support, and technical conversations.
           </p>
           <div class="button-row">
-            <Button href={`mailto:${siteConfig.email}?subject=EventsGateway%20inquiry`} variant="primary" icon="mail">
-              Contact by email
+            <Button href="#contact-form" variant="primary" icon="mail">
+              Open contact form
             </Button>
           </div>
         </div>
@@ -160,10 +157,11 @@ import { siteConfig } from "../config/site";
 </BaseLayout>
 
 <style>
-  .contact-email {
+  .contact-focus-title {
     font-family: var(--font-display);
     font-size: clamp(1.4rem, 3vw, 2.15rem);
     letter-spacing: -0.03em;
+    margin: 0;
   }
 
   .contact-form-layout {
