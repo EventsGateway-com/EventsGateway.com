@@ -8,11 +8,11 @@ export const integrationsContent = {
       slug: "meta-ads",
       label: "Meta Ads",
       title: "Meta Ads integration",
-      summary: "Improve Meta Event Match Score with cleaner purchase, lead, and identity data.",
+      summary: "Improve Meta Event Match Quality (EMQ) with cleaner purchase, lead, and identity data.",
       hero:
         "Send cleaner conversion data to Meta so campaigns optimize on stronger matching inputs, better audience quality, and more reliable mobile signal.",
       points: [
-        "Improve Event Match Score with cleaner purchase and lead events",
+        "Improve Event Match Quality (EMQ) with cleaner purchase and lead events",
         "Keep browser and server-side conversion logic easier to trust",
         "Reduce wasted spend caused by fragmented or incomplete Meta tracking"
       ],

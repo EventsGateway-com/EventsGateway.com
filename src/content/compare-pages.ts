@@ -2,7 +2,7 @@ export const comparePages = {
   "cloudflare-zaraz": {
     title: "EventsGateway vs Cloudflare Zaraz",
     description:
-      "Zaraz is useful when the main goal is tag governance. EventsGateway is stronger when the real goal is cleaner conversion data, higher Event Match Score posture, better targeting inputs, and one event layer that feeds Meta, Google Ads, TikTok, and analytics tools together.",
+      "Zaraz is useful when the main goal is tag governance. EventsGateway is stronger when the real goal is cleaner conversion data, higher Event Match Quality (EMQ) posture, better targeting inputs, and one event layer that feeds Meta, Google Ads, TikTok, and analytics tools together.",
     winner: "Use EventsGateway when you want stronger ad signal and one event model. Use Zaraz when your main problem is tag orchestration.",
     points: [
       {
@@ -21,7 +21,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Tag governance", "Conversion signal quality"],
       ["Meta and TikTok readiness", "Indirect", "Built into the product story"],
-      ["Event Match Score posture", "Secondary benefit", "Core advantage"],
+      ["Event Match Quality (EMQ) posture", "Secondary benefit", "Core advantage"],
       ["Multi-platform routing", "Limited", "Primary capability"],
       ["Mobile and iOS resilience", "Mixed by tag setup", "Stronger because one event layer stays consistent"],
       ["Best for", "Teams cleaning up scripts", "Teams improving ad signal and targeting"]
@@ -77,7 +77,7 @@ export const comparePages = {
     table: [
       ["Primary value", "CDP breadth", "Signal quality and routing clarity"],
       ["Commercial fit", "Broader than many teams need", "Focused and easier to justify"],
-      ["Meta Event Match Score posture", "Possible but indirect", "Direct positioning advantage"],
+      ["Meta Event Match Quality (EMQ) posture", "Possible but indirect", "Direct positioning advantage"],
       ["Multi-platform routing", "Strong", "Strong and more focused"],
       ["Targeting inputs", "Part of a larger system", "Core benefit"],
       ["Best for", "Large CDP programs", "Marketers who need cleaner conversion data"]
@@ -106,7 +106,7 @@ export const comparePages = {
       ["Primary value", "Product analytics depth", "Ad-signal quality and routing"],
       ["Purchase and lead quality", "Secondary", "Primary"],
       ["Meta, Google, TikTok routing", "Secondary", "Core use case"],
-      ["Event Match Score posture", "Indirect", "Direct benefit"],
+      ["Event Match Quality (EMQ) posture", "Indirect", "Direct benefit"],
       ["Mobile and iOS tracking", "Not the main message", "Explicit value"],
       ["Best for", "Product teams", "Performance teams"]
     ]
@@ -133,7 +133,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Container control", "Cleaner ad-platform signal"],
       ["Learning curve", "Higher for non-technical teams", "Lower for performance teams"],
-      ["Meta Event Match Score posture", "Depends on setup quality", "Part of the product promise"],
+      ["Meta Event Match Quality (EMQ) posture", "Depends on setup quality", "Part of the product promise"],
       ["Multi-platform routing", "Possible through tag logic", "Built in"],
       ["Mobile and iOS resilience", "Depends on implementation discipline", "Designed as a core advantage"],
       ["Best for", "Google-tagging teams", "Advertisers who want cleaner conversions"]
@@ -161,7 +161,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Privacy governance", "Paid-media signal quality"],
       ["Open flexibility", "Lower", "Higher"],
-      ["Event Match Score posture", "Not the lead message", "Lead advantage"],
+      ["Event Match Quality (EMQ) posture", "Not the lead message", "Lead advantage"],
       ["Targeting improvement", "Secondary", "Primary"],
       ["Commercial clarity", "Enterprise-heavy", "Simpler"],
       ["Best for", "Privacy-led enterprise teams", "Growth and performance teams"]
@@ -216,7 +216,7 @@ export const comparePages = {
     ],
     table: [
       ["Primary value", "Traffic analytics", "Conversion quality for ads and analytics"],
-      ["Meta Event Match Score posture", "Not a core topic", "Core advantage"],
+      ["Meta Event Match Quality (EMQ) posture", "Not a core topic", "Core advantage"],
       ["Paid-media routing", "Limited", "Primary"],
       ["Targeting impact", "Low", "High"],
       ["Mobile and iOS tracking", "Not the focus", "Explicit value"],
@@ -246,7 +246,7 @@ export const comparePages = {
       ["Primary value", "Owned analytics", "Paid-media signal quality"],
       ["Reporting depth", "Strong", "Secondary"],
       ["Meta, Google, TikTok routing", "Secondary", "Primary"],
-      ["Event Match Score posture", "Indirect", "Direct"],
+      ["Event Match Quality (EMQ) posture", "Indirect", "Direct"],
       ["Targeting and audience inputs", "Secondary", "Primary"],
       ["Best for", "Reporting-led teams", "Advertisers and growth teams"]
     ]
@@ -273,7 +273,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Default analytics and tags", "Clean conversion routing across platforms"],
       ["Vendor neutrality", "Google-centered", "Multi-platform by design"],
-      ["Meta Event Match Score posture", "Depends on extra work", "Built into the value story"],
+      ["Meta Event Match Quality (EMQ) posture", "Depends on extra work", "Built into the value story"],
       ["Targeting improvement", "Limited", "Stronger"],
       ["Mobile and iOS resilience", "Varies by tag setup", "Direct advantage"],
       ["Best for", "Baseline measurement", "Growth teams that need better signal"]
@@ -302,7 +302,7 @@ export const comparePages = {
       ["Primary value", "Product analytics", "Ad-signal quality and routing"],
       ["Revenue-event focus", "Secondary", "Primary"],
       ["Meta, Google, TikTok delivery", "Secondary", "Core use case"],
-      ["Event Match Score posture", "Indirect", "Direct"],
+      ["Event Match Quality (EMQ) posture", "Indirect", "Direct"],
       ["Targeting inputs", "Limited", "Stronger"],
       ["Best for", "Product teams", "Performance teams"]
     ]
@@ -329,7 +329,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Behavior analytics", "Clean ad-platform signal"],
       ["Campaign-routing strength", "Secondary", "Primary"],
-      ["Meta Event Match Score posture", "Indirect", "Direct"],
+      ["Meta Event Match Quality (EMQ) posture", "Indirect", "Direct"],
       ["Targeting improvement", "Secondary", "Primary"],
       ["Commercial simplicity", "Heavier", "Lighter"],
       ["Best for", "Analytics-led teams", "Advertisers and growth operators"]
@@ -358,7 +358,7 @@ export const comparePages = {
       ["Primary value", "Automatic analytics capture", "Explicit conversion quality control"],
       ["Purchase and lead governance", "Secondary", "Primary"],
       ["Meta, Google, TikTok routing", "Secondary", "Primary"],
-      ["Event Match Score posture", "Indirect", "Direct"],
+      ["Event Match Quality (EMQ) posture", "Indirect", "Direct"],
       ["Targeting inputs", "Limited", "Stronger"],
       ["Best for", "Product analytics teams", "Performance teams"]
     ]
@@ -385,7 +385,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Modeled event pipelines", "Cleaner signal for ad platforms"],
       ["Time to business value", "Longer", "Faster"],
-      ["Meta Event Match Score posture", "Possible but indirect", "Direct advantage"],
+      ["Meta Event Match Quality (EMQ) posture", "Possible but indirect", "Direct advantage"],
       ["Targeting and optimization inputs", "Secondary", "Primary"],
       ["Commercial clarity", "Heavier", "Simpler"],
       ["Best for", "Analytics engineering teams", "Growth and performance teams"]
@@ -414,7 +414,7 @@ export const comparePages = {
       ["Primary value", "Enterprise analytics depth", "Paid-media signal quality and routing"],
       ["Commercial weight", "Heavy", "Lighter"],
       ["Meta, Google, TikTok routing", "Secondary", "Primary"],
-      ["Event Match Score posture", "Indirect", "Direct"],
+      ["Event Match Quality (EMQ) posture", "Indirect", "Direct"],
       ["Targeting improvement", "Secondary", "Primary"],
       ["Best for", "Large enterprise analytics teams", "Growth-focused advertisers"]
     ]
@@ -441,7 +441,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Simple analytics", "Signal quality and routing"],
       ["Paid-media usefulness", "Limited", "High"],
-      ["Meta Event Match Score posture", "Not the focus", "Core benefit"],
+      ["Meta Event Match Quality (EMQ) posture", "Not the focus", "Core benefit"],
       ["Targeting improvement", "Low", "Strong"],
       ["Mobile and iOS tracking", "Not the focus", "Direct value"],
       ["Best for", "Simple reporting needs", "Advertisers and growth teams"]
@@ -469,7 +469,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Simple analytics", "Ad-signal quality and routing"],
       ["Campaign usefulness", "Secondary", "Primary"],
-      ["Meta Event Match Score posture", "Not the focus", "Direct benefit"],
+      ["Meta Event Match Quality (EMQ) posture", "Not the focus", "Direct benefit"],
       ["Targeting improvement", "Low", "Stronger"],
       ["Mobile and iOS tracking", "Not the focus", "Explicit value"],
       ["Best for", "Lightweight reporting", "Advertisers and growth teams"]
@@ -497,7 +497,7 @@ export const comparePages = {
     table: [
       ["Primary value", "Governance and owned analytics", "Signal quality and routing"],
       ["Meta, Google, TikTok usefulness", "Secondary", "Primary"],
-      ["Event Match Score posture", "Indirect", "Direct"],
+      ["Event Match Quality (EMQ) posture", "Indirect", "Direct"],
       ["Commercial simplicity", "Broader", "Lighter"],
       ["Targeting improvement", "Secondary", "Primary"],
       ["Best for", "Governance-led teams", "Growth and performance teams"]
@@ -506,7 +506,7 @@ export const comparePages = {
   "meta-pixel-direct": {
     title: "EventsGateway vs Meta Pixel Direct",
     description:
-      "Meta Pixel direct is the quickest way to send events only to Meta. EventsGateway is stronger when the business wants higher Event Match Score posture, cleaner purchase and lead data, more stable mobile and iOS measurement, and one event stream that also feeds Google Ads, TikTok, and analytics tools.",
+      "Meta Pixel direct is the quickest way to send events only to Meta. EventsGateway is stronger when the business wants higher Event Match Quality (EMQ) posture, cleaner purchase and lead data, more stable mobile and iOS measurement, and one event stream that also feeds Google Ads, TikTok, and analytics tools.",
     winner: "Use EventsGateway when Meta is part of a broader growth stack. Use Meta Pixel direct only for the smallest Meta-only setup.",
     points: [
       {
@@ -524,7 +524,7 @@ export const comparePages = {
     ],
     table: [
       ["Primary value", "Fast Meta-only setup", "Cleaner signal across the whole stack"],
-      ["Event Match Score posture", "Limited by direct setup quality", "Stronger by design"],
+      ["Event Match Quality (EMQ) posture", "Limited by direct setup quality", "Stronger by design"],
       ["Google Ads and TikTok reuse", "No", "Yes"],
       ["Mobile and iOS resilience", "More fragile", "Stronger and more consistent"],
       ["Targeting quality", "Limited to one vendor path", "Broader and cleaner"],

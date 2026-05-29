@@ -2,7 +2,7 @@ export const whyNotDirectPixelsContent = {
   title: "Why EventsGateway Instead Of Direct Pixels",
   eyebrow: "Direct Pixels Vs Event Gateway",
   intro:
-    "Direct pixels are fast only when the stack has one destination and almost no operational ambition. EventsGateway becomes the stronger commercial choice the moment the same site must improve Meta Event Match Score, route conversions to multiple platforms, and keep signal quality high without multiplying browser-side code.",
+    "Direct pixels are fast only when the stack has one destination and almost no operational ambition. EventsGateway becomes the stronger commercial choice the moment the same site must improve Meta Event Match Quality (EMQ), route conversions to multiple platforms, and keep signal quality high without multiplying browser-side code.",
   reasons: [
     {
       title: "One event model instead of vendor-specific browser code",
@@ -35,7 +35,7 @@ export const whyNotDirectPixelsContent = {
       note: "EventsGateway wins the moment the same conversion must feed Meta, Google, TikTok, and analytics tools."
     },
     {
-      label: "Event Match Score posture",
+      label: "Event Match Quality (EMQ) posture",
       pixels: 2,
       gateway: 5,
       note: "A central gateway makes identifiers, payload quality, and destination logic easier to control for stronger matching."
@@ -49,7 +49,7 @@ export const whyNotDirectPixelsContent = {
   ],
   comparisonRows: [
     ["Browser code", "Vendor-specific per platform", "One canonical event contract"],
-    ["Event Match Score inputs", "Managed differently per vendor", "Centralized for stronger matching quality"],
+    ["Event Match Quality (EMQ) inputs", "Managed differently per vendor", "Centralized for stronger matching quality"],
     ["Adding Meta, TikTok, GA4, and more", "More scripts and more logic in the site", "Route the same event stream to new destinations"],
     ["Retry and delivery logic", "Mostly absent in the browser", "Handled in the event gateway"],
     ["Tracking ownership", "Platform-led", "Business-led"],

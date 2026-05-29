@@ -38,7 +38,7 @@ export const contactContent = {
     {
       icon: "spark",
       title: "Signal strategy",
-      text: "Discuss Meta signal quality, Event Match Score posture, conversion modeling, and multi-destination rollout.",
+      text: "Discuss Meta signal quality, Event Match Quality (EMQ) posture, conversion modeling, and multi-destination rollout.",
       actionLabel: "Use contact form",
       href: "#contact-form"
     },

@@ -2,7 +2,7 @@ export const compareContent = {
   title: "EventsGateway Comparisons",
   eyebrow: "Tracker Comparisons",
   intro:
-    "Compare EventsGateway with Cloudflare Zaraz, RudderStack, Segment, GTM server-side setups, PostHog, JENTIS, Stape-based setups, Plausible, Matomo, GA4 plus GTM, Mixpanel, Amplitude, Heap, Snowplow, Adobe Analytics, Simple Analytics, Fathom, Piwik PRO, direct Meta Pixel setups, and direct TikTok Pixel setups. These pages are written for performance teams that care about Meta signal quality, Event Match Score posture, cost clarity, and one clean event stream that can feed every channel.",
+    "Compare EventsGateway with Cloudflare Zaraz, RudderStack, Segment, GTM server-side setups, PostHog, JENTIS, Stape-based setups, Plausible, Matomo, GA4 plus GTM, Mixpanel, Amplitude, Heap, Snowplow, Adobe Analytics, Simple Analytics, Fathom, Piwik PRO, direct Meta Pixel setups, and direct TikTok Pixel setups. These pages are written for performance teams that care about Meta signal quality, Event Match Quality (EMQ) posture, cost clarity, and one clean event stream that can feed every channel.",
   cards: [
     {
       slug: "cloudflare-zaraz",
@@ -171,6 +171,6 @@ export const compareContent = {
     "EventsGateway is strongest when you want one browser-side event contract and stronger downstream routing for Meta, Google, TikTok, and analytics tools.",
     "The biggest commercial advantage is signal quality plus cost clarity: one implementation, one event model, and one lower-cost routing layer.",
     "Broader CDPs often win on warehouse activation and identity graphs, while EventsGateway wins on directness, launch speed, and routing control for advertisers.",
-    "Analytics tools can be excellent for reporting, but EventsGateway becomes more compelling when you need better Event Match Score posture, retries, transformations, and multi-destination delivery from one canonical source."
+    "Analytics tools can be excellent for reporting, but EventsGateway becomes more compelling when you need better Event Match Quality (EMQ) posture, retries, transformations, and multi-destination delivery from one canonical source."
   ]
 } as const;

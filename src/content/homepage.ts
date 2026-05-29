@@ -2,14 +2,14 @@ export const homeContent = {
   eyebrow: "Commercial Event Gateway",
   title: "The best-priced event gateway for marketers who want less spend and better performance.",
   description:
-    "EventsGateway is built for advertisers who care about Meta signal quality, Event Match Score, cleaner conversion routing, stronger targeting, and lower tracking cost. Replace scattered pixels and expensive stacks with one event gateway that helps Meta receive the strongest possible data while the same event stream also feeds GA4, Google Ads, TikTok, and custom destinations, with cleaner mobile tracking and far better resilience on iOS devices.",
+    "EventsGateway is built for advertisers who care about Meta signal quality, Event Match Quality (EMQ), cleaner conversion routing, stronger targeting, and lower tracking cost. Replace scattered pixels and expensive stacks with one event gateway that helps Meta receive the strongest possible data while the same event stream also feeds GA4, Google Ads, TikTok, and custom destinations, with cleaner mobile tracking and far better resilience on iOS devices.",
   trustMarks: [
-    "Maximum Event Match Score posture",
+    "Maximum Event Match Quality (EMQ) posture",
     "One setup, many destinations",
     "More reliable on mobile and iOS"
   ],
   stats: [
-    { label: "Event Match Score", value: "Max", detail: "Built to help Meta receive the strongest matching signal your site can send" },
+    { label: "Event Match Quality (EMQ)", value: "Max", detail: "Built to help Meta receive the strongest matching signal your site can send" },
     { label: "Linear overage", value: "$5 / 1M", detail: "No pricing cliff when routed volume grows" },
     { label: "Enterprise from", value: "$1,995+", detail: "Commercial support for high-volume programs and complex delivery needs" }
   ],
@@ -125,7 +125,7 @@ export const homeContent = {
       text: "Tracking rules, deliveries, and visibility stay in one product instead of being spread across plugins, tags, and disconnected vendors."
     }
   ],
-  finalCtaTitle: "Ready to improve Event Match Score without paying for a heavier stack?",
+  finalCtaTitle: "Ready to improve Event Match Quality (EMQ) without paying for a heavier stack?",
   finalCtaText:
     "Start with the hosted dashboard, collect once, route everywhere, and give Meta, Google Ads, and TikTok stronger conversion signal while keeping the commercial model clearer and cheaper than heavier alternatives."
 } as const;
