@@ -138,7 +138,6 @@ main {
 
 .section-title {
   margin: 0;
-  max-width: 12ch;
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3.2rem);
   font-weight: 630;
@@ -155,13 +154,11 @@ main {
 }
 
 .hero-copy {
-  max-width: 40rem;
   font-size: 1.05rem;
 }
 
 .page-copy,
 .section-copy {
-  max-width: 40rem;
   font-size: 1rem;
 }
 
