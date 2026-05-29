@@ -1285,11 +1285,7 @@ function DraggablePanel({ title, children, isMinimized, onToggleMinimize, onClos
           {children}
         </div>
       )}
-      {!isMinimized && (
-        <div className="eg-draggable-panel__resize-handle" style={{ position: 'absolute', bottom: '4px', right: '4px', cursor: 'nwse-resize', color: 'var(--eg-muted)' }}>
-          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="21 15 21 21 15 21"></polyline><line x1="21" y1="21" x2="13" y2="13"></line></svg>
-        </div>
-      )}
+      
     </div>
   );
 }
@@ -1395,6 +1391,22 @@ function OverviewPage() {
     setClosedPanels(prev => {
       const newState = { ...prev, [panelId]: false };
       saveState({ closedPanels: newState });
+      
+      // Also restore the layout height if it was crushed
+      setLayouts((currentLayouts: any) => {
+        const newLayouts = { ...currentLayouts };
+        Object.keys(newLayouts).forEach(breakpoint => {
+          newLayouts[breakpoint] = newLayouts[breakpoint].map((l: any) => {
+            if (l.i === panelId) {
+              return { ...l, h: originalHeights[panelId] || 5 };
+            }
+            return l;
+          });
+        });
+        saveState({ layouts: newLayouts });
+        return newLayouts;
+      });
+      
       return newState;
     });
   };
@@ -1427,6 +1439,11 @@ function OverviewPage() {
           rowHeight={20}
           draggableHandle=".drag-handle"
           onLayoutChange={handleLayoutChange}
+          resizeHandle={
+            <div className="react-resizable-handle" style={{ position: 'absolute', bottom: '8px', right: '8px', cursor: 'nwse-resize', color: 'var(--eg-muted)', zIndex: 10 }}>
+              <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="21 15 21 21 15 21"></polyline><line x1="21" y1="21" x2="13" y2="13"></line></svg>
+            </div>
+          }
         >
           {allPanels.filter(p => !closedPanels[p.id]).map(p => (
             <div key={p.id}>

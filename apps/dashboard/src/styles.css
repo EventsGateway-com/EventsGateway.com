@@ -1310,9 +1310,14 @@ p {
   }
 
   .eg-sidebar__content {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-bottom: 2rem;
+    height: 100%;
+    overscroll-behavior: contain;
   }
 
   .eg-brand {
@@ -1427,5 +1432,5 @@ p {
 }
 
 
-.react-resizable-handle { opacity: 0; }
+.react-resizable-handle { opacity: 1; }
 .react-grid-item.react-draggable-dragging { user-select: none; }
