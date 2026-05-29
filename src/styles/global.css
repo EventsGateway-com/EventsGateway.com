@@ -294,14 +294,14 @@ main {
 
 .floating-field--select > .floating-label,
 .floating-field--textarea > .floating-label {
-  top: 1rem;
+  top: 0.88rem;
   transform: none;
 }
 
 .floating-field.is-filled > .floating-label,
 .floating-field.is-active > .floating-label,
 .floating-field:focus-within > .floating-label {
-  top: 0.68rem;
+  top: 0.5rem;
   transform: none;
   color: var(--color-subtle);
   font-size: 0.72rem;

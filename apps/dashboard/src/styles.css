@@ -176,7 +176,7 @@ p {
 .eg-field--floating.is-filled > span,
 .eg-field--floating.is-active > span,
 .eg-field--floating:focus-within > span {
-  top: 0.72rem;
+  top: 0.5rem;
   transform: none;
   color: var(--eg-subtle);
   font-size: 0.72rem;
