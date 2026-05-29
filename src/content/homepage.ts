@@ -1,6 +1,6 @@
 export const homeContent = {
   eyebrow: "Event Routing Platform",
-  title: "The event gateway for teams that want more purchases and&nbsp;<span style=\"color: var(--color-accent);\">less ad spend</span>.",
+  title: "The event gateway for teams that want more Purchase events and&nbsp;<span style=\"color: var(--color-accent);\">less ad spend</span>.",
   description:
     "EVENTS Gateway gives teams one event layer for purchases, leads, signups, and lifecycle events. Collect data once, then route it to Meta, Google Ads, TikTok, GA4, CRM tools, and webhooks without rebuilding tracking for each destination.",
   trustMarks: [
