@@ -104,6 +104,25 @@ const docsJsonLd = {
   <section class="section section--tight">
     <Container>
       <SectionHeader
+        eyebrow="Billing Guides"
+        title="Commercial setup and recovery documentation."
+        description="Use these guides when EventsGateway needs a production-ready billing layer, not just event routing."
+      />
+      <div class="card-grid">
+        {
+          docsContent.billingGuides.map((item) => (
+            <PremiumCard icon="terminal" title={item.title} text={item.text}>
+              <Button href={`/docs/${item.slug}/`} variant="secondary" icon="arrow-right">Open guide</Button>
+            </PremiumCard>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
         eyebrow="Playbooks"
         title="Implementation guides for real funnels."
         description="Move beyond a raw event catalog and see how the canonical e_g model should be applied in common business models."

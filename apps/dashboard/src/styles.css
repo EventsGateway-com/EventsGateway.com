@@ -782,6 +782,12 @@ p {
   background: linear-gradient(90deg, rgba(125, 211, 252, 0.96), rgba(167, 139, 250, 0.92));
 }
 
+.eg-filter-grid {
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .eg-version-strip {
   display: flex;
   flex-wrap: wrap;
@@ -916,6 +922,13 @@ p {
     width: auto;
   }
 
+  .eg-shell-banner,
+  .eg-alert {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .eg-list__row,
   .eg-stream__row,
   .eg-action-line,
@@ -968,6 +981,12 @@ p {
   .eg-json {
     max-height: 24rem;
     font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .eg-filter-grid {
+    grid-template-columns: 1fr;
   }
 }
 

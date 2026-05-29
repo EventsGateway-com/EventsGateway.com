@@ -72,6 +72,13 @@ export const docsContent = {
       text: "Track one-time donations, recurring giving, campaign IDs, and nonprofit lead flows."
     }
   ],
+  billingGuides: [
+    {
+      slug: "stripe-billing",
+      title: "Stripe Billing Setup",
+      text: "Configure Checkout, Billing Portal, webhooks, reminder flow, and automatic routing suspension."
+    }
+  ],
   eventFields: [
     {
       name: "value",

@@ -262,6 +262,16 @@ function AppShell() {
   }, [isSidebarOpen]);
 
   const navGroups = useMemo(() => getNavGroups(user?.role === "global_admin"), [user?.role]);
+  const isSuspensionSafeRoute = useMemo(
+    () =>
+      [
+        "/settings/billing",
+        "/settings/install",
+        "/settings/general",
+        "/admin/billing"
+      ].some((segment) => location.pathname.includes(segment)),
+    [location.pathname]
+  );
 
   return (
     <div className="eg-shell">
@@ -382,7 +392,29 @@ function AppShell() {
               </NavLink>
             </div>
           ) : null}
-          <Outlet />
+          {billingStatusQuery.data?.subscription.status === "suspended" && !isSuspensionSafeRoute ? (
+            <div className="eg-page">
+              <StateCard
+                title="Routing is suspended for this site"
+                description="Operational pages are locked until the overdue billing state is resolved. Use the billing area to update payment details or clear the overdue invoice."
+              />
+              <div className="eg-inline-actions">
+                <NavLink className="eg-button eg-button--primary" to={sitePath("settings/billing")}>
+                  Open billing
+                </NavLink>
+                <NavLink className="eg-button" to={sitePath("settings/install")}>
+                  Open install
+                </NavLink>
+                {user?.role === "global_admin" ? (
+                  <NavLink className="eg-button" to={sitePath("admin/billing")}>
+                    Open admin billing
+                  </NavLink>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </main>
       </div>
     </div>
@@ -4273,6 +4305,8 @@ function BillingPage() {
 function AdminBillingPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "past_due" | "suspended" | "canceled">("all");
   const [invoiceDraft, setInvoiceDraft] = useState({
     site_id: currentContext.siteId,
     amount_usd: "25",
@@ -4326,6 +4360,24 @@ function AdminBillingPage() {
     return <StateCard title="Loading billing admin" description="Preparing subscriptions, transactions, and revenue monitoring." />;
   }
 
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredSubscriptions = subscriptionsQuery.data.filter((subscription) => {
+    const matchesStatus = statusFilter === "all" || subscription.status === statusFilter;
+    const matchesSearch = !normalizedSearchTerm ||
+      subscription.company_name.toLowerCase().includes(normalizedSearchTerm) ||
+      subscription.billing_email.toLowerCase().includes(normalizedSearchTerm) ||
+      subscription.site_id.toLowerCase().includes(normalizedSearchTerm);
+    return matchesStatus && matchesSearch;
+  });
+  const filteredTransactions = transactionsQuery.data.filter((transaction) => {
+    const matchesSearch = !normalizedSearchTerm ||
+      transaction.company_name.toLowerCase().includes(normalizedSearchTerm) ||
+      transaction.billing_email.toLowerCase().includes(normalizedSearchTerm) ||
+      (transaction.invoice_number || "").toLowerCase().includes(normalizedSearchTerm);
+    const matchesStatus = statusFilter === "all" || transaction.status === statusFilter || (statusFilter === "past_due" && transaction.status === "failed");
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="eg-page">
       <PageIntro
@@ -4333,6 +4385,48 @@ function AdminBillingPage() {
         description="Global finance operations for subscriptions, transactions, manual invoices, and suspension control."
       />
       {error ? <p className="eg-form-error">{error}</p> : null}
+      <section className="eg-grid eg-grid--two">
+        <SurfaceCard title="Search and filters" subtitle="Narrow down subscriptions and transactions by company, email, site, invoice, or risk state">
+          <div className="eg-filter-grid">
+            <label className="eg-field">
+              <span>Search</span>
+              <input
+                className="eg-input"
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Company, email, site ID, or invoice"
+                type="text"
+                value={searchTerm}
+              />
+            </label>
+            <label className="eg-field">
+              <span>Status filter</span>
+              <select className="eg-input" onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)} value={statusFilter}>
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="past_due">Past due</option>
+                <option value="suspended">Suspended</option>
+                <option value="canceled">Canceled</option>
+              </select>
+            </label>
+          </div>
+        </SurfaceCard>
+        <SurfaceCard title="Filter result posture" subtitle="Quick read on what the current filter is showing you">
+          <div className="eg-list">
+            <div className="eg-list__row">
+              <div>
+                <strong>{filteredSubscriptions.length} subscriptions</strong>
+                <span>Visible after applying the current search and status filter.</span>
+              </div>
+            </div>
+            <div className="eg-list__row">
+              <div>
+                <strong>{filteredTransactions.length} transactions</strong>
+                <span>Payment attempts or settlements matching the same search context.</span>
+              </div>
+            </div>
+          </div>
+        </SurfaceCard>
+      </section>
       <section className="eg-metric-grid">
         <MetricCard label="Subscriptions" value={overviewQuery.data.totals.subscriptions} detail="All commercial subscriptions across the platform" />
         <MetricCard label="Active" value={overviewQuery.data.totals.active_subscriptions} detail="Subscriptions currently allowed to route events" />
@@ -4444,19 +4538,31 @@ function AdminBillingPage() {
       <section className="eg-grid eg-grid--two">
         <SurfaceCard title="Subscriptions" subtitle="Plan codes, usage posture, and suspension controls">
           <div className="eg-stack">
-            {subscriptionsQuery.data.map((subscription) => (
+            {filteredSubscriptions.map((subscription) => (
               <div className="eg-admin-user" key={subscription.id}>
                 <div className="eg-admin-user__meta">
                   <ActionLine title="Company" text={subscription.company_name} />
                   <ActionLine title="Billing email" text={subscription.billing_email} />
+                  <ActionLine title="Site ID" text={subscription.site_id} />
                   <ActionLine title="Plan" text={subscription.plan_code} />
                   <ActionLine title="Status" text={subscription.status} />
                   <ActionLine title="Usage" text={`${subscription.monthly_events_used.toLocaleString("en-US")} / ${subscription.included_events.toLocaleString("en-US")}`} />
                 </div>
                 <div className="eg-admin-user__actions">
                   <div className="eg-inline-actions">
+                    <StatusBadge status={subscription.status === "active" ? "healthy" : subscription.status === "suspended" ? "warning" : "pending"}>
+                      {subscription.status}
+                    </StatusBadge>
+                    <StatusBadge status={subscription.plan_code === "enterprise" ? "healthy" : subscription.plan_code === "growth" ? "pending" : "info"}>
+                      {subscription.plan_code}
+                    </StatusBadge>
+                  </div>
+                  <div className="eg-inline-actions">
                     <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: subscription.plan_code === "free" ? "growth" : "free" } })} type="button">
                       Toggle plan
+                    </button>
+                    <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { plan_code: "enterprise" } })} type="button">
+                      Enterprise
                     </button>
                     <button className="eg-button eg-button--compact" onClick={() => updateSubscriptionMutation.mutate({ subscriptionId: subscription.id, input: { status: subscription.status === "suspended" ? "active" : "suspended" } })} type="button">
                       {subscription.status === "suspended" ? "Reactivate" : "Suspend"}
@@ -4475,7 +4581,7 @@ function AdminBillingPage() {
               <span className="eg-table__cell">Amount</span>
               <span className="eg-table__cell">Status</span>
             </div>
-            {transactionsQuery.data.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <div className="eg-table__row" key={transaction.id}>
                 <span className="eg-table__cell" data-label="Company">
                   <strong>{transaction.company_name}</strong>
@@ -4483,6 +4589,9 @@ function AdminBillingPage() {
                 </span>
                 <span className="eg-table__cell" data-label="Invoice">{transaction.invoice_number || "n/a"}</span>
                 <span className="eg-table__cell" data-label="Amount">${transaction.amount_usd.toFixed(2)}</span>
+                <span className="eg-table__cell" data-label="Method">
+                  {transaction.payment_method_brand ? `${transaction.payment_method_brand.toUpperCase()} •••• ${transaction.payment_method_last4 || "----"}` : "Stripe-managed"}
+                </span>
                 <div className="eg-table__cell" data-label="Status">
                   <StatusBadge status={transaction.status === "succeeded" ? "healthy" : transaction.status === "failed" ? "warning" : "pending"}>
                     {transaction.status}

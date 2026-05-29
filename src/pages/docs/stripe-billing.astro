@@ -1,0 +1,229 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Button from "../../components/Button.astro";
+import Container from "../../components/Container.astro";
+import PremiumCard from "../../components/PremiumCard.astro";
+import SectionHeader from "../../components/SectionHeader.astro";
+import { stripeBillingDocsContent } from "../../content/docs-stripe-billing";
+
+const docsJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: stripeBillingDocsContent.title,
+  description: stripeBillingDocsContent.intro
+};
+---
+
+<BaseLayout
+  title={stripeBillingDocsContent.title}
+  description={stripeBillingDocsContent.intro}
+  canonicalPath="/docs/stripe-billing/"
+  jsonLd={docsJsonLd}
+>
+  <section class="section page-hero">
+    <Container>
+      <div class="stack">
+        <span class="eyebrow">{stripeBillingDocsContent.eyebrow}</span>
+        <h1 class="page-title">{stripeBillingDocsContent.title}</h1>
+        <p class="page-copy">{stripeBillingDocsContent.intro}</p>
+        <div class="button-row">
+          <Button href="/install/" variant="primary" icon="download">Install EventsGateway</Button>
+          <Button href="/pricing/" variant="secondary" icon="arrow-right">Open Pricing</Button>
+          <Button href="/docs/" variant="secondary" icon="arrow-right">Back to Docs</Button>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="What It Covers"
+        title="Stripe is the payment processor. EventsGateway is the billing control layer."
+        description="The platform stores billing state, reminders, subscription posture, and routing suspension policy, while Stripe stays responsible for card-sensitive payment operations."
+      />
+      <div class="card-grid">
+        {
+          stripeBillingDocsContent.overview.map((item) => (
+            <PremiumCard icon="check" title={item} text="Part of the commercial billing flow already implemented in the control plane and dashboard." />
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <div class="two-column">
+        <div>
+          <SectionHeader
+            eyebrow="Environment"
+            title="Variables you must configure."
+            description="These values are needed to let the API worker talk to Stripe and to return billing flows back to the dashboard."
+          />
+          <div class="card-grid">
+            {
+              stripeBillingDocsContent.environmentVariables.map((item) => (
+                <PremiumCard icon="layers" title={item.name} text={item.description} />
+              ))
+            }
+          </div>
+        </div>
+        <div>
+          <SectionHeader
+            eyebrow="Recovery Flow"
+            title="How overdue billing escalates."
+            description="This is the exact commercial posture implemented today for reminders, past-due status, and suspension."
+          />
+          <ul class="simple-list">
+            {stripeBillingDocsContent.recoveryFlow.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Command Path"
+        title="Minimal setup commands."
+        description="Use these commands and endpoint values to wire Stripe into the API worker and dashboard."
+      />
+      <div class="command-grid">
+        {
+          stripeBillingDocsContent.commandBlocks.map((item) => (
+            <div class="surface-panel command-panel">
+              <div class="surface-panel__inner stack">
+                <span class="kicker">{item.title}</span>
+                <pre class="command-block"><code>{item.code}</code></pre>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </Container>
+  </section>
+
+  <section class="section">
+    <Container>
+      <SectionHeader
+        eyebrow="Webhook Coverage"
+        title="Events that should be enabled in Stripe."
+        description="These Stripe events are already meaningful to the platform and should be sent to the webhook endpoint."
+      />
+      <div class="surface-panel table-panel">
+        <div class="surface-panel__inner">
+          <div class="docs-table-wrap">
+            <table class="docs-table">
+              <thead>
+                <tr>
+                  <th>Stripe Event</th>
+                  <th>Purpose In EventsGateway</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  stripeBillingDocsContent.webhookEvents.map((item) => (
+                    <tr>
+                      <td><code>{item.name}</code></td>
+                      <td>{item.purpose}</td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </Container>
+  </section>
+
+  <section class="section section--tight">
+    <Container>
+      <SectionHeader
+        eyebrow="Final Check"
+        title="Before you call billing done."
+        description="Use this checklist to verify that the Stripe side, Cloudflare side, and dashboard side are aligned."
+      />
+      <div class="card-grid">
+        {
+          stripeBillingDocsContent.checklist.map((item) => (
+            <PremiumCard icon="terminal" title={item} text="Recommended before onboarding real paying sites into the commercial runtime." />
+          ))
+        }
+      </div>
+      <div class="button-row docs-actions">
+        <Button href="/install/" variant="primary" icon="download">Go to Install Guide</Button>
+        <Button href="https://dash.eventsgateway.com/login" variant="secondary" icon="arrow-right">Open Billing Dashboard</Button>
+      </div>
+    </Container>
+  </section>
+</BaseLayout>
+
+<style>
+  .command-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .command-panel {
+    height: 100%;
+  }
+
+  .command-block {
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: rgba(5, 10, 24, 0.9);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .table-panel {
+    overflow: hidden;
+  }
+
+  .docs-table-wrap {
+    overflow-x: auto;
+  }
+
+  .docs-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+  }
+
+  .docs-table th,
+  .docs-table td {
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  .docs-table th {
+    color: var(--color-subtle);
+    font-size: 0.74rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .docs-table td code {
+    font-family: var(--font-mono);
+    color: var(--color-text);
+  }
+
+  .docs-actions {
+    margin-top: 1.25rem;
+    justify-content: center;
+  }
+</style>
