@@ -154,7 +154,7 @@ p {
 
 .eg-field--floating > span {
   position: absolute;
-  top: 50%;
+  top: 47%;
   left: 0.9rem;
   z-index: 1;
   padding: 0 0.24rem;
@@ -176,7 +176,7 @@ p {
 .eg-field--floating.is-filled > span,
 .eg-field--floating.is-active > span,
 .eg-field--floating:focus-within > span {
-  top: 0.5rem;
+  top: 0.22rem;
   transform: none;
   color: var(--eg-subtle);
   font-size: 0.72rem;
@@ -186,8 +186,10 @@ p {
 
 .eg-input {
   width: 100%;
-  min-height: 2.8rem;
-  padding: 0.72rem 0.88rem;
+  min-height: 2.95rem;
+  padding: 0.8rem 0.92rem;
+  font-size: 1.1rem;
+  line-height: 1.5;
   border: 1px solid var(--eg-border);
   border-radius: 0.9rem;
   background: rgba(4, 8, 17, 0.88);
@@ -200,14 +202,14 @@ p {
 }
 
 .eg-field--floating > .eg-input {
-  padding-top: 1.32rem;
-  padding-bottom: 0.42rem;
+  padding-top: 1.42rem;
+  padding-bottom: 0.48rem;
 }
 
 .eg-field--floating.eg-field--select > .eg-input,
 .eg-field--floating.eg-field--textarea > .eg-input {
-  padding-top: 1.28rem;
-  padding-bottom: 0.56rem;
+  padding-top: 1.38rem;
+  padding-bottom: 0.62rem;
 }
 
 .eg-field--floating > .eg-input::placeholder {

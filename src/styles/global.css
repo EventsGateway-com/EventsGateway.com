@@ -266,6 +266,8 @@ main {
 .floating-field > select,
 .floating-field > textarea {
   width: 100%;
+  font-size: 1.1rem;
+  line-height: 1.5;
 }
 
 .floating-field > input::placeholder,
@@ -275,7 +277,7 @@ main {
 
 .floating-label {
   position: absolute;
-  top: 50%;
+  top: 47%;
   left: 0.95rem;
   z-index: 1;
   padding: 0 0.25rem;
@@ -294,14 +296,14 @@ main {
 
 .floating-field--select > .floating-label,
 .floating-field--textarea > .floating-label {
-  top: 0.88rem;
+  top: 0.62rem;
   transform: none;
 }
 
 .floating-field.is-filled > .floating-label,
 .floating-field.is-active > .floating-label,
 .floating-field:focus-within > .floating-label {
-  top: 0.5rem;
+  top: 0.22rem;
   transform: none;
   color: var(--color-subtle);
   font-size: 0.72rem;
