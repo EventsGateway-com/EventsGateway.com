@@ -15,6 +15,8 @@ type IconName =
 
 const {
   icon,
+  imageSrc,
+  imageAlt,
   title,
   text,
   eyebrow,
@@ -24,6 +26,8 @@ const {
   disabled = false
 } = Astro.props as {
   icon?: IconName;
+  imageSrc?: string;
+  imageAlt?: string;
   title?: string;
   text?: string;
   eyebrow?: string;
@@ -43,7 +47,11 @@ const Tag = href && !disabled ? "a" : "div";
 >
   <div class="premium-card__inner">
     <div class="premium-card__header">
-      {icon && (
+      {imageSrc ? (
+        <span class="premium-card__logo">
+          <img src={imageSrc} alt={imageAlt ?? title ?? "Integration logo"} loading="lazy" />
+        </span>
+      ) : icon && (
         <span class="premium-card__icon">
           <Icon name={icon} size={20} />
         </span>
@@ -126,6 +134,20 @@ const Tag = href && !disabled ? "a" : "div";
     border: 1px solid rgba(255, 255, 255, 0.14);
     background: rgba(255, 255, 255, 0.055);
     color: var(--color-accent);
+  }
+
+  .premium-card__logo {
+    width: 3rem;
+    height: 3rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .premium-card__logo img {
+    width: 3rem;
+    height: 3rem;
+    display: block;
+    border-radius: 0.9rem;
   }
 
   .premium-card__eyebrow {

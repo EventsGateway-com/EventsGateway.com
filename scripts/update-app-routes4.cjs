@@ -4,7 +4,7 @@ const path = require('path');
 const appTsxPath = path.join(__dirname, '../apps/dashboard/src/app.tsx');
 let content = fs.readFileSync(appTsxPath, 'utf8');
 
-const adminSitesPageRegex = /function AdminSitesPage\(\) \{[\s\S]*?(?=function ProtectedAdminOutlet)/;
+const adminSitesPageRegex = /function AdminSitesPage\(\) \{[\s\S]*?(?=function RouteDetailPage)/;
 const newAdminSitesPage = `function AdminSitesPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");

@@ -23,7 +23,7 @@
   <rect x="80" y="80" width="1040" height="470" rx="28" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" />
   <rect x="140" y="142" width="290" height="40" rx="20" fill="rgba(125,211,252,0.08)" stroke="rgba(125,211,252,0.22)" />
   <text x="168" y="167" fill="#7DD3FC" font-family="Segoe UI, Arial, sans-serif" font-size="18" letter-spacing="4">OPEN SOURCE EVENT GATEWAY</text>
-  <text x="140" y="268" fill="#F7F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="72" font-weight="700">EventsGateway</text>
+  <text x="140" y="268" fill="#F7F8FB" font-family="Segoe UI, Arial, sans-serif" font-size="72" font-weight="700">EVENTS Gateway</text>
   <text x="140" y="336" fill="#A7ADBD" font-family="Segoe UI, Arial, sans-serif" font-size="30">Tracking and event routing for Meta, GA4, Google Ads, and custom pipelines.</text>
   <rect x="140" y="390" width="326" height="72" rx="22" fill="url(#accent)" />
   <text x="188" y="435" fill="#02050A" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700">Collect once. Route anywhere.</text>

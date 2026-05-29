@@ -37,7 +37,7 @@ import { integrationsContent } from "../../content/integrations";
       <div class="card-grid">
         {
           integrationsContent.items.map((item) => (
-            <PremiumCard icon="layers" title={item.label} text={item.summary}>
+            <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={item.label} text={item.summary}>
               <Button href={`/integrations/${item.slug}/`} variant="secondary" icon="arrow-right">Open integration</Button>
             </PremiumCard>
           ))

@@ -27,6 +27,7 @@ const { item } = Astro.props as {
     <Container>
       <div class="stack">
         <span class="eyebrow">Integration</span>
+        <img class="integration-hero-logo" src={`/integrations/logos/${item.slug}.svg`} alt={`${item.label} logo`} loading="eager" />
         <h1 class="page-title">{item.title}</h1>
         <p class="page-copy">{item.hero}</p>
         <div class="button-row">
@@ -48,7 +49,7 @@ const { item } = Astro.props as {
         description="The goal is simple: cleaner data, better optimization inputs, and less wasted spend caused by fragmented tracking."
       />
       <div class="card-grid">
-        {item.points.map((point) => <PremiumCard icon="check" title={item.label} text={point} />)}
+        {item.points.map((point) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={item.label} text={point} />)}
       </div>
     </Container>
   </section>
@@ -61,7 +62,7 @@ const { item } = Astro.props as {
         description="These are common situations where one cleaner event stream makes campaign tracking easier to trust."
       />
       <div class="card-grid">
-        {item.useCases.map((point) => <PremiumCard icon="layers" title={item.label} text={point} />)}
+        {item.useCases.map((point) => <PremiumCard imageSrc={`/integrations/logos/${item.slug}.svg`} imageAlt={`${item.label} logo`} title={item.label} text={point} />)}
       </div>
     </Container>
   </section>
@@ -85,3 +86,12 @@ const { item } = Astro.props as {
     </Container>
   </section>
 </BaseLayout>
+
+<style>
+  .integration-hero-logo {
+    width: 4.75rem;
+    height: 4.75rem;
+    border-radius: 1.15rem;
+    display: block;
+  }
+</style>

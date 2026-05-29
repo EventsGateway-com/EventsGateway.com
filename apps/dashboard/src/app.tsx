@@ -1,3 +1,6 @@
+import { Responsive, WidthProvider } from "react-grid-layout/legacy";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,6 +37,7 @@ import { CaptchaWidget, isCaptchaConfigured } from "./captcha-widget";
 type NavItem = {
   label: string;
   href: string;
+  icon?: React.ReactNode;
 };
 
 type NavGroup = {
@@ -341,7 +345,7 @@ function AppShell() {
         <div className="eg-brand">
           <div className="eg-brand__mark">EG</div>
           <div>
-            <strong>EventsGateway</strong>
+            <strong>EVENTS Gateway</strong>
             <span>Control center</span>
           </div>
           <button
@@ -365,6 +369,7 @@ function AppShell() {
                     key={item.href}
                     to={item.href}
                   >
+                    {item.icon && <span className="eg-nav-link__icon">{item.icon}</span>}
                     {item.label}
                   </NavLink>
                 ))}
@@ -790,7 +795,7 @@ function LoginPage() {
   return (
     <AuthShell
       title="Login to the dashboard"
-      description="Use your real dashboard account to access the EventsGateway control plane."
+      description="Use your real dashboard account to access the EVENTS Gateway control plane."
       footer={
         <>
           <span>Need a new account?</span>
@@ -1106,7 +1111,7 @@ function ResetPasswordPage() {
   return (
     <AuthShell
       title="Choose a new password"
-      description="Set a new password for your EventsGateway dashboard account."
+      description="Set a new password for your EVENTS Gateway dashboard account."
       footer={
         <>
           <span>Need to sign in instead?</span>
@@ -1199,7 +1204,7 @@ function AcceptInvitePage() {
   return (
     <AuthShell
       title="Accept your invitation"
-      description="Create your access or confirm your current password to join this site on EventsGateway."
+      description="Create your access or confirm your current password to join this site on EVENTS Gateway."
       footer={
         <>
           <span>Already want to sign in?</span>
@@ -1258,10 +1263,55 @@ function AcceptInvitePage() {
   );
 }
 
+const ResponsiveGridLayout = WidthProvider(Responsive);
+
+function DraggablePanel({ title, children, onRemove }: { title: string; children: React.ReactNode; onRemove?: () => void }) {
+  const [minimized, setMinimized] = useState(false);
+  const [maximized, setMaximized] = useState(false);
+  
+  return (
+    <div className={`eg-draggable-panel ${maximized ? 'is-maximized' : ''} ${minimized ? 'is-minimized' : ''}`} style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--eg-bg-elevated)', border: '1px solid var(--eg-border)', borderRadius: 'var(--eg-radius-lg)', overflow: maximized ? 'auto' : 'hidden', zIndex: maximized ? 1000 : 1, position: maximized ? 'fixed' : 'relative', top: maximized ? '2rem' : 'auto', left: maximized ? '2rem' : 'auto', right: maximized ? '2rem' : 'auto', bottom: maximized ? '2rem' : 'auto' }}>
+      <div className="eg-draggable-panel__header drag-handle" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: minimized ? 'none' : '1px solid var(--eg-border)', cursor: 'move', background: 'rgba(255,255,255,0.02)' }}>
+        <strong style={{ fontSize: '0.95rem', fontWeight: 600 }}>{title}</strong>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button type="button" onClick={() => setMinimized(!minimized)} style={{ background: 'transparent', border: 'none', color: 'var(--eg-muted)', cursor: 'pointer' }}>
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+          {!minimized && (
+            <button type="button" onClick={() => setMaximized(!maximized)} style={{ background: 'transparent', border: 'none', color: 'var(--eg-muted)', cursor: 'pointer' }}>
+              {maximized ? (
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+      {!minimized && (
+        <div className="eg-draggable-panel__content" style={{ padding: '1rem', flex: 1, overflow: 'auto' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function OverviewPage() {
   const overviewQuery = useQuery({
     queryKey: qk.overview(currentContext.siteId, currentContext.dateRange),
     queryFn: dashboardApi.fetchOverview
+  });
+
+  const [layouts, setLayouts] = useState<any>({
+    lg: [
+      { i: 'metric1', x: 0, y: 0, w: 3, h: 4 },
+      { i: 'metric2', x: 3, y: 0, w: 3, h: 4 },
+      { i: 'metric3', x: 6, y: 0, w: 3, h: 4 },
+      { i: 'metric4', x: 9, y: 0, w: 3, h: 4 },
+      { i: 'panel1', x: 0, y: 4, w: 6, h: 8 },
+      { i: 'panel2', x: 6, y: 4, w: 6, h: 8 }
+    ]
   });
 
   if (!overviewQuery.data) return <StateCard title="Loading overview" description="Building the latest metrics snapshot." />;
@@ -1271,52 +1321,81 @@ function OverviewPage() {
       <PageIntro
         title="Overview"
         description="Central view for ingestion, matching, delivery success and active routing state."
-        action={<button className="eg-button eg-button--primary">Publish routing changes</button>}
       />
-
-      <div className="eg-metric-grid">
-        <MetricCard label="Events per minute" value={overviewQuery.data.ingestPerMinute} detail="Current ingest lane" />
-        <MetricCard label="Matched rate" value={`${overviewQuery.data.matchedRate}%`} detail="Events that resolve into at least one route" />
-        <MetricCard label="Delivery success" value={`${overviewQuery.data.deliverySuccess}%`} detail="Last 24h delivery performance" />
-        <MetricCard label="Queue depth" value={overviewQuery.data.queueDepth} detail="Forwarder backlog" />
-      </div>
-
-      <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Top signals" subtitle="Highest volume event families in the active window">
-          <div className="eg-list">
-            {overviewQuery.data.topSignals.map((signal) => (
-              <div className="eg-list__row" key={signal.label}>
-                <div>
-                  <strong>{signal.label}</strong>
-                  <span>{signal.value.toLocaleString()} events</span>
-                </div>
-                <StatusBadge status="healthy">{signal.delta}</StatusBadge>
+      <div style={{ margin: '0 -10px' }}>
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={layouts}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          rowHeight={30}
+          draggableHandle=".drag-handle"
+          onLayoutChange={(currentLayout, allLayouts) => setLayouts(allLayouts)}
+        >
+          <div key="metric1">
+            <DraggablePanel title="Events per minute">
+              <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.ingestPerMinute}</div>
+              <div style={{ color: 'var(--eg-muted)' }}>Current ingest lane</div>
+            </DraggablePanel>
+          </div>
+          <div key="metric2">
+            <DraggablePanel title="Matched rate">
+              <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.matchedRate}%</div>
+              <div style={{ color: 'var(--eg-muted)' }}>Events that resolve into at least one route</div>
+            </DraggablePanel>
+          </div>
+          <div key="metric3">
+            <DraggablePanel title="Delivery success">
+              <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.deliverySuccess}%</div>
+              <div style={{ color: 'var(--eg-muted)' }}>Last 24h delivery performance</div>
+            </DraggablePanel>
+          </div>
+          <div key="metric4">
+            <DraggablePanel title="Queue depth">
+              <div style={{ fontSize: '2rem', fontWeight: 600, fontFamily: 'var(--font-display)', marginBottom: '0.5rem' }}>{overviewQuery.data.queueDepth}</div>
+              <div style={{ color: 'var(--eg-muted)' }}>Forwarder backlog</div>
+            </DraggablePanel>
+          </div>
+          
+          <div key="panel1">
+            <DraggablePanel title="Top signals">
+              <div className="eg-list">
+                {overviewQuery.data.topSignals.map((signal) => (
+                  <div className="eg-list__row" key={signal.label}>
+                    <div>
+                      <strong>{signal.label}</strong>
+                      <span>{signal.value.toLocaleString()} events</span>      
+                    </div>
+                    <StatusBadge status="healthy">{signal.delta}</StatusBadge> 
+                  </div>
+                ))}
               </div>
-            ))}
+            </DraggablePanel>
           </div>
-        </SurfaceCard>
 
-        <SurfaceCard title="Routing state" subtitle="Production compiler and active pipeline">
-          <div className="eg-stack">
-            <div className="eg-stat-line">
-              <span>Compiled version</span>
-              <strong>v{overviewQuery.data.compiledVersion}</strong>
-            </div>
-            <div className="eg-stat-line">
-              <span>Active routes</span>
-              <strong>{overviewQuery.data.activeRoutes}</strong>
-            </div>
-            <div className="eg-stat-line">
-              <span>Pipeline posture</span>
-              <strong>Collect once, route everywhere</strong>
-            </div>
+          <div key="panel2">
+            <DraggablePanel title="Routing state">
+              <div className="eg-stack">
+                <div className="eg-stat-line">
+                  <span>Compiled version</span>
+                  <strong>v{overviewQuery.data.compiledVersion}</strong>       
+                </div>
+                <div className="eg-stat-line">
+                  <span>Active routes</span>
+                  <strong>{overviewQuery.data.activeRoutes}</strong>
+                </div>
+                <div className="eg-stat-line">
+                  <span>Pipeline posture</span>
+                  <strong>Collect once, route everywhere</strong>
+                </div>
+              </div>
+            </DraggablePanel>
           </div>
-        </SurfaceCard>
-      </section>
+        </ResponsiveGridLayout>
+      </div>
     </div>
   );
 }
-
 function RealtimePage() {
   const realtimeQuery = useQuery({
     queryKey: ["sites", currentContext.siteId, "realtime"],
@@ -4130,7 +4209,7 @@ function TagManagerPage() {
       </section>
 
       <section className="eg-grid eg-grid--two">
-        <SurfaceCard title="Container control" subtitle="Site-level tag manager surface aligned with EventsGateway routing">
+        <SurfaceCard title="Container control" subtitle="Site-level tag manager surface aligned with EVENTS Gateway routing">
           <form className="eg-auth-form" onSubmit={(event) => event.preventDefault()}>
             <label className="eg-field">
               <span>Container ID</span>
@@ -5918,6 +5997,7 @@ function AdminUsersPage() {
 function AdminSitesPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
+  const [isPaneOpen, setIsPaneOpen] = useState(false);
   const [siteDraft, setSiteDraft] = useState({
     name: "",
     domain: "",
@@ -5973,6 +6053,7 @@ function AdminSitesPage() {
         project_name: "",
         environment: "production"
       });
+      setIsPaneOpen(false);
       await refreshAdminSites();
     },
     onError: (mutationError) => {
@@ -6011,19 +6092,20 @@ function AdminSitesPage() {
     }
   });
 
-  function handleCreateSiteSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleCreateSiteSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    const domain = siteDraft.domain.trim();
     createSiteMutation.mutate({
       name: siteDraft.name.trim(),
-      domain: siteDraft.domain.trim() || undefined,
+      domain: domain || undefined,
       org_name: siteDraft.org_name.trim() || undefined,
       project_name: siteDraft.project_name.trim() || undefined,
       environment: siteDraft.environment.trim() || undefined
     });
   }
 
-  function handleAdminDomainSubmit(event: FormEvent<HTMLFormElement>, siteId: string) {
+  function handleAdminDomainSubmit(event: React.FormEvent<HTMLFormElement>, siteId: string) {
     event.preventDefault();
     setError("");
     const domain = (domainDrafts[siteId] ?? "").trim();
@@ -6042,93 +6124,35 @@ function AdminSitesPage() {
       <PageIntro
         title="Sites Admin"
         description="Inspect all tracked sites, manage their domains, review collector keys, and monitor total event activity."
+        action={
+          <button className="eg-button eg-button--primary" onClick={() => setIsPaneOpen(true)} type="button">
+            Add Site
+          </button>
+        }
       />
       {error ? <p className="eg-form-error">{error}</p> : null}
+      
       {!sitesQuery.data ? (
         <StateCard title="Loading sites" description="Fetching the global platform site inventory." />
       ) : (
         <section className="eg-stack">
-          <SurfaceCard title="Create site" subtitle="Register a new tracked site with its first collector key and optional primary domain">
-            <form className="eg-auth-form" onSubmit={handleCreateSiteSubmit}>
-              <div className="eg-grid eg-grid--two">
-                <label className="eg-field">
-                  <span>Site name</span>
-                  <input
-                    className="eg-input"
-                    onChange={(event) => setSiteDraft((current) => ({ ...current, name: event.target.value }))}
-                    placeholder="Main storefront"
-                    required
-                    type="text"
-                    value={siteDraft.name}
-                  />
-                </label>
-                <label className="eg-field">
-                  <span>Primary domain</span>
-                  <input
-                    className="eg-input"
-                    onChange={(event) => setSiteDraft((current) => ({ ...current, domain: event.target.value }))}
-                    placeholder="store.example.com"
-                    type="text"
-                    value={siteDraft.domain}
-                  />
-                </label>
-                <label className="eg-field">
-                  <span>Organization</span>
-                  <input
-                    className="eg-input"
-                    onChange={(event) => setSiteDraft((current) => ({ ...current, org_name: event.target.value }))}
-                    placeholder="Open Commerce Lab"
-                    type="text"
-                    value={siteDraft.org_name}
-                  />
-                </label>
-                <label className="eg-field">
-                  <span>Project</span>
-                  <input
-                    className="eg-input"
-                    onChange={(event) => setSiteDraft((current) => ({ ...current, project_name: event.target.value }))}
-                    placeholder="Events Core"
-                    type="text"
-                    value={siteDraft.project_name}
-                  />
-                </label>
-              </div>
-              <label className="eg-field">
-                <span>Environment</span>
-                <input
-                  className="eg-input"
-                  onChange={(event) => setSiteDraft((current) => ({ ...current, environment: event.target.value }))}
-                  placeholder="production"
-                  type="text"
-                  value={siteDraft.environment}
-                />
-              </label>
-              <button
-                className="eg-button eg-button--primary"
-                disabled={createSiteMutation.isPending || siteDraft.name.trim().length < 2}
-                type="submit"
-              >
-                {createSiteMutation.isPending ? "Creating site..." : "Create site"}
-              </button>
-            </form>
-          </SurfaceCard>
           {sitesQuery.data.map((site) => (
             <SurfaceCard key={site.id} title={site.name} subtitle={`${site.org_name} · ${site.project_name} · ${site.id}`}>
               <div className="eg-admin-site">
                 <div className="eg-inline-actions">
                   <span className="eg-pill is-mono">{site.collector_url}</span>
-                  {site.id === currentContext.siteId ? (
-                    <span className="eg-pill">Primary site</span>
-                  ) : (
-                    <button
-                      className="eg-button eg-button--compact"
-                      disabled={deleteSiteMutation.isPending}
-                      onClick={() => deleteSiteMutation.mutate(site.id)}
-                      type="button"
-                    >
-                      Delete site
-                    </button>
-                  )}
+                  <button
+                    className="eg-button eg-button--compact"
+                    disabled={deleteSiteMutation.isPending}
+                    onClick={() => {
+                      if(confirm("Are you sure you want to delete this site?")) {
+                        deleteSiteMutation.mutate(site.id);
+                      }
+                    }}
+                    type="button"
+                  >
+                    Delete site
+                  </button>
                 </div>
                 <div className="eg-admin-site__meta">
                   <MetricMini label="Environment" value={site.environment} />
@@ -6219,15 +6243,14 @@ function AdminSitesPage() {
                             </div>
                             <div className="eg-inline-actions">
                               <StatusBadge status={item.status === "active" ? "healthy" : "warning"}>{item.status}</StatusBadge>
-                              <span className="eg-pill">{item.last_used_at ? formatDateTime(item.last_used_at) : "Not used yet"}</span>
-                              {item.status === "active" ? (
+                              {activeKeyCount > 1 ? (
                                 <button
                                   className="eg-button eg-button--compact"
-                                  disabled={revokeKeyMutation.isPending || activeKeyCount <= 1}
+                                  disabled={revokeKeyMutation.isPending}
                                   onClick={() => revokeKeyMutation.mutate({ siteId: site.id, keyId: item.id })}
                                   type="button"
                                 >
-                                  Revoke key
+                                  Revoke
                                 </button>
                               ) : null}
                             </div>
@@ -6239,7 +6262,6 @@ function AdminSitesPage() {
                       className="eg-auth-form"
                       onSubmit={(event) => {
                         event.preventDefault();
-                        setError("");
                         createKeyMutation.mutate({
                           siteId: site.id,
                           input: { label: (keyLabelDrafts[site.id] ?? "").trim() }
@@ -6255,7 +6277,7 @@ function AdminSitesPage() {
                               ...current,
                               [site.id]: event.target.value
                             }))}
-                          placeholder="Regional browser key"
+                          placeholder="Mobile App Key"
                           required
                           type="text"
                           value={keyLabelDrafts[site.id] ?? ""}
@@ -6263,10 +6285,10 @@ function AdminSitesPage() {
                       </label>
                       <button
                         className="eg-button eg-button--primary"
-                        disabled={createKeyMutation.isPending || (keyLabelDrafts[site.id] ?? "").trim().length < 2}
+                        disabled={createKeyMutation.isPending || (keyLabelDrafts[site.id] ?? "").trim().length === 0}
                         type="submit"
                       >
-                        {createKeyMutation.isPending ? "Creating key..." : "Create collector key"}
+                        {createKeyMutation.isPending ? "Creating key..." : "Create key"}
                       </button>
                     </form>
                   </div>
@@ -6276,10 +6298,77 @@ function AdminSitesPage() {
           ))}
         </section>
       )}
+
+      <SidePane 
+        isOpen={isPaneOpen} 
+        onClose={() => setIsPaneOpen(false)} 
+        title="Add Site" 
+        subtitle="Register a new tracked site with its first collector key and optional primary domain"
+      >
+        <form className="eg-stack" onSubmit={handleCreateSiteSubmit}>
+          <label className="eg-field">
+            <span>Site name</span>
+            <input
+              className="eg-input"
+              onChange={(event) => setSiteDraft((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Main storefront"
+              required
+              type="text"
+              value={siteDraft.name}
+            />
+          </label>
+          <label className="eg-field">
+            <span>Primary domain</span>
+            <input
+              className="eg-input"
+              onChange={(event) => setSiteDraft((current) => ({ ...current, domain: event.target.value }))}
+              placeholder="store.example.com"
+              type="text"
+              value={siteDraft.domain}
+            />
+          </label>
+          <label className="eg-field">
+            <span>Organization</span>
+            <input
+              className="eg-input"
+              onChange={(event) => setSiteDraft((current) => ({ ...current, org_name: event.target.value }))}
+              placeholder="Open Commerce Lab"
+              type="text"
+              value={siteDraft.org_name}
+            />
+          </label>
+          <label className="eg-field">
+            <span>Project</span>
+            <input
+              className="eg-input"
+              onChange={(event) => setSiteDraft((current) => ({ ...current, project_name: event.target.value }))}
+              placeholder="Events Core"
+              type="text"
+              value={siteDraft.project_name}
+            />
+          </label>
+          <label className="eg-field">
+            <span>Environment</span>
+            <input
+              className="eg-input"
+              onChange={(event) => setSiteDraft((current) => ({ ...current, environment: event.target.value }))}
+              placeholder="production"
+              type="text"
+              value={siteDraft.environment}
+            />
+          </label>
+          <button
+            className="eg-button eg-button--primary"
+            disabled={createSiteMutation.isPending || siteDraft.name.trim().length < 2}
+            type="submit"
+          >
+            {createSiteMutation.isPending ? "Creating site..." : "Create site"}
+          </button>
+        </form>
+      </SidePane>
     </div>
   );
 }
-
 function RouteDetailPage() {
   const { routeId = "" } = useParams();
   const queryClient = useQueryClient();

@@ -354,8 +354,8 @@ function renderTransactionalEmail(input: {
   const ctaLabel = input.ctaLabel ? escapeHtml(input.ctaLabel) : "";
   const ctaUrl = input.ctaUrl ? escapeHtml(input.ctaUrl) : "";
   const note = input.note ? escapeHtml(input.note) : "";
-  const closing = escapeHtml(input.closing || "Thanks for choosing EventsGateway.");
-  const signature = escapeHtml(input.signature || "The EventsGateway team");
+  const closing = escapeHtml(input.closing || "Thanks for choosing EVENTS Gateway.");
+  const signature = escapeHtml(input.signature || "The EVENTS Gateway team");
 
   const ctaHtml = input.ctaLabel && input.ctaUrl
     ? `
@@ -395,7 +395,7 @@ function renderTransactionalEmail(input: {
             <tr>
               <td style="padding-bottom:18px;text-align:center;">
                 <div style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:rgba(255,255,255,0.78);border:1px solid rgba(148,163,184,0.18);font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4338ca;">
-                  EventsGateway
+                  EVENTS Gateway
                 </div>
               </td>
             </tr>
@@ -434,8 +434,8 @@ function renderTransactionalEmail(input: {
       ...input.paragraphs,
       input.ctaLabel && input.ctaUrl ? `${input.ctaLabel}: ${input.ctaUrl}` : "",
       input.note || "",
-      input.closing || "Thanks for choosing EventsGateway.",
-      input.signature || "The EventsGateway team"
+      input.closing || "Thanks for choosing EVENTS Gateway.",
+      input.signature || "The EVENTS Gateway team"
     ]
       .filter(Boolean)
       .join("\n\n")
@@ -461,7 +461,7 @@ async function sendBrevoEmail(
     body: JSON.stringify({
       sender: {
         email: senderEmail,
-        name: "EventsGateway"
+        name: "EVENTS Gateway"
       },
       to: [{ email: input.email, name: input.name }],
       subject: input.subject,
@@ -1617,14 +1617,14 @@ async function sendPasswordResetEmail(
   await sendBrevoEmail(env, {
     email: input.email,
     name: input.name,
-    subject: "Reset your EventsGateway password",
+    subject: "Reset your EVENTS Gateway password",
     template: renderTransactionalEmail({
       preheader: "Reset your password and get back into your dashboard securely.",
       eyebrow: "Password reset request",
       heading: "Reset your password",
       greeting: `Hello ${input.name || "there"},`,
       paragraphs: [
-        "We received a request to reset the password for your EventsGateway dashboard account.",
+        "We received a request to reset the password for your EVENTS Gateway dashboard account.",
         "Use the secure button below to choose a new password and continue where you left off."
       ],
       ctaLabel: "Reset password",
@@ -1647,21 +1647,21 @@ async function sendWelcomeEmail(
   await sendBrevoEmail(env, {
     email: input.email,
     name: input.name,
-    subject: "Welcome to EventsGateway",
+    subject: "Welcome to EVENTS Gateway",
     template: renderTransactionalEmail({
-      preheader: "Your EventsGateway dashboard account is ready.",
+      preheader: "Your EVENTS Gateway dashboard account is ready.",
       eyebrow: "Welcome aboard",
       heading: "Your account is live",
       greeting: `Hello ${input.name || "there"},`,
       paragraphs: [
-        "Welcome to EventsGateway. Your dashboard account has been created successfully.",
+        "Welcome to EVENTS Gateway. Your dashboard account has been created successfully.",
         roleMessage,
         "From here you can configure routing, connect destinations, and start validating your event flow in one place."
       ],
       ctaLabel: "Open dashboard",
       ctaUrl: dashboardLoginUrl,
       note: "Keep this email for quick access. If you ever lose your password, you can request a secure reset from the dashboard login page.",
-      closing: "We are glad to have you building with EventsGateway."
+      closing: "We are glad to have you building with EVENTS Gateway."
     })
   });
 }
@@ -1686,14 +1686,14 @@ async function sendSiteInviteEmail(
   await sendBrevoEmail(env, {
     email: input.email,
     name: input.invited_name,
-    subject: `You were invited to ${input.site_name} on EventsGateway`,
+    subject: `You were invited to ${input.site_name} on EVENTS Gateway`,
     template: renderTransactionalEmail({
-      preheader: `Join ${input.site_name} on EventsGateway and activate your access.`,
+      preheader: `Join ${input.site_name} on EVENTS Gateway and activate your access.`,
       eyebrow: "Workspace invitation",
       heading: "You have been invited",
       greeting: `Hello ${input.invited_name || "there"},`,
       paragraphs: [
-        `${input.inviter_name} invited you to join ${input.site_name} on EventsGateway.`,
+        `${input.inviter_name} invited you to join ${input.site_name} on EVENTS Gateway.`,
         `Your access will be created with the ${roleLabel} role for this site.`,
         "Use the secure button below to accept the invitation and finish account access."
       ],
