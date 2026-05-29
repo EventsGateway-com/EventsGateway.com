@@ -14,6 +14,7 @@
     "postbuild": "node scripts/minify-html.mjs",
     "preview": "astro preview",
     "deploy": "npm run build && wrangler deploy --env production",
+    "deploy:public": "npm run deploy && npm run deploy:dashboard && npm run deploy:api && npm run deploy:collector",
     "deploy:dashboard": "npm --prefix apps/dashboard run deploy",
     "deploy:api": "npm --prefix apps/api-worker run deploy",
     "deploy:collector": "npm --prefix apps/collector-worker run deploy",

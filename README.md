@@ -163,13 +163,20 @@ Run from the repository root:
 
 ```bash
 npm run deploy
+npm run deploy:public
 npm run deploy:dashboard
 npm run deploy:api
 npm run deploy:collector
 npm run deploy:forwarder
 ```
 
-Or deploy the full public surface in sequence:
+Deploy the hosted public surface with root site, dashboard, API, and collector:
+
+```bash
+npm run deploy:public
+```
+
+Or deploy the full public surface plus forwarder in sequence:
 
 ```bash
 npm run deploy:all
