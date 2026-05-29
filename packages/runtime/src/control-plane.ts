@@ -851,10 +851,10 @@ function toSiteRoute(record: DatabaseRecord): EventRoute {
     id: asString(record.id),
     site_id: asString(record.site_id),
     name: asString(record.name),
-    description: asNullableString(record.description),
+    description: asNullableString(record.description) ?? undefined,
     enabled: asNumber(record.enabled) !== 0,
     priority: asNumber(record.priority),
-    environment: asString(record.environment) || "all",
+    environment: (asString(record.environment) || "all") as EventRoute["environment"],
     match: parseJsonRecord(record.match_json) as EventRoute["match"],
     consent_required: parseJsonRecord(record.consent_required_json) as EventRoute["consent_required"],
     sampling: parseJsonRecord(record.sampling_json) as EventRoute["sampling"],
@@ -1243,10 +1243,11 @@ async function ensureSiteMembershipTables(db: DatabaseBinding) {
 }
 
 async function ensureDefaultSiteMemberships(db: DatabaseBinding) {
-  const defaultSite = await firstRecord(db, "SELECT id FROM sites WHERE id = ? LIMIT 1", DEFAULT_SITE_ID);
+  const defaultSite = await firstRecord(db, "SELECT id FROM sites ORDER BY created_at ASC LIMIT 1");
   if (!defaultSite) {
     return;
   }
+  const actualSiteId = asString(defaultSite.id);
 
   const users = await allRecords(
     db,
@@ -1260,7 +1261,7 @@ async function ensureDefaultSiteMemberships(db: DatabaseBinding) {
     const existingMembership = await firstRecord(
       db,
       "SELECT id FROM site_memberships WHERE site_id = ? AND user_id = ? LIMIT 1",
-      DEFAULT_SITE_ID,
+      actualSiteId,
       asString(user.id)
     );
     if (existingMembership) {
@@ -1277,7 +1278,7 @@ async function ensureDefaultSiteMemberships(db: DatabaseBinding) {
     )
       .bind(
         crypto.randomUUID(),
-        DEFAULT_SITE_ID,
+        actualSiteId,
         asString(user.id),
         toDashboardUserRole(user.role) === "global_admin" ? "admin" : "user",
         "active",
@@ -1360,13 +1361,14 @@ async function ensureRoutingTables(db: DatabaseBinding) {
 }
 
 async function seedControlPlaneRouting(db: DatabaseBinding) {
-  const seededSite = await firstRecord(db, "SELECT id FROM sites WHERE id = ? LIMIT 1", DEFAULT_SITE_ID);
+  const seededSite = await firstRecord(db, "SELECT id FROM sites ORDER BY created_at ASC LIMIT 1");
   if (!seededSite) return;
+  const actualSiteId = asString(seededSite.id);
 
-  const destinationCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_destinations WHERE site_id = ?", DEFAULT_SITE_ID);
+  const destinationCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_destinations WHERE site_id = ?", actualSiteId);
   if (destinationCount === 0) {
     const createdAt = nowIso();
-    for (const destination of listSeedDestinations(DEFAULT_SITE_ID)) {
+    for (const destination of listSeedDestinations(actualSiteId)) {
       await db.prepare(
         `
           INSERT INTO site_destinations (
@@ -1389,10 +1391,10 @@ async function seedControlPlaneRouting(db: DatabaseBinding) {
     }
   }
 
-  const routeCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_routes WHERE site_id = ?", DEFAULT_SITE_ID);
+  const routeCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_routes WHERE site_id = ?", actualSiteId);
   if (routeCount === 0) {
     const createdAt = nowIso();
-    for (const route of listSeedRoutes(DEFAULT_SITE_ID)) {
+    for (const route of listSeedRoutes(actualSiteId)) {
       await db.prepare(
         `
           INSERT INTO site_routes (
@@ -1420,10 +1422,10 @@ async function seedControlPlaneRouting(db: DatabaseBinding) {
     }
   }
 
-  const transformationCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_transformations WHERE site_id = ?", DEFAULT_SITE_ID);
+  const transformationCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_transformations WHERE site_id = ?", actualSiteId);
   if (transformationCount === 0) {
     const createdAt = nowIso();
-    for (const transformation of listSeedTransformations(DEFAULT_SITE_ID)) {
+    for (const transformation of listSeedTransformations(actualSiteId)) {
       await db.prepare(
         `
           INSERT INTO site_transformations (
@@ -1446,12 +1448,12 @@ async function seedControlPlaneRouting(db: DatabaseBinding) {
     }
   }
 
-  const versionCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_route_versions WHERE site_id = ?", DEFAULT_SITE_ID);
+  const versionCount = await countRecords(db, "SELECT COUNT(*) AS count FROM site_route_versions WHERE site_id = ?", actualSiteId);
   if (versionCount === 0) {
-    const seedVersions = listSeedRouteVersions(DEFAULT_SITE_ID);
+    const seedVersions = listSeedRouteVersions(actualSiteId);
     const activeVersion = seedVersions.find((item) => item.active)?.version ?? 1;
-    const routes = listSeedRoutes(DEFAULT_SITE_ID);
-    const destinations = listSeedDestinations(DEFAULT_SITE_ID).reduce<Record<string, CompiledSiteRoutingConfig["destinations"][string]>>((accumulator, destination) => {
+    const routes = listSeedRoutes(actualSiteId);
+    const destinations = listSeedDestinations(actualSiteId).reduce<Record<string, CompiledSiteRoutingConfig["destinations"][string]>>((accumulator, destination) => {
       accumulator[destination.id] = {
         id: destination.id,
         kind: destination.kind,
@@ -1461,7 +1463,7 @@ async function seedControlPlaneRouting(db: DatabaseBinding) {
       };
       return accumulator;
     }, {});
-    const transformations = listSeedTransformations(DEFAULT_SITE_ID).reduce<Record<string, CompiledSiteRoutingConfig["transformations"][string]>>((accumulator, transformation) => {
+    const transformations = listSeedTransformations(actualSiteId).reduce<Record<string, CompiledSiteRoutingConfig["transformations"][string]>>((accumulator, transformation) => {
       accumulator[transformation.id] = {
         id: transformation.id,
         name: transformation.name,
@@ -1473,7 +1475,7 @@ async function seedControlPlaneRouting(db: DatabaseBinding) {
       return accumulator;
     }, {});
     const compiled = compileRoutingConfig({
-      site_id: DEFAULT_SITE_ID,
+      site_id: actualSiteId,
       version: activeVersion,
       routes,
       destinations,
@@ -1485,7 +1487,7 @@ async function seedControlPlaneRouting(db: DatabaseBinding) {
         VALUES (?, ?, ?, ?, ?)
       `
     )
-      .bind(DEFAULT_SITE_ID, activeVersion, 1, JSON.stringify(compiled), nowIso())
+      .bind(actualSiteId, activeVersion, 1, JSON.stringify(compiled), nowIso())
       .run();
   }
 }
@@ -2056,25 +2058,30 @@ export async function createUserSession(
     .bind(userId, name, email, await sha256Hex(password), role, "active", createdAt, createdAt)
     .run();
 
-  await db.prepare(
-    `
-      INSERT INTO site_memberships (
-        id, site_id, user_id, role, status, invited_by_user_id, created_at, updated_at, joined_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-  )
-    .bind(
-      crypto.randomUUID(),
-      DEFAULT_SITE_ID,
-      userId,
-      role === "global_admin" ? "admin" : "user",
-      "active",
-      null,
-      createdAt,
-      createdAt,
-      createdAt
+  const siteRecord = await firstRecord(db, "SELECT id FROM sites ORDER BY created_at ASC LIMIT 1");
+  const actualSiteId = siteRecord ? asString(siteRecord.id) : null;
+
+  if (actualSiteId) {
+    await db.prepare(
+      `
+        INSERT INTO site_memberships (
+          id, site_id, user_id, role, status, invited_by_user_id, created_at, updated_at, joined_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `
     )
-    .run();
+      .bind(
+        crypto.randomUUID(),
+        actualSiteId,
+        userId,
+        role === "global_admin" ? "admin" : "user",
+        "active",
+        null,
+        createdAt,
+        createdAt,
+        createdAt
+      )
+      .run();
+  }
 
   try {
     await sendWelcomeEmail(env, {
@@ -2083,7 +2090,9 @@ export async function createUserSession(
       role
     });
   } catch (error) {
-    await db.prepare("DELETE FROM site_memberships WHERE user_id = ? AND site_id = ?").bind(userId, DEFAULT_SITE_ID).run();
+    if (actualSiteId) {
+      await db.prepare("DELETE FROM site_memberships WHERE user_id = ? AND site_id = ?").bind(userId, actualSiteId).run();
+    }
     await db.prepare("DELETE FROM dashboard_users WHERE id = ?").bind(userId).run();
     throw error;
   }
@@ -2356,14 +2365,13 @@ export async function getDefaultSite(dbInput: DatabaseBinding | undefined) {
     `
       SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at
       FROM sites
-      WHERE id = ?
+      ORDER BY created_at ASC
       LIMIT 1
-    `,
-    DEFAULT_SITE_ID
+    `
   );
 
   if (!site) {
-    throw new Error("Default site is missing.");
+    throw new Error("Default site is missing. Ensure the installation wizard has completed successfully.");
   }
 
   return toDashboardSite(site);

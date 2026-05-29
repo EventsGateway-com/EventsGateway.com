@@ -96,7 +96,8 @@ async function readSnapshotResponse(response: Response) {
     return null;
   }
 
-  return response.json<VisitorStateSnapshot>();
+  const data = await response.json();
+  return data as VisitorStateSnapshot;
 }
 
 export async function updateVisitorState(
@@ -147,7 +148,7 @@ export class VisitorStateDurableObject {
       return new Response("Not found", { status: 404 });
     }
 
-    const input = await request.json<VisitorStateUpdateInput>();
+    const input = (await request.json()) as VisitorStateUpdateInput;
     const snapshot = await this.state.blockConcurrencyWhile(async () => {
       const current = await this.state.storage.get<VisitorStateSnapshot>(SNAPSHOT_STORAGE_KEY);
       const next = buildVisitorStateSnapshot(input, current);
