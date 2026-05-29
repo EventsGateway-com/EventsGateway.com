@@ -416,6 +416,70 @@ async function handleInfrastructureStatus(env) {
   }
 }
 
+function normalizeVisitorConsent(input, fallback) {
+  return {
+    analytics: Boolean(input?.analytics ?? fallback?.analytics ?? false),
+    ads: Boolean(input?.ads ?? fallback?.ads ?? false),
+    functional: Boolean(input?.functional ?? fallback?.functional ?? false)
+  };
+}
+
+function buildVisitorStateSnapshot(input, current) {
+  return {
+    site_id: input.site_id,
+    visitor_key: input.visitor_key,
+    canonical_user_id: input.event?.canonical_user_id ?? current?.canonical_user_id ?? null,
+    anonymous_id: input.event?.anonymous_id ?? current?.anonymous_id ?? null,
+    session_id: input.event?.session_id ?? current?.session_id ?? null,
+    first_seen_at: current?.first_seen_at ?? input.received_at,
+    last_seen_at: input.received_at,
+    last_event_id: input.event?.event_id ?? current?.last_event_id ?? null,
+    last_event_type: input.event?.type ?? current?.last_event_type ?? null,
+    last_source: input.event?.source ?? current?.last_source ?? null,
+    last_environment: input.event?.environment ?? current?.last_environment ?? null,
+    last_page_path: input.event?.page?.path ?? current?.last_page_path ?? null,
+    last_page_url: input.event?.page?.url ?? current?.last_page_url ?? null,
+    consent: normalizeVisitorConsent(input.event?.consent, current?.consent),
+    event_count: (current?.event_count ?? 0) + 1
+  };
+}
+
+export class VisitorStateDurableObject {
+  constructor(state) {
+    this.state = state;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (request.method === "GET" && url.pathname === "/snapshot") {
+      const snapshot = await this.state.storage.get("snapshot");
+      return new Response(JSON.stringify(snapshot ?? null), {
+        headers: {
+          "content-type": "application/json; charset=utf-8"
+        }
+      });
+    }
+
+    if (request.method !== "POST" || url.pathname !== "/track") {
+      return new Response("Not found", { status: 404 });
+    }
+
+    const input = await request.json();
+    const snapshot = await this.state.blockConcurrencyWhile(async () => {
+      const current = await this.state.storage.get("snapshot");
+      const next = buildVisitorStateSnapshot(input, current);
+      await this.state.storage.put("snapshot", next);
+      return next;
+    });
+
+    return new Response(JSON.stringify(snapshot), {
+      headers: {
+        "content-type": "application/json; charset=utf-8"
+      }
+    });
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
