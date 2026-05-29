@@ -69,6 +69,11 @@ function npmExecutable() {
   return process.platform === "win32" ? "npm.cmd" : "npm";
 }
 
+async function installAppDependencies(relativePath) {
+  console.log(`[eventsgateway] Installing dependencies for ${relativePath}`);
+  await spawnCommand(npmExecutable(), ["--prefix", relativePath, "clean-install", "--progress=false"], rootDir);
+}
+
 async function runRealWrangler(commandArgs, cwd) {
   if (!existsSync(realWranglerCli)) {
     throw new Error(`Wrangler CLI not found at ${realWranglerCli}`);
@@ -85,9 +90,13 @@ async function runHostedDeploy() {
   console.log("[eventsgateway] Running hosted deploy for root, dashboard, api-worker, collector-worker, and forwarder-worker");
 
   await runRealWrangler(["deploy", "--env", "production"], rootDir);
+  await installAppDependencies("apps/dashboard");
   await spawnCommand(npmExecutable(), ["--prefix", "apps/dashboard", "run", "deploy"], rootDir);
+  await installAppDependencies("apps/api-worker");
   await spawnCommand(npmExecutable(), ["--prefix", "apps/api-worker", "run", "deploy"], rootDir);
+  await installAppDependencies("apps/collector-worker");
   await spawnCommand(npmExecutable(), ["--prefix", "apps/collector-worker", "run", "deploy"], rootDir);
+  await installAppDependencies("apps/forwarder-worker");
   await spawnCommand(npmExecutable(), ["--prefix", "apps/forwarder-worker", "run", "deploy"], rootDir);
 }
 
