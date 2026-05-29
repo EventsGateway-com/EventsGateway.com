@@ -46,7 +46,7 @@ export const homeContent = {
     {
       icon: "layers",
       title: "Direct pixels make attribution harder to trust",
-      text: "When Meta, GA4, Google Ads, and internal systems all collect separately, routing, debugging, and deduplication become expensive and messy."
+      text: "When Meta, GA4, Google Ads, and internal systems all collect separately, campaign data becomes harder to trust and wasted spend grows faster."
     },
     {
       icon: "shield",
@@ -63,12 +63,12 @@ export const homeContent = {
     {
       icon: "bolt",
       title: "One event stream",
-      text: "Collect events once, standardize naming once, and avoid fragmented vendor-by-vendor browser logic that weakens signal quality."
+      text: "Send events once, keep naming clean, and avoid fragmented vendor-by-vendor tracking that weakens campaign performance."
     },
     {
       icon: "cloud",
       title: "Multi-destination routing",
-      text: "Route one clean event stream to Meta, GA4, Google Ads, TikTok, webhooks, and custom pipelines without duplicating your tracking implementation."
+      text: "Send one clean event stream to Meta, GA4, Google Ads, TikTok, webhooks, and custom tools without duplicating your tracking setup."
     },
     {
       icon: "check",
@@ -78,7 +78,7 @@ export const homeContent = {
     {
       icon: "spark",
       title: "Commercial visibility",
-      text: "See routed volume, delivery health, and the event quality needed by performance teams from one dashboard instead of across multiple tools."
+      text: "See volume, delivery health, and the quality of the data your campaigns depend on from one dashboard instead of across multiple tools."
     },
     {
       icon: "layers",
@@ -90,7 +90,7 @@ export const homeContent = {
     {
       step: "01",
       title: "Install the tracker",
-      text: "Add the script or SDK to your site and point it to the EventsGateway collector endpoint."
+      text: "Add the script or SDK to your site once and start sending cleaner events from one place."
     },
     {
       step: "02",
@@ -100,12 +100,12 @@ export const homeContent = {
     {
       step: "03",
       title: "Define routes and destinations",
-      text: "Control how events move to analytics, ads, and custom systems with explicit routing rules."
+      text: "Control how events move to Meta, Google Ads, TikTok, analytics tools, and custom systems without rebuilding tracking each time."
     },
     {
       step: "04",
       title: "Observe and optimize",
-      text: "Use the dashboard to inspect delivery, debug event flow, and improve reliability over time."
+      text: "Use the dashboard to see what is working, spot broken flows faster, and improve campaign data over time."
     }
   ],
   controlColumns: [
@@ -122,7 +122,7 @@ export const homeContent = {
     {
       icon: "cloud",
       title: "One control center",
-      text: "Routes, deliveries, retry logic, and operational visibility stay in one product instead of being spread across vendors."
+      text: "Tracking rules, deliveries, and visibility stay in one product instead of being spread across plugins, tags, and disconnected vendors."
     }
   ],
   finalCtaTitle: "Ready to improve Event Match Score without paying for a heavier stack?",
