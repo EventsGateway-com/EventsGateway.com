@@ -4082,6 +4082,28 @@ function InstallPage() {
     queryFn: dashboardApi.fetchInstall
   });
 
+  if (installQuery.error) {
+    return (
+      <WindowedPage
+        pageKey="install"
+        introTitle="Install Tracker"
+        introDescription="Connect the browser tracker and generate private deployment values for self-hosted installs."
+        panels={[{
+          id: "install-error",
+          title: "Install config unavailable",
+          variant: "full",
+          content: (
+            <StateCard
+              title="Install config unavailable"
+              description={installQuery.error instanceof Error ? installQuery.error.message : "Install config unavailable."}
+              compact
+            />
+          )
+        }]}
+      />
+    );
+  }
+
   if (!installQuery.data) {
     return (
       <WindowedPage

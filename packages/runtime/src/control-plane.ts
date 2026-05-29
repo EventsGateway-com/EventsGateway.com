@@ -4451,10 +4451,22 @@ export async function getPrimarySiteKey(dbInput: DatabaseBinding | undefined, si
 }
 
 export async function getInstallConfigFromDb(dbInput: DatabaseBinding | undefined, siteId: string) {
-  const site = await getDefaultSite(dbInput);
-  if (site.id !== siteId) {
+  const db = ensureDb(dbInput);
+  await ensureControlPlane(db);
+  const siteRecord = await firstRecord(
+    db,
+    `
+      SELECT id, org_id, org_name, project_id, project_name, name, environment, collector_url, created_at
+      FROM sites
+      WHERE id = ?
+      LIMIT 1
+    `,
+    siteId
+  );
+  if (!siteRecord) {
     throw new Error("Site not found.");
   }
+  const site = toDashboardSite(siteRecord);
 
   const key = await getPrimarySiteKey(dbInput, siteId);
   const loaderUrl = site.collector_url.replace(/\/v1\/collect$/, "/tracker.js");
