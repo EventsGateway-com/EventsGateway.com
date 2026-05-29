@@ -27,7 +27,9 @@ function buildArtifacts() {
   const zoneId = getValue("install-zone-id") || "replace-with-your-cloudflare-zone-id";
   const databaseId = getValue("install-database-id") || "replace-with-your-d1-database-id";
   const databaseName = getValue("install-database-name") || "eventsgateway-control-plane";
-  const queueName = getValue("install-queue-name") || "eventsgateway-ingest";
+  const kvNamespaceId = getValue("install-kv-namespace-id") || "replace-with-your-kv-namespace-id";
+  const r2BucketName = getValue("install-r2-bucket-name") || "eventsgateway-assets-production";
+  const queueName = getValue("install-queue-name") || "eventsgateway-ingest-production";
   const captchaProvider = getValue("install-captcha-provider") || "turnstile";
   const captchaSiteKey = getValue("install-captcha-site-key") || `replace-with-your-${captchaProvider}-site-key`;
   const captchaSecretKey = getValue("install-captcha-secret-key") || `replace-with-your-${captchaProvider}-secret-key`;
@@ -70,6 +72,8 @@ function buildArtifacts() {
       CLOUDFLARE_ZONE_ID: zoneId,
       CONTROL_PLANE_DATABASE_ID: databaseId,
       CONTROL_PLANE_DATABASE_NAME: databaseName,
+      CACHE_KV_NAMESPACE_ID: kvNamespaceId,
+      ASSETS_R2_BUCKET_NAME: r2BucketName,
       EVENTS_QUEUE_NAME: queueName
     })
   );
@@ -84,6 +88,8 @@ function buildArtifacts() {
       runtime: {
         database_id: databaseId,
         database_name: databaseName,
+        kv_namespace_id: kvNamespaceId,
+        r2_bucket_name: r2BucketName,
         queue_name: queueName
       },
       domains: {
@@ -103,6 +109,45 @@ function buildArtifacts() {
         secret_env: "STRIPE_SECRET_KEY",
         webhook_secret_env: "STRIPE_WEBHOOK_SECRET",
         billing_return_url: billingReturnUrl
+      }
+    })
+  );
+
+  setText(
+    "install-output-wrangler-bindings",
+    prettyJson({
+      d1_databases: [
+        {
+          binding: "DB",
+          database_name: databaseName,
+          database_id: databaseId,
+          remote: true
+        }
+      ],
+      kv_namespaces: [
+        {
+          binding: "CACHE",
+          id: kvNamespaceId
+        }
+      ],
+      r2_buckets: [
+        {
+          binding: "ASSETS_BUCKET",
+          bucket_name: r2BucketName
+        }
+      ],
+      queues: {
+        producers: [
+          {
+            binding: "EVENTS_QUEUE",
+            queue: queueName
+          }
+        ],
+        consumers: [
+          {
+            queue: queueName
+          }
+        ]
       }
     })
   );

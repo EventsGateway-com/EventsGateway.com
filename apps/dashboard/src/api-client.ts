@@ -81,6 +81,8 @@ export type InstallWizardInput = {
   cloudflare_zone_id: string;
   control_plane_database_id: string;
   control_plane_database_name: string;
+  cache_kv_namespace_id: string;
+  assets_r2_bucket_name: string;
   events_queue_name: string;
   captcha_provider: CaptchaProvider;
   captcha_site_key: string;

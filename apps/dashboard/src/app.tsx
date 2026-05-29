@@ -56,7 +56,9 @@ const DEFAULT_INSTALL_INPUT: InstallWizardInput = {
   cloudflare_zone_id: "",
   control_plane_database_id: "",
   control_plane_database_name: "eventsgateway-control-plane",
-  events_queue_name: "eventsgateway-ingest",
+  cache_kv_namespace_id: "",
+  assets_r2_bucket_name: "eventsgateway-assets-production",
+  events_queue_name: "eventsgateway-ingest-production",
   captcha_provider: "turnstile",
   captcha_site_key: "",
   captcha_secret_key: ""
@@ -118,20 +120,59 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
       CLOUDFLARE_ZONE_ID: input.cloudflare_zone_id || "replace-with-your-cloudflare-zone-id",
       CONTROL_PLANE_DATABASE_ID: input.control_plane_database_id || "replace-with-your-d1-database-id",
       CONTROL_PLANE_DATABASE_NAME: input.control_plane_database_name || "eventsgateway-control-plane",
-      EVENTS_QUEUE_NAME: input.events_queue_name || "eventsgateway-ingest"
+      CACHE_KV_NAMESPACE_ID: input.cache_kv_namespace_id || "replace-with-your-kv-namespace-id",
+      ASSETS_R2_BUCKET_NAME: input.assets_r2_bucket_name || "eventsgateway-assets-production",
+      EVENTS_QUEUE_NAME: input.events_queue_name || "eventsgateway-ingest-production"
     },
     wrangler_private_values: {
       account_id: input.cloudflare_account_id || "replace-with-your-cloudflare-account-id",
       zone_id: input.cloudflare_zone_id || "replace-with-your-cloudflare-zone-id",
       database_id: input.control_plane_database_id || "replace-with-your-d1-database-id",
       database_name: input.control_plane_database_name || "eventsgateway-control-plane",
-      queue_name: input.events_queue_name || "eventsgateway-ingest",
+      kv_namespace_id: input.cache_kv_namespace_id || "replace-with-your-kv-namespace-id",
+      r2_bucket_name: input.assets_r2_bucket_name || "eventsgateway-assets-production",
+      queue_name: input.events_queue_name || "eventsgateway-ingest-production",
       routes: {
         root: input.root_domain,
         root_www: `www.${input.root_domain}`,
         dashboard: input.dashboard_domain,
         api: input.api_domain,
         collector: input.collector_domain
+      }
+    },
+    wrangler_resource_bindings: {
+      d1_databases: [
+        {
+          binding: "DB",
+          database_name: input.control_plane_database_name || "eventsgateway-control-plane",
+          database_id: input.control_plane_database_id || "replace-with-your-d1-database-id",
+          remote: true
+        }
+      ],
+      kv_namespaces: [
+        {
+          binding: "CACHE",
+          id: input.cache_kv_namespace_id || "replace-with-your-kv-namespace-id"
+        }
+      ],
+      r2_buckets: [
+        {
+          binding: "ASSETS_BUCKET",
+          bucket_name: input.assets_r2_bucket_name || "eventsgateway-assets-production"
+        }
+      ],
+      queues: {
+        producers: [
+          {
+            binding: "EVENTS_QUEUE",
+            queue: input.events_queue_name || "eventsgateway-ingest-production"
+          }
+        ],
+        consumers: [
+          {
+            queue: input.events_queue_name || "eventsgateway-ingest-production"
+          }
+        ]
       }
     },
     captcha_summary: {
@@ -145,6 +186,10 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
       "npm --prefix apps/api-worker install",
       "npm --prefix apps/collector-worker install",
       "npm --prefix apps/forwarder-worker install",
+      "npx wrangler d1 create eventsgateway-control-plane",
+      "npx wrangler queues create eventsgateway-ingest-production",
+      "npx wrangler kv namespace create EVENTSGATEWAY_CACHE",
+      "npx wrangler r2 bucket create eventsgateway-assets-production",
       "npm run deploy:dashboard",
       "npm run deploy:api",
       "npm run deploy:collector",
@@ -2658,6 +2703,14 @@ function SetupWizardSection({
               <input className="eg-input" onChange={(event) => updateField("control_plane_database_name", event.target.value)} type="text" value={form.control_plane_database_name} />
             </label>
             <label className="eg-field">
+              <span>KV namespace ID</span>
+              <input className="eg-input" onChange={(event) => updateField("cache_kv_namespace_id", event.target.value)} type="text" value={form.cache_kv_namespace_id} />
+            </label>
+            <label className="eg-field">
+              <span>R2 bucket name</span>
+              <input className="eg-input" onChange={(event) => updateField("assets_r2_bucket_name", event.target.value)} type="text" value={form.assets_r2_bucket_name} />
+            </label>
+            <label className="eg-field">
               <span>Queue name</span>
               <input className="eg-input" onChange={(event) => updateField("events_queue_name", event.target.value)} type="text" value={form.events_queue_name} />
             </label>
@@ -2705,7 +2758,8 @@ function SetupWizardSection({
           <JsonPanel
             value={{
               placeholders: artifacts.tracked_placeholders,
-              private_values: artifacts.wrangler_private_values
+              private_values: artifacts.wrangler_private_values,
+              wrangler_bindings: artifacts.wrangler_resource_bindings
             }}
           />
         </SurfaceCard>

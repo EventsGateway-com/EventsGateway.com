@@ -2,7 +2,7 @@ export const installGuideContent = {
   title: "Install EventsGateway On Your Domain",
   eyebrow: "GitHub To Production",
   intro:
-    "This guide shows the fastest path from the GitHub repository page to a working EventsGateway setup on your own domain. The goal is simple: deploy the Cloudflare runtime, connect a collector subdomain, install the tracker on any site you already run, and keep the setup inside free-tier limits whenever your traffic profile allows it.",
+    "This guide shows the fastest path from the GitHub repository page to a working EventsGateway setup on your own domain. The goal is simple: create the required Cloudflare resources manually using the preset project names, define their real IDs and names in Wrangler, deploy the runtime, connect a collector subdomain, install the tracker on any site you already run, and keep the setup inside free-tier limits whenever your traffic profile allows it.",
   preflight: [
     {
       title: "GitHub repository access",
@@ -10,7 +10,7 @@ export const installGuideContent = {
     },
     {
       title: "Cloudflare account",
-      text: "You need a Cloudflare account with access to Workers and the domain where the collector subdomain will run. Many small sites can start on Cloudflare free tiers before the paid plan is needed."
+      text: "You need a Cloudflare account with access to Workers and the domain where the collector subdomain will run. Create D1, Queues, KV namespaces, and R2 buckets manually inside your own account, keep the official resource names, then define the generated IDs and names in Wrangler."
     },
     {
       title: "A target website",
@@ -29,31 +29,36 @@ export const installGuideContent = {
     },
     {
       step: "02",
-      title: "Deploy the Workers runtime",
-      text: "Install dependencies, configure Wrangler for the collector, API, and forwarder workers, then deploy them to Cloudflare. For many small sites, this can stay inside the free-tier envelope."
+      title: "Create Cloudflare resources manually",
+      text: "Create the D1 database, queue, KV namespaces, and R2 buckets in your own Cloudflare account first. Keep the preset project names and copy the generated IDs and names because the next step defines them in Wrangler."
     },
     {
       step: "03",
+      title: "Define resources in Wrangler and deploy",
+      text: "Add the manual Cloudflare resource IDs and names to Wrangler for the collector, API, and forwarder workers, then deploy them to Cloudflare. For many small sites, this can stay inside the free-tier envelope."
+    },
+    {
+      step: "04",
       title: "Attach a collector subdomain",
       text: "Choose a subdomain such as events.example.com or edge.example.com and point it to the collector worker so every site event goes through one controlled entry point."
     },
     {
-      step: "04",
+      step: "05",
       title: "Install the tracker on the site",
       text: "Add the script tag or SDK snippet to the target website and send events to your collector endpoint. This is why the platform can be installed quickly on almost any site."
     },
     {
-      step: "05",
+      step: "06",
       title: "Configure routing and destinations",
       text: "Use the dashboard to define routes, transformations, and destinations for Meta, GA4, Google Ads, or custom webhooks."
     },
     {
-      step: "06",
+      step: "07",
       title: "Verify event flow on the real domain",
       text: "Load the live site, confirm page views and custom events reach the collector, then validate routing, delivery status, and retries from the dashboard."
     },
     {
-      step: "07",
+      step: "08",
       title: "Activate Stripe billing",
       text: "Set Stripe publishable key, secret key, webhook secret, and billing return URL during installation so payment methods, invoices, reminders, and suspension logic are ready."
     }
@@ -75,6 +80,44 @@ cd eventsgateway`
 cd apps/api-worker && npm install
 cd ../collector-worker && npm install
 cd ../forwarder-worker && npm install`
+    },
+    {
+      title: "Create Cloudflare resources manually",
+      code: `npx wrangler d1 create eventsgateway-control-plane
+npx wrangler queues create eventsgateway-ingest-production
+npx wrangler kv namespace create EVENTSGATEWAY_CACHE
+npx wrangler r2 bucket create eventsgateway-assets-production`
+    },
+    {
+      title: "Define resources in Wrangler",
+      code: `"d1_databases": [
+  {
+    "binding": "DB",
+    "database_name": "eventsgateway-control-plane",
+    "database_id": "replace-with-your-d1-database-id",
+    "remote": true
+  }
+],
+"kv_namespaces": [
+  {
+    "binding": "CACHE",
+    "id": "replace-with-your-kv-namespace-id"
+  }
+],
+"r2_buckets": [
+  {
+    "binding": "ASSETS_BUCKET",
+    "bucket_name": "eventsgateway-assets-production"
+  }
+],
+"queues": {
+  "producers": [
+    {
+      "binding": "EVENTS_QUEUE",
+      "queue": "eventsgateway-ingest-production"
+    }
+  ]
+}`
     },
     {
       title: "Deploy the Workers runtime",
@@ -109,6 +152,8 @@ set VITE_STRIPE_PUBLISHABLE_KEY=pk_test_replace_me`
   ],
   checklist: [
     "GitHub repository cloned or forked into your own account",
+    "Cloudflare D1, Queues, KV namespaces, and R2 buckets created manually in your own account",
+    "Wrangler files updated with the real resource IDs and names before deploy",
     "Cloudflare Workers deployed for collector, API, and forwarding runtime",
     "Collector subdomain mapped on your domain",
     "Stripe publishable key, secret key, and webhook secret configured",
