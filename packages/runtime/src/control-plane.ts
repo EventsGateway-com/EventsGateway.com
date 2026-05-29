@@ -168,6 +168,18 @@ export type SiteRouteVersion = {
 
 export type BootstrapPayload = {
   user: DashboardUser;
+  accessible_sites: Array<{
+    id: string;
+    org_id: string;
+    org_name: string;
+    project_id: string;
+    project_name: string;
+    name: string;
+    environment: string;
+    collector_url: string;
+    created_at: string;
+    role: string;
+  }>;
   site: DashboardSite;
   domains: SiteDomain[];
 };
@@ -2312,7 +2324,7 @@ export async function getSessionByToken(dbInput: DatabaseBinding | undefined, to
   const session = await firstRecord(
     db,
     `
-      SELECT s.id, s.token, s.user_id, s.expires_at, s.created_at, u.name, u.email, u.created_at AS user_created_at
+      SELECT s.id, s.token, s.user_id, s.expires_at, s.created_at, u.name, u.email, u.phone, u.created_at AS user_created_at
       , u.role, u.status, u.last_login_at, u.password_changed_at
       FROM dashboard_sessions s
       JOIN dashboard_users u ON u.id = s.user_id
@@ -2346,6 +2358,7 @@ export async function getSessionByToken(dbInput: DatabaseBinding | undefined, to
       email: asString(session.email),
       role: toDashboardUserRole(session.role),
       status: toDashboardUserStatus(session.status),
+      phone: asNullableString(session.phone),
       created_at: asString(session.user_created_at),
       last_login_at: asNullableString(session.last_login_at),
       password_changed_at: asNullableString(session.password_changed_at)
@@ -3068,6 +3081,9 @@ export async function updateMyProfile(
     // Invalidate other sessions
     await db.prepare("DELETE FROM dashboard_sessions WHERE user_id = ?").bind(userId).run();
   }
+
+  return { success: true };
+}
 
 export async function getBootstrap(dbInput: DatabaseBinding | undefined, userId: string): Promise<BootstrapPayload> {
   const db = ensureDb(dbInput);
