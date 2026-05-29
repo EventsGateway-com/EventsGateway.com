@@ -34,6 +34,27 @@ const integrationsLinks = [
     href: `/integrations/${item.slug}/`
   }))
 ] as Array<{ label: string; href: string }>;
+const integrationGroups = [
+  {
+    label: "Official Managed Components",
+    items: integrationsContent.items
+      .filter((item) => item.group === "Official Managed Components")
+      .map((item) => ({
+        label: item.label,
+        href: `/integrations/${item.slug}/`
+      }))
+  },
+  {
+    label: "Community Managed Components",
+    items: integrationsContent.items
+      .filter((item) => item.group === "Community Managed Components")
+      .map((item) => ({
+        label: item.label,
+        href: `/integrations/${item.slug}/`
+      }))
+  }
+] as Array<{ label: string; items: Array<{ label: string; href: string }> }>;
+const integrationsCountLabel = `Integrations (${integrationsContent.items.length})`;
 const communityLinks = [
   { label: "Open Source", href: "/open-source/" },
   { label: "Install", href: "/install/" },
@@ -84,7 +105,7 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
               <span class="nav-link__dot"></span>
               Docs
             </summary>
-            <div class="nav-dropdown__panel nav-dropdown__panel--wide">
+            <div class="nav-dropdown__panel nav-dropdown__panel--wide nav-dropdown__panel--scroll">
               {
                 docsLinks.map((item) => (
                   <a class:list={[isActivePath(item.href) && "is-active"]} href={item.href}>
@@ -112,16 +133,28 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
           <details class:list={["nav-dropdown", integrationsActive && "is-active"]}>
             <summary class="nav-link">
               <span class="nav-link__dot"></span>
-              Integrations
+              {integrationsCountLabel}
             </summary>
-            <div class="nav-dropdown__panel nav-dropdown__panel--wide">
-              {
-                integrationsLinks.map((item) => (
-                  <a class:list={[isActivePath(item.href) && "is-active"]} href={item.href}>
-                    {item.label}
-                  </a>
-                ))
-              }
+            <div class="nav-dropdown__panel nav-dropdown__panel--integrations nav-dropdown__panel--scroll">
+              <a class:list={["nav-dropdown__home-link", isActivePath("/integrations/") && "is-active"]} href="/integrations/">
+                Integrations Home
+              </a>
+              <div class="nav-dropdown__groups">
+                {
+                  integrationGroups.map((group) => (
+                    <div class="nav-dropdown__group">
+                      <span class="nav-dropdown__label">{group.label}</span>
+                      {
+                        group.items.map((item) => (
+                          <a class:list={[isActivePath(item.href) && "is-active"]} href={item.href}>
+                            {item.label}
+                          </a>
+                        ))
+                      }
+                    </div>
+                  ))
+                }
+              </div>
             </div>
           </details>
           <details class:list={["nav-dropdown", communityActive && "is-active"]}>
@@ -199,12 +232,23 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
           </div>
           <div class="mobile-nav__group">
             <span class="mobile-nav__label">Integrations</span>
+            <a class:list={["mobile-link", isActivePath("/integrations/") && "is-active"]} href="/integrations/">
+              <span class="nav-link__dot"></span>
+              Integrations Home
+            </a>
             {
-              integrationsLinks.map((item) => (
-                <a class:list={["mobile-link", isActivePath(item.href) && "is-active"]} href={item.href}>
-                  <span class="nav-link__dot"></span>
-                  {item.label}
-                </a>
+              integrationGroups.map((group) => (
+                <div class="mobile-nav__subgroup">
+                  <span class="mobile-nav__subgroup-label">{group.label}</span>
+                  {
+                    group.items.map((item) => (
+                      <a class:list={["mobile-link", "mobile-link--subtle", isActivePath(item.href) && "is-active"]} href={item.href}>
+                        <span class="nav-link__dot"></span>
+                        {item.label}
+                      </a>
+                    ))
+                  }
+                </div>
               ))
             }
           </div>
@@ -426,9 +470,43 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     min-width: 15rem;
   }
 
+  .nav-dropdown__panel--integrations {
+    min-width: 34rem;
+    max-width: min(42rem, 92vw);
+  }
+
   .nav-dropdown__panel--scroll {
     max-height: min(70vh, 28rem);
     overflow-y: auto;
+  }
+
+  .nav-dropdown__home-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .nav-dropdown__groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .nav-dropdown__group {
+    display: grid;
+    gap: 0.2rem;
+    align-content: start;
+  }
+
+  .nav-dropdown__label,
+  .mobile-nav__subgroup-label {
+    color: var(--color-muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 
   .nav-dropdown__panel a,
@@ -475,6 +553,18 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     margin-top: 0.5rem;
   }
 
+  .mobile-nav__subgroup {
+    display: grid;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+  }
+
+  .mobile-link--subtle {
+    min-height: 2.1rem;
+    padding-left: 0.95rem;
+    font-size: 0.88rem;
+  }
+
   .mobile-nav__label {
     font-size: 0.75rem;
     letter-spacing: 0.12em;
@@ -504,3 +594,18 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     }
   }
 </style>
+
+<script>
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    const openDetails = document.querySelectorAll<HTMLDetailsElement>("details[open].mobile-nav, details[open].desktop-dropdown");
+    
+    openDetails.forEach((details) => {
+      if (!details.contains(target)) {
+        details.removeAttribute("open");
+      }
+    });
+  });
+</script>
