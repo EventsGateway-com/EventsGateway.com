@@ -200,6 +200,7 @@ const DEFAULT_PROJECT_NAME = "Events Core";
 const DEFAULT_ENVIRONMENT = "production";
 const PASSWORD_RESET_TTL_MS = 1000 * 60 * 60;
 const DEFAULT_PASSWORD_RESET_BASE_URL = "https://dash.eventsgateway.com/reset-password";
+const DEFAULT_DASHBOARD_URL = "https://dash.eventsgateway.com";
 
 let ensurePromise: Promise<void> | null = null;
 
@@ -225,6 +226,170 @@ function asNullableString(value: unknown) {
 
 function asNumber(value: unknown) {
   return typeof value === "number" ? value : Number(value ?? 0);
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function resolveDashboardUrl(pathname: string, baseUrl: string) {
+  try {
+    return new URL(pathname, baseUrl).toString();
+  } catch {
+    return new URL(pathname, `${DEFAULT_DASHBOARD_URL}/`).toString();
+  }
+}
+
+type TransactionalEmailTemplate = {
+  htmlContent: string;
+  textContent: string;
+};
+
+function renderTransactionalEmail(input: {
+  preheader: string;
+  eyebrow: string;
+  heading: string;
+  greeting: string;
+  paragraphs: string[];
+  ctaLabel?: string;
+  ctaUrl?: string;
+  note?: string;
+  closing?: string;
+  signature?: string;
+}): TransactionalEmailTemplate {
+  const preheader = escapeHtml(input.preheader);
+  const eyebrow = escapeHtml(input.eyebrow);
+  const heading = escapeHtml(input.heading);
+  const greeting = escapeHtml(input.greeting);
+  const paragraphs = input.paragraphs.map((paragraph) => `
+              <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#334155;">${escapeHtml(paragraph)}</p>`).join("");
+  const ctaLabel = input.ctaLabel ? escapeHtml(input.ctaLabel) : "";
+  const ctaUrl = input.ctaUrl ? escapeHtml(input.ctaUrl) : "";
+  const note = input.note ? escapeHtml(input.note) : "";
+  const closing = escapeHtml(input.closing || "Thanks for choosing EventsGateway.");
+  const signature = escapeHtml(input.signature || "The EventsGateway team");
+
+  const ctaHtml = input.ctaLabel && input.ctaUrl
+    ? `
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:8px 0 24px;">
+                <tr>
+                  <td style="border-radius:14px;background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%);text-align:center;">
+                    <a href="${ctaUrl}" style="display:inline-block;padding:14px 24px;font-size:15px;font-weight:700;line-height:1;text-decoration:none;color:#ffffff;">${ctaLabel}</a>
+                  </td>
+                </tr>
+              </table>`
+    : "";
+
+  const noteHtml = note
+    ? `
+              <div style="margin-top:24px;padding:16px 18px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0;font-size:14px;line-height:1.6;color:#475569;">
+                ${note}
+              </div>`
+    : "";
+
+  return {
+    htmlContent: `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${heading}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#eef2ff;font-family:Arial,sans-serif;color:#0f172a;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
+      ${preheader}
+    </div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#eef2ff;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width:640px;">
+            <tr>
+              <td style="padding-bottom:18px;text-align:center;">
+                <div style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:rgba(255,255,255,0.78);border:1px solid rgba(148,163,184,0.18);font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4338ca;">
+                  EventsGateway
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="border-radius:28px;background:#ffffff;box-shadow:0 24px 70px rgba(15,23,42,0.12);overflow:hidden;">
+                <div style="padding:40px 40px 32px;background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 55%,#7c3aed 100%);">
+                  <div style="margin-bottom:14px;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.72);">${eyebrow}</div>
+                  <h1 style="margin:0;font-size:32px;line-height:1.2;font-weight:800;color:#ffffff;">${heading}</h1>
+                </div>
+                <div style="padding:36px 40px 40px;">
+                  <p style="margin:0 0 20px;font-size:18px;line-height:1.6;font-weight:600;color:#0f172a;">${greeting}</p>
+                  ${paragraphs}
+                  ${ctaHtml}
+                  ${noteHtml}
+                  <p style="margin:24px 0 0;font-size:15px;line-height:1.7;color:#334155;">${closing}</p>
+                  <p style="margin:8px 0 0;font-size:15px;line-height:1.7;font-weight:700;color:#0f172a;">${signature}</p>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:18px 10px 0;text-align:center;font-size:12px;line-height:1.7;color:#64748b;">
+                Open-source event routing and tracking platform for modern teams.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`.trim(),
+    textContent: [
+      input.heading,
+      "",
+      input.greeting,
+      "",
+      ...input.paragraphs,
+      input.ctaLabel && input.ctaUrl ? `${input.ctaLabel}: ${input.ctaUrl}` : "",
+      input.note || "",
+      input.closing || "Thanks for choosing EventsGateway.",
+      input.signature || "The EventsGateway team"
+    ]
+      .filter(Boolean)
+      .join("\n\n")
+  };
+}
+
+async function sendBrevoEmail(
+  env: Pick<EnvironmentBindings, "BREVO_API_KEY" | "BREVO_SENDER_EMAIL">,
+  input: { email: string; name: string; subject: string; template: TransactionalEmailTemplate }
+) {
+  const apiKey = env.BREVO_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error("BREVO_API_KEY is not configured.");
+  }
+
+  const senderEmail = env.BREVO_SENDER_EMAIL?.trim() || "no-reply@eventsgateway.com";
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "api-key": apiKey
+    },
+    body: JSON.stringify({
+      sender: {
+        email: senderEmail,
+        name: "EventsGateway"
+      },
+      to: [{ email: input.email, name: input.name }],
+      subject: input.subject,
+      htmlContent: input.template.htmlContent,
+      textContent: input.template.textContent
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error("Brevo rejected the transactional email request.");
+  }
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -1191,47 +1356,59 @@ async function sendPasswordResetEmail(
   env: Pick<EnvironmentBindings, "BREVO_API_KEY" | "BREVO_SENDER_EMAIL" | "PASSWORD_RESET_BASE_URL">,
   input: { email: string; name: string; token: string }
 ) {
-  const apiKey = env.BREVO_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error("BREVO_API_KEY is not configured.");
-  }
-
-  const senderEmail = env.BREVO_SENDER_EMAIL?.trim() || "no-reply@eventsgateway.com";
   const resetBaseUrl = env.PASSWORD_RESET_BASE_URL?.trim() || DEFAULT_PASSWORD_RESET_BASE_URL;
   const separator = resetBaseUrl.includes("?") ? "&" : "?";
   const resetUrl = `${resetBaseUrl}${separator}token=${encodeURIComponent(input.token)}`;
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "api-key": apiKey
-    },
-    body: JSON.stringify({
-      sender: {
-        email: senderEmail,
-        name: "EventsGateway"
-      },
-      to: [{ email: input.email, name: input.name }],
-      subject: "Reset your EventsGateway password",
-      htmlContent: [
-        "<p>Hello,</p>",
-        "<p>We received a request to reset your EventsGateway dashboard password.</p>",
-        `<p><a href="${resetUrl}">Reset password</a></p>`,
-        "<p>If you did not request this change, you can ignore this email.</p>",
-        "<p>This link expires in 60 minutes.</p>"
-      ].join(""),
-      textContent: [
-        "We received a request to reset your EventsGateway dashboard password.",
-        `Reset password: ${resetUrl}`,
-        "If you did not request this change, you can ignore this email.",
-        "This link expires in 60 minutes."
-      ].join("\n")
+  await sendBrevoEmail(env, {
+    email: input.email,
+    name: input.name,
+    subject: "Reset your EventsGateway password",
+    template: renderTransactionalEmail({
+      preheader: "Reset your password and get back into your dashboard securely.",
+      eyebrow: "Password reset request",
+      heading: "Reset your password",
+      greeting: `Hello ${input.name || "there"},`,
+      paragraphs: [
+        "We received a request to reset the password for your EventsGateway dashboard account.",
+        "Use the secure button below to choose a new password and continue where you left off."
+      ],
+      ctaLabel: "Reset password",
+      ctaUrl: resetUrl,
+      note: "If you did not request this change, you can safely ignore this email. This secure link expires in 60 minutes.",
+      closing: "Need to access the dashboard later? You can always start a new reset request from the sign-in screen."
     })
   });
+}
 
-  if (!response.ok) {
-    throw new Error("Brevo rejected the password reset email request.");
-  }
+async function sendWelcomeEmail(
+  env: Pick<EnvironmentBindings, "BREVO_API_KEY" | "BREVO_SENDER_EMAIL" | "PASSWORD_RESET_BASE_URL">,
+  input: { email: string; name: string; role: DashboardUserRole }
+) {
+  const dashboardLoginUrl = resolveDashboardUrl("/login", env.PASSWORD_RESET_BASE_URL?.trim() || DEFAULT_PASSWORD_RESET_BASE_URL);
+  const roleMessage = input.role === "global_admin"
+    ? "Your account is the first workspace owner for this deployment, so you can immediately start the platform setup."
+    : "Your dashboard account is active and ready for event routing, destinations, and workspace setup.";
+
+  await sendBrevoEmail(env, {
+    email: input.email,
+    name: input.name,
+    subject: "Welcome to EventsGateway",
+    template: renderTransactionalEmail({
+      preheader: "Your EventsGateway dashboard account is ready.",
+      eyebrow: "Welcome aboard",
+      heading: "Your account is live",
+      greeting: `Hello ${input.name || "there"},`,
+      paragraphs: [
+        "Welcome to EventsGateway. Your dashboard account has been created successfully.",
+        roleMessage,
+        "From here you can configure routing, connect destinations, and start validating your event flow in one place."
+      ],
+      ctaLabel: "Open dashboard",
+      ctaUrl: dashboardLoginUrl,
+      note: "Keep this email for quick access. If you ever lose your password, you can request a secure reset from the dashboard login page.",
+      closing: "We are glad to have you building with EventsGateway."
+    })
+  });
 }
 
 async function deletePasswordResetToken(db: DatabaseBinding, resetId: string) {
@@ -1598,6 +1775,7 @@ export async function exportRawJob(dbInput: DatabaseBinding | undefined, siteId:
 
 export async function createUserSession(
   dbInput: DatabaseBinding | undefined,
+  env: Pick<EnvironmentBindings, "BREVO_API_KEY" | "BREVO_SENDER_EMAIL" | "PASSWORD_RESET_BASE_URL">,
   input: { name: string; email: string; password: string }
 ) {
   const db = ensureDb(dbInput);
@@ -1637,6 +1815,17 @@ export async function createUserSession(
   )
     .bind(userId, name, email, await sha256Hex(password), role, "active", createdAt, createdAt)
     .run();
+
+  try {
+    await sendWelcomeEmail(env, {
+      email,
+      name,
+      role
+    });
+  } catch (error) {
+    await db.prepare("DELETE FROM dashboard_users WHERE id = ?").bind(userId).run();
+    throw error;
+  }
 
   return createSession(db, userId);
 }

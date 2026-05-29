@@ -297,7 +297,7 @@ export async function handleApiRequest(request: Request, env?: EnvironmentBindin
       try {
         const body = await readJson<{ name: string; email: string; password: string; captcha_token?: string; turnstile_token?: string }>(request);
         await verifyCaptchaToken(request, env, body.captcha_token || body.turnstile_token || "");
-        const result = await createUserSession(env.DB, body);
+        const result = await createUserSession(env.DB, env, body);
         return json(context, result, { status: 201 });
       } catch (error) {
         return errorResponse(context, "register_failed", error instanceof Error ? error.message : "Register failed.", 400);
