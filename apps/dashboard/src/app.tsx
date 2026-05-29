@@ -589,34 +589,134 @@ type PasswordFieldProps = {
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  error?: string;
 };
 
-function PasswordField({ label, autoComplete, placeholder, value, onChange }: PasswordFieldProps) {
+type TextFieldProps = {
+  label: string;
+  autoComplete: string;
+  placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  error?: string;
+  required?: boolean;
+};
+
+type AuthFieldErrors = Partial<Record<"name" | "email" | "password" | "confirmPassword" | "captcha" | "form", string>>;
+
+function FieldTooltip({ message }: { message: string }) {
+  return (
+    <span className="eg-field-tooltip" role="alert">
+      {message}
+    </span>
+  );
+}
+
+function TextField({ label, autoComplete, placeholder, value, onChange, type = "text", error, required = true }: TextFieldProps) {
+  return (
+    <label className={`eg-field${error ? " is-error" : ""}`}>
+      <span>{label}</span>
+      <div className="eg-field__control">
+        <input
+          autoComplete={autoComplete}
+          aria-invalid={error ? true : undefined}
+          className="eg-input"
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          required={required}
+          type={type}
+          value={value}
+        />
+        {error ? <FieldTooltip message={error} /> : null}
+      </div>
+    </label>
+  );
+}
+
+function PasswordField({ label, autoComplete, placeholder, value, onChange, error }: PasswordFieldProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <label className="eg-field eg-field--password">
+    <label className={`eg-field eg-field--password${error ? " is-error" : ""}`}>
       <span>{label}</span>
-      <input
-        autoComplete={autoComplete}
-        className="eg-input eg-input--password"
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        required
-        type={isVisible ? "text" : "password"}
-        value={value}
-      />
-      <button
-        aria-label={isVisible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
-        aria-pressed={isVisible}
-        className="eg-password-toggle"
-        onClick={() => setIsVisible((current) => !current)}
-        type="button"
-      >
-        <PasswordToggleIcon visible={isVisible} />
-      </button>
+      <div className="eg-field__control">
+        <input
+          autoComplete={autoComplete}
+          aria-invalid={error ? true : undefined}
+          className="eg-input eg-input--password"
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          required
+          type={isVisible ? "text" : "password"}
+          value={value}
+        />
+        <button
+          aria-label={isVisible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+          aria-pressed={isVisible}
+          className="eg-password-toggle"
+          onClick={() => setIsVisible((current) => !current)}
+          type="button"
+        >
+          <PasswordToggleIcon visible={isVisible} />
+        </button>
+        {error ? <FieldTooltip message={error} /> : null}
+      </div>
     </label>
   );
+}
+
+function mapLoginErrors(message: string): AuthFieldErrors {
+  if (message.includes("No account exists") || message.includes("valid email")) {
+    return { email: message };
+  }
+  if (message.includes("incorrect") || message.includes("password") || message.includes("blocked")) {
+    return { password: message };
+  }
+  return { form: message };
+}
+
+function mapRegisterErrors(message: string): AuthFieldErrors {
+  if (message.includes("Name must")) {
+    return { name: message };
+  }
+  if (message.includes("valid email") || message.includes("account already exists")) {
+    return { email: message };
+  }
+  if (message.includes("Password must")) {
+    return { password: message };
+  }
+  return { form: message };
+}
+
+function mapForgotPasswordErrors(message: string): AuthFieldErrors {
+  if (message.includes("valid email")) {
+    return { email: message };
+  }
+  return { form: message };
+}
+
+function mapResetPasswordErrors(message: string): AuthFieldErrors {
+  if (message.includes("Passwords must match")) {
+    return { confirmPassword: message };
+  }
+  if (message.includes("Password must")) {
+    return { password: message };
+  }
+  return { form: message };
+}
+
+function mapAcceptInviteErrors(message: string): AuthFieldErrors {
+  if (message.includes("Name must")) {
+    return { name: message };
+  }
+  if (message.includes("Passwords must match")) {
+    return { confirmPassword: message };
+  }
+  if (message.includes("password") || message.includes("current password")) {
+    return { password: message };
+  }
+  return { form: message };
 }
 
 function useCaptchaAvailability() {
@@ -642,9 +742,10 @@ function LoginPage() {
   const isCaptchaReady = useCaptchaAvailability();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<AuthFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
@@ -653,19 +754,19 @@ function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
+    setErrors({});
 
     if (!captchaToken) {
-      setError("Complete the captcha challenge before signing in.");
+      setErrors({ captcha: "Complete the captcha challenge before signing in." });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      await login({ email, password, captcha_token: captchaToken });
+      await login({ email, password, captcha_token: captchaToken, remember: rememberMe });
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Login failed.");
+      setErrors(mapLoginErrors(submitError instanceof Error ? submitError.message : "Login failed."));
       setCaptchaResetNonce((current) => current + 1);
     } finally {
       setIsSubmitting(false);
@@ -686,28 +787,36 @@ function LoginPage() {
       }
     >
       <form className="eg-auth-form" onSubmit={handleSubmit}>
-        <label className="eg-field">
-          <span>Email</span>
-          <input
-            autoComplete="email"
-            className="eg-input"
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="admin@eventsgateway.com"
-            required
-            type="email"
-            value={email}
-          />
-        </label>
+        <TextField
+          autoComplete="email"
+          error={errors.email}
+          label="Email"
+          onChange={(value) => {
+            setEmail(value);
+            setErrors((current) => ({ ...current, email: undefined, form: undefined }));
+          }}
+          placeholder="admin@eventsgateway.com"
+          type="email"
+          value={email}
+        />
 
         <PasswordField
           autoComplete="current-password"
+          error={errors.password}
           label="Password"
-          onChange={setPassword}
+          onChange={(value) => {
+            setPassword(value);
+            setErrors((current) => ({ ...current, password: undefined, form: undefined }));
+          }}
           placeholder="Enter your password"
           value={password}
         />
 
         <div className="eg-auth-form__meta">
+          <label className="eg-checkbox-field">
+            <input checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} type="checkbox" />
+            <span>Remember me</span>
+          </label>
           <div className="eg-auth-form__links">
             <NavLink className="eg-inline-link" to="/forgot-password">
               Forgot password?
@@ -715,8 +824,15 @@ function LoginPage() {
           </div>
         </div>
 
-        <CaptchaWidget onTokenChange={setCaptchaToken} resetNonce={captchaResetNonce} />
-        {error ? <p className="eg-form-error">{error}</p> : null}
+        <CaptchaWidget
+          onTokenChange={(token) => {
+            setCaptchaToken(token);
+            setErrors((current) => ({ ...current, captcha: undefined, form: undefined }));
+          }}
+          resetNonce={captchaResetNonce}
+        />
+        {errors.captcha ? <p className="eg-form-error">{errors.captcha}</p> : null}
+        {errors.form ? <p className="eg-form-error">{errors.form}</p> : null}
 
         <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaReady || !captchaToken} type="submit">
           {isSubmitting ? "Signing in..." : "Login"}
@@ -735,7 +851,7 @@ function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<AuthFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
@@ -744,14 +860,14 @@ function RegisterPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
+    setErrors({});
 
     if (password !== confirmPassword) {
-      setError("Passwords must match.");
+      setErrors({ confirmPassword: "Passwords must match." });
       return;
     }
     if (!captchaToken) {
-      setError("Complete the captcha challenge before creating the account.");
+      setErrors({ captcha: "Complete the captcha challenge before creating the account." });
       return;
     }
 
@@ -760,7 +876,7 @@ function RegisterPage() {
     try {
       await register({ name, email, password, captcha_token: captchaToken });
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Register failed.");
+      setErrors(mapRegisterErrors(submitError instanceof Error ? submitError.message : "Register failed."));
       setCaptchaResetNonce((current) => current + 1);
     } finally {
       setIsSubmitting(false);
@@ -781,50 +897,64 @@ function RegisterPage() {
       }
     >
       <form className="eg-auth-form" onSubmit={handleSubmit}>
-        <label className="eg-field">
-          <span>Name</span>
-          <input
-            autoComplete="name"
-            className="eg-input"
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Operations admin"
-            required
-            type="text"
-            value={name}
-          />
-        </label>
+        <TextField
+          autoComplete="name"
+          error={errors.name}
+          label="Name"
+          onChange={(value) => {
+            setName(value);
+            setErrors((current) => ({ ...current, name: undefined, form: undefined }));
+          }}
+          placeholder="Operations admin"
+          value={name}
+        />
 
-        <label className="eg-field">
-          <span>Email</span>
-          <input
-            autoComplete="email"
-            className="eg-input"
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="admin@eventsgateway.com"
-            required
-            type="email"
-            value={email}
-          />
-        </label>
+        <TextField
+          autoComplete="email"
+          error={errors.email}
+          label="Email"
+          onChange={(value) => {
+            setEmail(value);
+            setErrors((current) => ({ ...current, email: undefined, form: undefined }));
+          }}
+          placeholder="admin@eventsgateway.com"
+          type="email"
+          value={email}
+        />
 
         <PasswordField
           autoComplete="new-password"
+          error={errors.password}
           label="Password"
-          onChange={setPassword}
+          onChange={(value) => {
+            setPassword(value);
+            setErrors((current) => ({ ...current, password: undefined, form: undefined }));
+          }}
           placeholder="At least 8 characters"
           value={password}
         />
 
         <PasswordField
           autoComplete="new-password"
+          error={errors.confirmPassword}
           label="Confirm password"
-          onChange={setConfirmPassword}
+          onChange={(value) => {
+            setConfirmPassword(value);
+            setErrors((current) => ({ ...current, confirmPassword: undefined, form: undefined }));
+          }}
           placeholder="Repeat the password"
           value={confirmPassword}
         />
 
-        <CaptchaWidget onTokenChange={setCaptchaToken} resetNonce={captchaResetNonce} />
-        {error ? <p className="eg-form-error">{error}</p> : null}
+        <CaptchaWidget
+          onTokenChange={(token) => {
+            setCaptchaToken(token);
+            setErrors((current) => ({ ...current, captcha: undefined, form: undefined }));
+          }}
+          resetNonce={captchaResetNonce}
+        />
+        {errors.captcha ? <p className="eg-form-error">{errors.captcha}</p> : null}
+        {errors.form ? <p className="eg-form-error">{errors.form}</p> : null}
 
         <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaReady || !captchaToken} type="submit">
           {isSubmitting ? "Creating account..." : "Register"}
@@ -840,7 +970,7 @@ function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaResetNonce, setCaptchaResetNonce] = useState(0);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<AuthFieldErrors>({});
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -850,11 +980,11 @@ function ForgotPasswordPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
+    setErrors({});
     setSuccess("");
 
     if (!captchaToken) {
-      setError("Complete the captcha challenge before requesting the reset link.");
+      setErrors({ captcha: "Complete the captcha challenge before requesting the reset link." });
       return;
     }
 
@@ -865,7 +995,7 @@ function ForgotPasswordPage() {
       setSuccess("If an account exists for this email, we sent a reset link.");
       setCaptchaResetNonce((current) => current + 1);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to send reset link.");
+      setErrors(mapForgotPasswordErrors(submitError instanceof Error ? submitError.message : "Unable to send reset link."));
       setCaptchaResetNonce((current) => current + 1);
     } finally {
       setIsSubmitting(false);
@@ -886,22 +1016,29 @@ function ForgotPasswordPage() {
       }
     >
       <form className="eg-auth-form" onSubmit={handleSubmit}>
-        <label className="eg-field">
-          <span>Email</span>
-          <input
-            autoComplete="email"
-            className="eg-input"
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="admin@eventsgateway.com"
-            required
-            type="email"
-            value={email}
-          />
-        </label>
+        <TextField
+          autoComplete="email"
+          error={errors.email}
+          label="Email"
+          onChange={(value) => {
+            setEmail(value);
+            setErrors((current) => ({ ...current, email: undefined, form: undefined }));
+          }}
+          placeholder="admin@eventsgateway.com"
+          type="email"
+          value={email}
+        />
 
-        <CaptchaWidget onTokenChange={setCaptchaToken} resetNonce={captchaResetNonce} />
+        <CaptchaWidget
+          onTokenChange={(token) => {
+            setCaptchaToken(token);
+            setErrors((current) => ({ ...current, captcha: undefined, form: undefined }));
+          }}
+          resetNonce={captchaResetNonce}
+        />
         {success ? <p className="eg-form-success">{success}</p> : null}
-        {error ? <p className="eg-form-error">{error}</p> : null}
+        {errors.captcha ? <p className="eg-form-error">{errors.captcha}</p> : null}
+        {errors.form ? <p className="eg-form-error">{errors.form}</p> : null}
 
         <button className="eg-button eg-button--primary" disabled={isSubmitting || !isCaptchaReady || !captchaToken} type="submit">
           {isSubmitting ? "Sending link..." : "Send reset link"}
@@ -917,7 +1054,7 @@ function ResetPasswordPage() {
   const token = useMemo(() => new URLSearchParams(location.search).get("token")?.trim() ?? "", [location.search]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<AuthFieldErrors>({});
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -927,15 +1064,15 @@ function ResetPasswordPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
+    setErrors({});
     setSuccess("");
 
     if (!token) {
-      setError("The reset link is missing a token.");
+      setErrors({ form: "The reset link is missing a token." });
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords must match.");
+      setErrors({ confirmPassword: "Passwords must match." });
       return;
     }
 
@@ -946,7 +1083,7 @@ function ResetPasswordPage() {
       setPassword("");
       setConfirmPassword("");
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to reset password.");
+      setErrors(mapResetPasswordErrors(submitError instanceof Error ? submitError.message : "Unable to reset password."));
     } finally {
       setIsSubmitting(false);
     }
@@ -966,35 +1103,33 @@ function ResetPasswordPage() {
       }
     >
       <form className="eg-auth-form" onSubmit={handleSubmit}>
-        <label className="eg-field">
-          <span>New password</span>
-          <input
-            autoComplete="new-password"
-            className="eg-input"
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="At least 8 characters"
-            required
-            type="password"
-            value={password}
-          />
-        </label>
+        <PasswordField
+          autoComplete="new-password"
+          error={errors.password}
+          label="New password"
+          onChange={(value) => {
+            setPassword(value);
+            setErrors((current) => ({ ...current, password: undefined, form: undefined }));
+          }}
+          placeholder="At least 8 characters"
+          value={password}
+        />
 
-        <label className="eg-field">
-          <span>Confirm new password</span>
-          <input
-            autoComplete="new-password"
-            className="eg-input"
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="Repeat the new password"
-            required
-            type="password"
-            value={confirmPassword}
-          />
-        </label>
+        <PasswordField
+          autoComplete="new-password"
+          error={errors.confirmPassword}
+          label="Confirm new password"
+          onChange={(value) => {
+            setConfirmPassword(value);
+            setErrors((current) => ({ ...current, confirmPassword: undefined, form: undefined }));
+          }}
+          placeholder="Repeat the new password"
+          value={confirmPassword}
+        />
 
         {!token ? <p className="eg-form-error">This reset link is invalid.</p> : null}
         {success ? <p className="eg-form-success">{success}</p> : null}
-        {error ? <p className="eg-form-error">{error}</p> : null}
+        {errors.form ? <p className="eg-form-error">{errors.form}</p> : null}
 
         <button className="eg-button eg-button--primary" disabled={isSubmitting || !token} type="submit">
           {isSubmitting ? "Updating password..." : "Update password"}
@@ -1011,7 +1146,7 @@ function AcceptInvitePage() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<AuthFieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (user) {
@@ -1020,14 +1155,14 @@ function AcceptInvitePage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
+    setErrors({});
 
     if (!token) {
-      setError("The invitation link is missing a token.");
+      setErrors({ form: "The invitation link is missing a token." });
       return;
     }
     if (password !== confirmPassword) {
-      setError("Passwords must match.");
+      setErrors({ confirmPassword: "Passwords must match." });
       return;
     }
 
@@ -1041,7 +1176,7 @@ function AcceptInvitePage() {
       writeSessionToken(result.session.token);
       window.location.assign(sitePath("overview"));
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to accept invitation.");
+      setErrors(mapAcceptInviteErrors(submitError instanceof Error ? submitError.message : "Unable to accept invitation."));
     } finally {
       setIsSubmitting(false);
     }
@@ -1061,36 +1196,45 @@ function AcceptInvitePage() {
       }
     >
       <form className="eg-auth-form" onSubmit={handleSubmit}>
-        <label className="eg-field">
-          <span>Name</span>
-          <input
-            autoComplete="name"
-            className="eg-input"
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Your full name"
-            type="text"
-            value={name}
-          />
-        </label>
+        <TextField
+          autoComplete="name"
+          error={errors.name}
+          label="Name"
+          onChange={(value) => {
+            setName(value);
+            setErrors((current) => ({ ...current, name: undefined, form: undefined }));
+          }}
+          placeholder="Your full name"
+          required={false}
+          value={name}
+        />
 
         <PasswordField
           autoComplete="new-password"
+          error={errors.password}
           label="Password"
-          onChange={setPassword}
+          onChange={(value) => {
+            setPassword(value);
+            setErrors((current) => ({ ...current, password: undefined, form: undefined }));
+          }}
           placeholder="Use your current password if you already have an account"
           value={password}
         />
 
         <PasswordField
           autoComplete="new-password"
+          error={errors.confirmPassword}
           label="Confirm password"
-          onChange={setConfirmPassword}
+          onChange={(value) => {
+            setConfirmPassword(value);
+            setErrors((current) => ({ ...current, confirmPassword: undefined, form: undefined }));
+          }}
           placeholder="Repeat the password"
           value={confirmPassword}
         />
 
         {!token ? <p className="eg-form-error">This invitation link is invalid.</p> : null}
-        {error ? <p className="eg-form-error">{error}</p> : null}
+        {errors.form ? <p className="eg-form-error">{errors.form}</p> : null}
 
         <button className="eg-button eg-button--primary" disabled={isSubmitting || !token} type="submit">
           {isSubmitting ? "Accepting invitation..." : "Accept invitation"}

@@ -29,6 +29,7 @@ type LoginInput = {
   email: string;
   password: string;
   captcha_token: string;
+  remember?: boolean;
 };
 
 type AuthContextValue = {
@@ -79,9 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(nextBootstrap.user);
   }, []);
 
-  const login = useCallback(async ({ email, password, captcha_token }: LoginInput) => {
+  const login = useCallback(async ({ email, password, captcha_token, remember = true }: LoginInput) => {
     const result = await loginDashboardUser({ email, password, captcha_token });
-    writeSessionToken(result.session.token);
+    writeSessionToken(result.session.token, remember);
     const nextBootstrap = await fetchDashboardBootstrap();
     setBootstrap(nextBootstrap);
     setUser(nextBootstrap.user);

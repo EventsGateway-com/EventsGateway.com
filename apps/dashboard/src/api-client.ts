@@ -495,16 +495,27 @@ let captchaConfig: CaptchaConfig = {
 
 export function readSessionToken() {
   if (typeof window === "undefined") return "";
-  return window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY) ?? "";
+  return (
+    window.sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY) ??
+    window.localStorage.getItem(SESSION_TOKEN_STORAGE_KEY) ??
+    ""
+  );
 }
 
-export function writeSessionToken(token: string | null) {
+export function writeSessionToken(token: string | null, remember = true) {
   if (typeof window === "undefined") return;
   if (token) {
-    window.localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
+    if (remember) {
+      window.localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
+      window.sessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+      return;
+    }
+    window.sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
+    window.localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
     return;
   }
 
+  window.sessionStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
   window.localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
 }
 
