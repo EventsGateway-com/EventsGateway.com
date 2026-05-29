@@ -31,7 +31,6 @@ function buildArtifacts() {
   const captchaProvider = getValue("install-captcha-provider") || "turnstile";
   const captchaSiteKey = getValue("install-captcha-site-key") || `replace-with-your-${captchaProvider}-site-key`;
   const captchaSecretKey = getValue("install-captcha-secret-key") || `replace-with-your-${captchaProvider}-secret-key`;
-  const captchaSecretEnv = captchaProvider === "turnstile" ? "TURNSTILE_SECRET_KEY" : `${captchaProvider.toUpperCase()}_SECRET_KEY`;
   const apiBaseUrl = `https://${apiDomain}`;
   const passwordResetBaseUrl = `https://${dashboardDomain}/reset-password`;
 
@@ -39,9 +38,8 @@ function buildArtifacts() {
     "install-output-dashboard-env",
     [
       `VITE_API_BASE_URL=${apiBaseUrl}`,
-      captchaProvider === "turnstile"
-        ? `VITE_TURNSTILE_SITE_KEY=${captchaSiteKey}`
-        : `VITE_CAPTCHA_PROVIDER=${captchaProvider}`
+      `VITE_CAPTCHA_PROVIDER=${captchaProvider}`,
+      `VITE_CAPTCHA_SITE_KEY=${captchaSiteKey}`
     ].join("\n")
   );
 
@@ -52,7 +50,8 @@ function buildArtifacts() {
       "BREVO_API_KEY=replace-with-your-brevo-api-key",
       "BREVO_SENDER_EMAIL=no-reply@example.com",
       `PASSWORD_RESET_BASE_URL=${passwordResetBaseUrl}`,
-      `${captchaSecretEnv}=${captchaSecretKey}`
+      `CAPTCHA_PROVIDER=${captchaProvider}`,
+      `CAPTCHA_SECRET_KEY=${captchaSecretKey}`
     ].join("\n")
   );
 
@@ -89,7 +88,7 @@ function buildArtifacts() {
       captcha: {
         provider: capitalizeWord(captchaProvider),
         site_key: captchaSiteKey,
-        secret_env: captchaSecretEnv
+        secret_env: "CAPTCHA_SECRET_KEY"
       }
     })
   );

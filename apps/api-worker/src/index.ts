@@ -114,6 +114,8 @@ type TurnstileVerificationResult = {
   "error-codes"?: string[];
 };
 
+type CaptchaProvider = "turnstile" | "recaptcha" | "hcaptcha";
+
 function siteIdFromSegments(segments: string[]) {
   return segments[2];
 }
@@ -126,12 +128,34 @@ function clientIpFromRequest(request: Request) {
   return request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
 }
 
-async function verifyTurnstileToken(
+function resolveCaptchaProvider(env: Pick<EnvironmentBindings, "CAPTCHA_PROVIDER"> | undefined): CaptchaProvider {
+  const provider = env?.CAPTCHA_PROVIDER?.trim().toLowerCase();
+  if (provider === "recaptcha" || provider === "hcaptcha") {
+    return provider;
+  }
+  return "turnstile";
+}
+
+function resolveCaptchaSecret(env: Pick<EnvironmentBindings, "CAPTCHA_SECRET_KEY" | "TURNSTILE_SECRET_KEY"> | undefined) {
+  return env?.CAPTCHA_SECRET_KEY?.trim() || env?.TURNSTILE_SECRET_KEY?.trim() || "";
+}
+
+function captchaVerifyEndpoint(provider: CaptchaProvider) {
+  if (provider === "recaptcha") {
+    return "https://www.google.com/recaptcha/api/siteverify";
+  }
+  if (provider === "hcaptcha") {
+    return "https://hcaptcha.com/siteverify";
+  }
+  return "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+}
+
+async function verifyCaptchaToken(
   request: Request,
-  env: Pick<EnvironmentBindings, "TURNSTILE_SECRET_KEY"> | undefined,
+  env: Pick<EnvironmentBindings, "CAPTCHA_PROVIDER" | "CAPTCHA_SECRET_KEY" | "TURNSTILE_SECRET_KEY"> | undefined,
   token: string
 ) {
-  const secret = env?.TURNSTILE_SECRET_KEY?.trim();
+  const secret = resolveCaptchaSecret(env);
   if (!secret) {
     throw new Error("Captcha verification is not configured for this deployment.");
   }
@@ -150,7 +174,7 @@ async function verifyTurnstileToken(
     body.set("remoteip", remoteIp);
   }
 
-  const verificationResponse = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+  const verificationResponse = await fetch(captchaVerifyEndpoint(resolveCaptchaProvider(env)), {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded"
@@ -241,8 +265,8 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
 
     if (segments[2] === "register" && method === "POST") {
       try {
-        const body = await readJson<{ name: string; email: string; password: string; turnstile_token: string }>(request);
-        await verifyTurnstileToken(request, env, body.turnstile_token);
+        const body = await readJson<{ name: string; email: string; password: string; captcha_token?: string; turnstile_token?: string }>(request);
+        await verifyCaptchaToken(request, env, body.captcha_token || body.turnstile_token || "");
         const result = await createUserSession(env.DB, body);
         return json(context, result, { status: 201 });
       } catch (error) {
@@ -252,8 +276,8 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
 
     if (segments[2] === "login" && method === "POST") {
       try {
-        const body = await readJson<{ email: string; password: string; turnstile_token: string }>(request);
-        await verifyTurnstileToken(request, env, body.turnstile_token);
+        const body = await readJson<{ email: string; password: string; captcha_token?: string; turnstile_token?: string }>(request);
+        await verifyCaptchaToken(request, env, body.captcha_token || body.turnstile_token || "");
         const result = await loginUserSession(env.DB, body);
         return json(context, result);
       } catch (error) {
@@ -271,8 +295,8 @@ async function routeRequest(request: Request, env?: EnvironmentBindings) {
 
     if (segments[2] === "forgot-password" && method === "POST") {
       try {
-        const body = await readJson<{ email: string; turnstile_token: string }>(request);
-        await verifyTurnstileToken(request, env, body.turnstile_token);
+        const body = await readJson<{ email: string; captcha_token?: string; turnstile_token?: string }>(request);
+        await verifyCaptchaToken(request, env, body.captcha_token || body.turnstile_token || "");
         const result = await requestUserPasswordReset(env.DB, env, body);
         return json(context, result);
       } catch (error) {

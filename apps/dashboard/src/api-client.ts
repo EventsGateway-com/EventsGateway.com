@@ -303,7 +303,12 @@ const API_BASE_URL = (
   (import.meta.env.PROD ? "https://api.eventsgateway.com" : "")
 ).replace(/\/$/, "");
 const API_TOKEN = (import.meta.env.VITE_API_TOKEN as string | undefined) ?? "";
-const CAPTCHA_SITE_KEY = (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined)?.trim() ?? "";
+const CAPTCHA_PROVIDER = ((import.meta.env.VITE_CAPTCHA_PROVIDER as string | undefined)?.trim().toLowerCase() || "turnstile") as CaptchaProvider;
+const CAPTCHA_SITE_KEY = (
+  (import.meta.env.VITE_CAPTCHA_SITE_KEY as string | undefined) ??
+  (import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined) ??
+  ""
+).trim();
 const SESSION_TOKEN_STORAGE_KEY = "eventsgateway-dashboard-session-token-v2";
 const TAG_MANAGER_STORAGE_PREFIX = "eventsgateway-dashboard-tag-manager-v1";
 
@@ -324,6 +329,10 @@ export function writeSessionToken(token: string | null) {
 
 export function readCaptchaSiteKey() {
   return CAPTCHA_SITE_KEY;
+}
+
+export function readCaptchaProvider() {
+  return CAPTCHA_PROVIDER;
 }
 
 function createLocalId(prefix: string) {
@@ -715,14 +724,14 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   return payload.data;
 }
 
-export function registerDashboardUser(input: { name: string; email: string; password: string; turnstile_token: string }) {
+export function registerDashboardUser(input: { name: string; email: string; password: string; captcha_token: string }) {
   return requestJson<{ user: DashboardUser; session: DashboardSession }>("/v1/auth/register", {
     method: "POST",
     body: JSON.stringify(input)
   });
 }
 
-export function loginDashboardUser(input: { email: string; password: string; turnstile_token: string }) {
+export function loginDashboardUser(input: { email: string; password: string; captcha_token: string }) {
   return requestJson<{ user: DashboardUser; session: DashboardSession }>("/v1/auth/login", {
     method: "POST",
     body: JSON.stringify(input)
@@ -736,7 +745,7 @@ export function logoutDashboardUser() {
   });
 }
 
-export function requestDashboardPasswordReset(input: { email: string; turnstile_token: string }) {
+export function requestDashboardPasswordReset(input: { email: string; captcha_token: string }) {
   return requestJson<PasswordResetRequestResult>("/v1/auth/forgot-password", {
     method: "POST",
     body: JSON.stringify(input)

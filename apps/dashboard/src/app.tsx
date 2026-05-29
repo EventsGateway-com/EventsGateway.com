@@ -102,18 +102,16 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
   return {
     dashboard_env: [
       `VITE_API_BASE_URL=${apiBaseUrl}`,
-      captchaProvider === "turnstile"
-        ? `VITE_TURNSTILE_SITE_KEY=${input.captcha_site_key || "replace-with-your-turnstile-site-key"}`
-        : `VITE_CAPTCHA_PROVIDER=${captchaProvider}`
+      `VITE_CAPTCHA_PROVIDER=${captchaProvider}`,
+      `VITE_CAPTCHA_SITE_KEY=${input.captcha_site_key || `replace-with-your-${captchaProvider}-site-key`}`
     ].join("\n"),
     api_dev_vars: [
       "API_TOKEN=replace-with-a-long-random-token",
       "BREVO_API_KEY=replace-with-your-brevo-api-key",
       "BREVO_SENDER_EMAIL=no-reply@example.com",
       `PASSWORD_RESET_BASE_URL=${passwordResetBaseUrl}`,
-      captchaProvider === "turnstile"
-        ? `TURNSTILE_SECRET_KEY=${input.captcha_secret_key || "replace-with-your-turnstile-secret-key"}`
-        : `${captchaProvider.toUpperCase()}_SECRET_KEY=${input.captcha_secret_key || `replace-with-your-${captchaProvider}-secret-key`}`
+      `CAPTCHA_PROVIDER=${captchaProvider}`,
+      `CAPTCHA_SECRET_KEY=${input.captcha_secret_key || `replace-with-your-${captchaProvider}-secret-key`}`
     ].join("\n"),
     tracked_placeholders: {
       CLOUDFLARE_ACCOUNT_ID: input.cloudflare_account_id || "replace-with-your-cloudflare-account-id",
@@ -139,7 +137,7 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
     captcha_summary: {
       provider: capitalizeWord(captchaProvider),
       site_key: input.captcha_site_key || `replace-with-your-${captchaProvider}-site-key`,
-      secret_key_env: captchaProvider === "turnstile" ? "TURNSTILE_SECRET_KEY" : `${captchaProvider.toUpperCase()}_SECRET_KEY`
+      secret_key_env: "CAPTCHA_SECRET_KEY"
     },
     deploy_commands: [
       "npm install",
@@ -451,7 +449,7 @@ function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await login({ email, password, turnstile_token: captchaToken });
+      await login({ email, password, captcha_token: captchaToken });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Login failed.");
       setCaptchaResetNonce((current) => current + 1);
@@ -550,7 +548,7 @@ function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await register({ name, email, password, turnstile_token: captchaToken });
+      await register({ name, email, password, captcha_token: captchaToken });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Register failed.");
       setCaptchaResetNonce((current) => current + 1);
@@ -662,7 +660,7 @@ function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      await requestDashboardPasswordReset({ email, turnstile_token: captchaToken });
+      await requestDashboardPasswordReset({ email, captcha_token: captchaToken });
       setSuccess("If an account exists for this email, we sent a reset link.");
       setCaptchaResetNonce((current) => current + 1);
     } catch (submitError) {

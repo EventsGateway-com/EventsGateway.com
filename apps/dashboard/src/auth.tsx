@@ -22,13 +22,13 @@ type RegisterInput = {
   name: string;
   email: string;
   password: string;
-  turnstile_token: string;
+  captcha_token: string;
 };
 
 type LoginInput = {
   email: string;
   password: string;
-  turnstile_token: string;
+  captcha_token: string;
 };
 
 type AuthContextValue = {
