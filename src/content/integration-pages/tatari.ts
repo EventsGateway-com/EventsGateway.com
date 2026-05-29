@@ -11,6 +11,8 @@ export const tatari: IntegrationItem = {
   whyDescription: "TV and streaming become much harder to judge when digital conversion truth is noisy or inconsistent. These are the practical benefits of tightening that connection.",
   useCasesTitle: "Where Tatari gains the most from better digital event quality",
   useCasesDescription: "These are the blended media situations where cleaner downstream signals create the clearest measurement value.",
+  ctaTitle: "Support TV attribution with digital conversion data your team can actually defend.",
+  ctaText: "Connect Tatari to the same downstream purchase and lead events used across digital reporting so blended media decisions are grounded in cleaner business signals.",
   reasons: [
     {
       title: "Shared Cross-Channel Truth",

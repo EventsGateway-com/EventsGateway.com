@@ -11,6 +11,8 @@ export const ihire: IntegrationItem = {
   whyDescription: "Recruitment programs often lose clarity between job clicks, applications, and candidate quality. These are the reasons to treat iHire as a full-funnel conversion source.",
   useCasesTitle: "Where iHire tracking delivers the most recruiting value",
   useCasesDescription: "These are the hiring scenarios where better recruitment tracking usually improves reporting quality the fastest.",
+  ctaTitle: "Track recruiting outcomes with more depth than clicks and applicant starts.",
+  ctaText: "Route candidate milestones and application quality through one cleaner hiring event model so iHire performance can be compared with the rest of your recruiting stack.",
   reasons: [
     {
       title: "Full Candidate Visibility",

@@ -11,6 +11,8 @@ export const hubspot: IntegrationItem = {
   whyDescription: "When HubSpot drifts from ad and site tracking, teams stop trusting the pipeline story. These are the biggest reasons to keep CRM events on the same routing layer.",
   useCasesTitle: "Where HubSpot alignment creates the clearest revenue impact",
   useCasesDescription: "These are the CRM and lifecycle scenarios where shared event truth removes friction between teams.",
+  ctaTitle: "Give HubSpot the same lifecycle truth your marketing and sales teams need.",
+  ctaText: "Keep lead capture, CRM updates, automations, and revenue events aligned on one event layer so HubSpot reflects the same reality as your acquisition stack.",
   reasons: [
     {
       title: "CRM Consistency",

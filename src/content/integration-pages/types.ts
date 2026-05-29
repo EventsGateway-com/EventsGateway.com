@@ -14,6 +14,8 @@ export type IntegrationItem = {
   whyDescription: string;
   useCasesTitle: string;
   useCasesDescription: string;
+  ctaTitle: string;
+  ctaText: string;
   reasons: IntegrationCard[];
   useCases: IntegrationCard[];
 };

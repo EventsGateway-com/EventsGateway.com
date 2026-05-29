@@ -11,6 +11,8 @@ export const pinterest: IntegrationItem = {
   whyDescription: "Pinterest journeys are rarely linear, which makes signal quality more important than ever. These are the reasons to keep Pinterest on a cleaner event layer.",
   useCasesTitle: "Where Pinterest signal cleanup improves campaign quality fastest",
   useCasesDescription: "These are the commerce and audience scenarios where Pinterest usually benefits most from better event routing.",
+  ctaTitle: "Keep discovery-led journeys connected to the purchases they actually influence.",
+  ctaText: "Use one cleaner event layer for Pinterest audiences, catalog flows, and conversions so inspiration traffic does not get disconnected from downstream value.",
   reasons: [
     {
       title: "Better Purchase Signals",

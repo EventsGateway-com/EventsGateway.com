@@ -11,6 +11,8 @@ export const taboola: IntegrationItem = {
   whyDescription: "Native campaigns often produce lots of page interaction but weaker downstream clarity. These are the reasons to give Taboola a better event foundation.",
   useCasesTitle: "Where Taboola cleanup improves native reporting and optimization",
   useCasesDescription: "These are the native media situations where cleaner conversion routing tends to remove the most uncertainty.",
+  ctaTitle: "Make native discovery campaigns answer to real conversions, not just content clicks.",
+  ctaText: "Send Taboola the same qualified lead and purchase events used elsewhere so advertorial funnels can be optimized on business outcomes instead of weak proxy metrics.",
   reasons: [
     {
       title: "Shared Native Truth",

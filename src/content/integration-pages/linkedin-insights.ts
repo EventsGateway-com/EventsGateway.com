@@ -11,6 +11,8 @@ export const linkedin_insights: IntegrationItem = {
   whyDescription: "B2B performance depends on signal quality over time, not just top-of-funnel lead volume. These are the reasons to give LinkedIn better downstream context.",
   useCasesTitle: "Where LinkedIn signal quality changes pipeline reporting most",
   useCasesDescription: "These are the B2B campaign scenarios where cleaner LinkedIn events usually create the strongest business value.",
+  ctaTitle: "Help LinkedIn optimize on better B2B signals than noisy top-of-funnel forms.",
+  ctaText: "Keep demo requests, pipeline signals, and lifecycle events aligned between LinkedIn, analytics, and CRM so longer buying cycles are measured with more confidence.",
   reasons: [
     {
       title: "Stronger Lead Quality",

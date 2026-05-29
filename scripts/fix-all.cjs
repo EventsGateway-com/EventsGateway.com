@@ -171,7 +171,6 @@ content = content.replace(overviewBodyRegex, newOverviewBody);
 
 // 3. Fix "My profile" linking in the topbar dropdown
 // We'll just replace the /app/profile NavLink with a dynamically generated route 
-const profileDropdownRegex = /<NavLink className="eg-nav-link" style=\{\{ display: "block", marginBottom: "0\.5rem" \}\} to="\/app\/profile">/;
 content = content.replace(/<NavLink className="eg-nav-link" style=\{\{ display: "block", marginBottom: "0\.5rem" \}\} to="\/app\/profile">[\s\S]*?<\/NavLink>/, '{bootstrap?.accessible_sites?.[0] ? <NavLink className="eg-nav-link" style={{ display: "block", marginBottom: "0.5rem" }} to={`/app/orgs/${bootstrap.accessible_sites[0].org_id}/projects/${bootstrap.accessible_sites[0].project_id}/sites/${bootstrap.accessible_sites[0].id}/profile`}>My Profile</NavLink> : null}');
 
 // Add the MyProfilePage route to ProtectedOutlet if missing
@@ -181,8 +180,14 @@ if(!myProfileRegex.test(content)){
   content = content.replace(settingsRouteRegex, '<Route path="profile" element={<MyProfilePage />} />\n                <Route path="settings/billing" element={<BillingPage />} />');
 }
 
+content = content.replace(/<Route path="events\/schemas\/:eventType" element=\{<SchemaDetailPage \/>\} \/>/g, 
+`<Route path="events/schemas/:eventType" element={<SchemaDetailPage />} />
+        <Route path="routing/routes" element={<RoutingPage />} />
+        <Route path="routing/routes/:routeId" element={<RouteDetailPage />} />`);
+
 fs.writeFileSync(appTsxPath, content);
 console.log("Updated app.tsx issues");
+console.log("Restored missing components in app.tsx");
 
 // Now update styles for sidebar scroll
 const stylesCssPath = path.join(__dirname, '../apps/dashboard/src/styles.css');

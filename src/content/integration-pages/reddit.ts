@@ -11,6 +11,8 @@ export const reddit: IntegrationItem = {
   whyDescription: "Reddit traffic can produce valuable users, but the signal often gets noisy between community engagement and downstream conversion. These are the reasons to clean it up.",
   useCasesTitle: "Where Reddit tracking clarity improves growth decisions fastest",
   useCasesDescription: "These are the Reddit campaign situations where cleaner events usually create the most practical value.",
+  ctaTitle: "Measure Reddit by the users and revenue it creates, not only by community engagement.",
+  ctaText: "Route signup, lead, and purchase outcomes through one shared event system so Reddit campaigns can be compared credibly with the rest of paid media.",
   reasons: [
     {
       title: "Cross-Platform Alignment",

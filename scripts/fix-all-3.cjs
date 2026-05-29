@@ -2,9 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 const appTsxPath = path.join(__dirname, '../apps/dashboard/src/app.tsx');       
+// Citim conținutul
 let content = fs.readFileSync(appTsxPath, 'utf8');
 
-const navLinkRenderRegex = /<NavLink\s*className=\{\(\{ isActive \}\) => \`eg-nav-link\$\{isActive \? " is-active" : ""\}\`\}\s*key=\{item\.href\}\s*to=\{item\.href\}\s*>\s*\{item\.icon && <span className="eg-nav-link__icon">\{item\.icon\}<\/span>\}\s*\{item\.label\}\s*<\/NavLink>/g;
+// Ștergem variabilele neutilizate
+// (Eliminat navLinkRenderRegex care nu era folosit)
 
 // Fix syntax error in App component where the closing tags were broken
 // It seems there was an issue around line 335 with a missing or extra tag.
@@ -53,5 +55,7 @@ const newSidebar = `<aside className={\`eg-sidebar\${isSidebarOpen ? " is-open" 
       </aside>`;
 
 content = content.replace(sidebarRegex, newSidebar);
+
+// Aplicăm o modificare generică (salvăm direct ce avem)
 fs.writeFileSync(appTsxPath, content);
-console.log("Fixed App syntax");
+console.log("Re-saved app.tsx without unused variables in script.");

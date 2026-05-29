@@ -11,6 +11,8 @@ export const branch: IntegrationItem = {
   whyDescription: "Mobile attribution gets expensive fast when web, app, and paid media all tell different stories. Branch becomes more useful when the underlying conversion truth is unified.",
   useCasesTitle: "Where Branch creates the most value in mobile growth",
   useCasesDescription: "These are the app and deep-link scenarios where one shared event stream usually removes the most confusion.",
+  ctaTitle: "Keep mobile attribution tied to the events your growth team already trusts.",
+  ctaText: "Use one shared event layer for installs, deep links, re-engagement, and post-install outcomes so Branch does not drift away from the rest of your web and app reporting.",
   reasons: [
     {
       title: "Unified Attribution",

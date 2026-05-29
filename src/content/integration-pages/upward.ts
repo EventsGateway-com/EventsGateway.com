@@ -11,6 +11,8 @@ export const upward: IntegrationItem = {
   whyDescription: "Niche acquisition sources often get weaker tracking because teams prioritize bigger platforms. These are the reasons to keep Upward on the same trusted event layer.",
   useCasesTitle: "Where Upward benefits most from shared conversion logic",
   useCasesDescription: "These are the smaller-channel scenarios where one shared event model removes the most unnecessary complexity.",
+  ctaTitle: "Give smaller acquisition channels the same measurement discipline as the big ones.",
+  ctaText: "Keep Upward on the same trusted event model used by your primary channels so niche expansion does not add new tracking debt to the stack.",
   reasons: [
     {
       title: "Shared Source Of Truth",

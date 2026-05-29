@@ -11,6 +11,8 @@ export const snapchat: IntegrationItem = {
   whyDescription: "Snapchat often feels signal-sensitive because mobile traffic exposes weak tracking quickly. These are the reasons to tighten conversion quality.",
   useCasesTitle: "Where Snapchat cleanup improves mobile campaign performance fastest",
   useCasesDescription: "These are the mobile and paid social situations where cleaner Snapchat signals usually create the biggest practical lift.",
+  ctaTitle: "Give Snapchat cleaner mobile signals without duplicating paid social tracking.",
+  ctaText: "Keep Snapchat tied to the same purchase and lead events used across Meta, TikTok, and analytics so mobile acquisition learns from stronger downstream truth.",
   reasons: [
     {
       title: "Better Mobile Signals",

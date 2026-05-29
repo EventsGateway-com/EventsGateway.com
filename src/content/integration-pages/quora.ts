@@ -11,6 +11,8 @@ export const quora: IntegrationItem = {
   whyDescription: "Quora often captures users in research mode, which makes downstream event quality more important than surface-level clicks. These are the main reasons to improve it.",
   useCasesTitle: "Where Quora cleanup changes conversion quality most",
   useCasesDescription: "These are the high-intent and education-led scenarios where cleaner Quora events usually matter the most.",
+  ctaTitle: "Turn research-heavy Quora traffic into cleaner downstream conversion insight.",
+  ctaText: "Keep Quora connected to the same event model used by search, social, and CRM so educational journeys can be judged by lead quality, not just traffic cost.",
   reasons: [
     {
       title: "Higher Intent Visibility",

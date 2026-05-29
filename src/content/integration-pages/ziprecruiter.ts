@@ -11,6 +11,8 @@ export const ziprecruiter: IntegrationItem = {
   whyDescription: "Job traffic is only useful if it connects to real candidate progress. These are the reasons to give ZipRecruiter cleaner funnel tracking.",
   useCasesTitle: "Where ZipRecruiter event discipline helps recruiting teams most",
   useCasesDescription: "These are the hiring use cases where cleaner recruitment events usually improve trust and speed the most.",
+  ctaTitle: "Track hiring quality with more clarity than raw applicant volume alone.",
+  ctaText: "Connect ZipRecruiter job traffic to shared recruiting funnel events so applications, candidate quality, and downstream hiring progress are easier to trust.",
   reasons: [
     {
       title: "Aligned Recruitment Funnels",

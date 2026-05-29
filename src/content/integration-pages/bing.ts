@@ -11,6 +11,8 @@ export const bing: IntegrationItem = {
   whyDescription: "Bing usually underperforms when it runs on a thinner or different version of the truth than the rest of paid search. These are the main reasons to keep it on the same event model.",
   useCasesTitle: "Where Bing tracking creates the biggest paid search advantage",
   useCasesDescription: "These are the Microsoft Ads scenarios where cleaner conversion routing usually improves trust, speed, and optimization quality.",
+  ctaTitle: "Give Microsoft Ads cleaner signals without rebuilding search tracking again.",
+  ctaText: "Keep Bing connected to the same purchase and qualified lead events already used across Google Ads, analytics, and CRM so paid search can scale on one conversion truth.",
   reasons: [
     {
       title: "Shared Search Truth",

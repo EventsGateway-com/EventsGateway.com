@@ -11,6 +11,8 @@ export const indeed: IntegrationItem = {
   whyDescription: "Indeed can drive volume fast, but volume is not enough if your team cannot connect it to real candidate progress. These are the improvements that matter most.",
   useCasesTitle: "Where Indeed event cleanup helps recruiting teams fastest",
   useCasesDescription: "These are the recruitment workflows where cleaner Indeed signals usually improve trust and decision speed the most.",
+  ctaTitle: "Measure what Indeed traffic becomes, not just how many applicants it sends.",
+  ctaText: "Connect job clicks, applications, and downstream candidate progress through one shared funnel model so hiring teams can trust Indeed performance more easily.",
   reasons: [
     {
       title: "Cleaner Application Signals",

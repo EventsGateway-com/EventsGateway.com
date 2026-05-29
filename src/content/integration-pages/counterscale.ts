@@ -11,6 +11,8 @@ export const counterscale: IntegrationItem = {
   whyDescription: "Privacy-aware analytics is most useful when it stays connected to the rest of your measurement approach. These are the reasons to keep Counterscale on the same event model.",
   useCasesTitle: "Where Counterscale adds value without adding measurement chaos",
   useCasesDescription: "These are the traffic and privacy-aware scenarios where lightweight analytics benefits most from better event consistency.",
+  ctaTitle: "Add lightweight analytics without breaking the discipline of your event model.",
+  ctaText: "Use Counterscale inside the same measurement system as your broader stack so privacy-aware reporting stays simple without becoming disconnected.",
   reasons: [
     {
       title: "Privacy-Friendly Consistency",

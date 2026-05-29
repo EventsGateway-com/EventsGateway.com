@@ -11,6 +11,8 @@ export const posthog: IntegrationItem = {
   whyDescription: "PostHog is most valuable when product analysis is tied to the same commercial truth as acquisition and revenue systems. These are the gains from aligning them.",
   useCasesTitle: "Where PostHog alignment improves product and growth decisions",
   useCasesDescription: "These are the product, experimentation, and funnel scenarios where shared event truth creates the clearest value.",
+  ctaTitle: "Align experiments and product analytics with the revenue events marketing already uses.",
+  ctaText: "Keep PostHog connected to the same signup, activation, and purchase milestones used across growth and acquisition so teams stop working from parallel event definitions.",
   reasons: [
     {
       title: "Shared Growth Truth",

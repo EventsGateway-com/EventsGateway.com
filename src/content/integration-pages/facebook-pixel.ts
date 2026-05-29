@@ -11,6 +11,8 @@ export const facebook_pixel: IntegrationItem = {
   whyDescription: "Meta usually suffers first when identity, conversion timing, and browser behavior are inconsistent. These are the biggest gains from a stronger event setup.",
   useCasesTitle: "Where Facebook Pixel improvements show up fastest",
   useCasesDescription: "These are the Meta-heavy scenarios where better signal quality usually creates the most visible lift.",
+  ctaTitle: "Feed Meta stronger signals instead of asking the algorithm to guess.",
+  ctaText: "Route cleaner identity, lead, and purchase events into Meta so EMQ, audience quality, and campaign learning improve without a fragile browser-only setup.",
   reasons: [
     {
       title: "Higher EMQ",

@@ -11,6 +11,8 @@ export const podsights: IntegrationItem = {
   whyDescription: "Audio is difficult to judge when conversion data lives somewhere else entirely. These are the biggest reasons to connect Podsights to cleaner downstream events.",
   useCasesTitle: "Where Podsights creates the most attribution clarity",
   useCasesDescription: "These are the audio and awareness scenarios where one shared event model usually reduces the most reporting uncertainty.",
+  ctaTitle: "Connect audio exposure to real business outcomes with less reporting guesswork.",
+  ctaText: "Feed Podsights from the same lead and purchase events already trusted across digital channels so podcast measurement becomes easier to defend in budget reviews.",
   reasons: [
     {
       title: "Shared Attribution Truth",

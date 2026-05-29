@@ -11,6 +11,8 @@ export const floodlight: IntegrationItem = {
   whyDescription: "Enterprise media programs break trust when Floodlight, analytics, and internal reporting drift apart. These are the benefits of keeping Floodlight on the same event truth.",
   useCasesTitle: "Where Floodlight discipline matters most",
   useCasesDescription: "These are the reporting and attribution scenarios where cleaner Floodlight inputs usually save the most time.",
+  ctaTitle: "Keep Floodlight aligned with the conversion logic your entire media team uses.",
+  ctaText: "Support enterprise reporting, attribution, and agency workflows with one controlled event source instead of patching multiple Floodlight definitions across the stack.",
   reasons: [
     {
       title: "Aligned Activities",

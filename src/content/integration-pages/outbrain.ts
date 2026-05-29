@@ -11,6 +11,8 @@ export const outbrain: IntegrationItem = {
   whyDescription: "Native traffic often looks healthy at the click level while failing downstream. These are the reasons to give Outbrain cleaner lead and purchase signals.",
   useCasesTitle: "Where Outbrain event quality creates the clearest lift",
   useCasesDescription: "These are the native media situations where better conversion routing usually improves optimization and reporting first.",
+  ctaTitle: "Give native campaigns cleaner downstream signals than shallow page engagement.",
+  ctaText: "Route qualified leads and real purchase intent into Outbrain so content discovery traffic is judged by business outcomes, not just cheap top-of-funnel clicks.",
   reasons: [
     {
       title: "Deeper Native Signals",

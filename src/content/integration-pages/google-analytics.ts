@@ -11,6 +11,8 @@ export const google_analytics: IntegrationItem = {
   whyDescription: "Legacy analytics should not force your team to keep legacy tracking chaos. These are the reasons to keep classic Google Analytics on the same structured event layer.",
   useCasesTitle: "Where classic Google Analytics still delivers value",
   useCasesDescription: "These are the situations where older analytics workflows still matter enough to justify cleaner support.",
+  ctaTitle: "Support legacy analytics without carrying legacy tracking chaos forward.",
+  ctaText: "Keep older Google Analytics reporting alive on the same structured event model used by the rest of your stack, so migration work does not create parallel truths.",
   reasons: [
     {
       title: "Reporting Continuity",

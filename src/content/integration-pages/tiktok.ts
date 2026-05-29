@@ -11,6 +11,8 @@ export const tiktok: IntegrationItem = {
   whyDescription: "TikTok moves fast, which means weak event quality breaks performance quickly. These are the reasons to strengthen the underlying conversion layer.",
   useCasesTitle: "Where TikTok signal cleanup improves performance fastest",
   useCasesDescription: "These are the TikTok-heavy scenarios where better event discipline usually creates the clearest gains.",
+  ctaTitle: "Keep TikTok learning on the same event truth as the rest of your paid media.",
+  ctaText: "Route mobile-first purchase and lead events through one reusable event layer so TikTok can scale without becoming another isolated tracking system.",
   reasons: [
     {
       title: "Cleaner Mobile Signals",

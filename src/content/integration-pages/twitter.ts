@@ -11,6 +11,8 @@ export const twitter: IntegrationItem = {
   whyDescription: "Twitter often lives in a mix of content and direct response motion, which makes consistent downstream events especially important. These are the biggest gains from tightening it up.",
   useCasesTitle: "Where Twitter event quality improves measurement the most",
   useCasesDescription: "These are the Twitter campaign situations where cleaner signals usually make reporting and optimization more trustworthy.",
+  ctaTitle: "Keep Twitter campaigns tied to the same downstream truth as every other paid channel.",
+  ctaText: "Use one cleaner event model for signups, leads, audiences, and content-led acquisition so Twitter performance can be read without extra tagging drift.",
   reasons: [
     {
       title: "Cross-Social Consistency",

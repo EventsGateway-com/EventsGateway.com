@@ -11,6 +11,8 @@ export const mixpanel: IntegrationItem = {
   whyDescription: "Product analytics loses leverage when it uses a different language than marketing and revenue systems. These are the biggest benefits of tying Mixpanel to one event truth.",
   useCasesTitle: "Where Mixpanel alignment improves growth analysis the most",
   useCasesDescription: "These are the product and growth scenarios where shared event definitions create the clearest advantage.",
+  ctaTitle: "Keep product analytics close to the same truth that drives revenue decisions.",
+  ctaText: "Use one event model for signup, activation, purchase, and lifecycle milestones so Mixpanel stays aligned with growth, media, and business reporting.",
   reasons: [
     {
       title: "Aligned Product And Revenue Data",

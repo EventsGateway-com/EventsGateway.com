@@ -11,6 +11,8 @@ export const google_ads: IntegrationItem = {
   whyDescription: "Google Ads loses efficiency when conversions differ between ad tags, analytics, and revenue systems. These are the practical gains from a more disciplined event layer.",
   useCasesTitle: "Where Google Ads signal cleanup pays off first",
   useCasesDescription: "These are the ad account situations where better conversion routing usually improves trust and optimization fastest.",
+  ctaTitle: "Let Google Ads optimize on cleaner conversions, not mismatched totals.",
+  ctaText: "Send Google Ads the same trusted lead, purchase, and lifecycle events used in GA4 and revenue reporting so bidding and remarketing rely on stronger inputs.",
   reasons: [
     {
       title: "Clearer Conversion Actions",

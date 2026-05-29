@@ -11,6 +11,8 @@ export const google_maps_rwg: IntegrationItem = {
   whyDescription: "Local discovery only matters when it turns into real appointments, reservations, and calls. These are the reasons to treat Google Maps RWG as part of a larger conversion system.",
   useCasesTitle: "Where Google Maps RWG creates the biggest local growth lift",
   useCasesDescription: "These are the local business scenarios where cleaner Reserve with Google signals usually produce the clearest operational value.",
+  ctaTitle: "Turn local discovery into reporting your booking and ops teams can trust.",
+  ctaText: "Connect reservations, appointments, calls, and local leads to the same event system used across campaigns and CRM so Reserve with Google supports real growth decisions.",
   reasons: [
     {
       title: "Booking Clarity",

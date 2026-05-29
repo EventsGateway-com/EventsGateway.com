@@ -11,6 +11,8 @@ export const segment: IntegrationItem = {
   whyDescription: "A CDP multiplies value only when what enters it is already trustworthy. These are the reasons to feed Segment from a cleaner event source.",
   useCasesTitle: "Where Segment gains the most from a stronger upstream event layer",
   useCasesDescription: "These are the data stack scenarios where shared event discipline usually makes Segment far more effective.",
+  ctaTitle: "Feed Segment with cleaner upstream events before they spread across the whole stack.",
+  ctaText: "Start with one controlled source for purchase, lead, and lifecycle events so warehouses, SaaS tools, and automations inherit better data by default.",
   reasons: [
     {
       title: "Cleaner CDP Inputs",

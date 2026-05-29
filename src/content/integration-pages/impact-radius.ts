@@ -11,6 +11,8 @@ export const impact_radius: IntegrationItem = {
   whyDescription: "Affiliate and partner channels create noise quickly when they run on separate payout logic and separate reporting logic. These are the gains from one shared source of truth.",
   useCasesTitle: "Where Impact Radius improves partner reporting the most",
   useCasesDescription: "These are the affiliate and partner situations where cleaner event routing usually makes the biggest operational difference.",
+  ctaTitle: "Keep affiliate payouts and partner reporting tied to cleaner conversion truth.",
+  ctaText: "Use one event model for direct, affiliate, and partner channels so Impact Radius reflects the same purchase and lead reality seen by growth, finance, and analytics.",
   reasons: [
     {
       title: "Partner Alignment",

@@ -11,6 +11,8 @@ export const google_analytics_4: IntegrationItem = {
   whyDescription: "GA4 is most helpful when it is not competing with your ad platforms and CRM for conversion ownership. These are the biggest gains from better alignment.",
   useCasesTitle: "Where GA4 alignment improves decision-making fastest",
   useCasesDescription: "These are the analytics and reporting scenarios where keeping GA4 on the same event model pays off quickly.",
+  ctaTitle: "Make GA4 reflect the same conversion truth your growth team uses everywhere else.",
+  ctaText: "Keep analytics, attribution, and media discussions anchored in the same purchase and lead events so GA4 stops becoming a second version of the truth.",
   reasons: [
     {
       title: "Shared Naming",
