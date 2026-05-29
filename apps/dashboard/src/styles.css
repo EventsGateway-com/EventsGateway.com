@@ -1,3 +1,27 @@
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  background:
+    radial-gradient(circle at top, rgba(14, 165, 233, 0.05), transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #0f172a;
+  --eg-bg: #f8fafc;
+  --eg-bg-elevated: #ffffff;
+  --eg-surface: rgba(0, 0, 0, 0.04);
+  --eg-surface-strong: rgba(0, 0, 0, 0.08);
+  --eg-border: rgba(0, 0, 0, 0.1);
+  --eg-border-strong: rgba(0, 0, 0, 0.2);
+  --eg-text: #0f172a;
+  --eg-muted: #475569;
+  --eg-subtle: #94a3b8;
+  --eg-accent: #0ea5e9;
+  --eg-accent-2: #8b5cf6;
+  --eg-success: #10b981;
+  --eg-warning: #f59e0b;
+  --eg-danger: #f43f5e;
+  --eg-info: #3b82f6;
+}
+
 :root {
   color-scheme: dark;
   font-family:
@@ -380,7 +404,7 @@ p {
   padding: 0.45rem 0.8rem;
   border: 1px solid var(--eg-border);
   border-radius: 0.8rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--eg-surface-strong);
   color: var(--eg-text);
   cursor: pointer;
 }
@@ -500,7 +524,7 @@ p {
   border: 1px solid transparent;
   border-radius: 0.85rem;
   color: var(--eg-muted);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--eg-surface);
   transition:
     border-color 0.18s ease,
     color 0.18s ease,
@@ -611,7 +635,7 @@ p {
   padding: 0.26rem 0.52rem;
   border: 1px solid var(--eg-border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--eg-surface-strong);
   color: var(--eg-muted);
   font-size: 0.7rem;
   white-space: nowrap;
@@ -676,7 +700,7 @@ p {
   padding: 0.8rem 0.9rem;
   border: 1px solid var(--eg-border);
   border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--eg-surface-strong);
 }
 
 .eg-shell-banner strong,
@@ -746,7 +770,7 @@ p {
   padding: 0.58rem 0.82rem;
   border: 1px solid var(--eg-border);
   border-radius: 0.85rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--eg-surface-strong);
   cursor: pointer;
   transition:
     background-color 0.18s ease,
@@ -862,7 +886,7 @@ p {
 .eg-conditions__row,
 .eg-trace__item {
   padding: 0.62rem 0.72rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--eg-border);
   border-radius: 0.95rem;
   background: rgba(255, 255, 255, 0.03);
 }
@@ -907,7 +931,7 @@ p {
   grid-template-columns: 1fr;
   gap: 0.55rem;
   padding: 0.68rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--eg-border);
   border-radius: 1rem;
   background: rgba(255, 255, 255, 0.03);
 }
@@ -969,7 +993,7 @@ p {
   overflow: hidden;
   min-height: 0.65rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--eg-surface-strong);
 }
 
 .eg-usage-meter__fill {
@@ -1031,7 +1055,7 @@ p {
   display: grid;
   gap: 0.7rem;
   padding: 0.78rem 0.82rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--eg-border);
   border-radius: 1rem;
   background: rgba(255, 255, 255, 0.03);
 }
@@ -1051,7 +1075,7 @@ p {
   overflow: hidden;
   min-height: 0.7rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--eg-surface-strong);
 }
 
 .eg-report-bar__fill {
@@ -1073,7 +1097,7 @@ p {
 
 .eg-metric-mini {
   padding: 0.62rem 0.72rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--eg-border);
   border-radius: 0.95rem;
   background: rgba(255, 255, 255, 0.03);
 }
@@ -1113,7 +1137,7 @@ p {
   max-height: 20rem;
   overflow: auto;
   padding: 0.72rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--eg-border);
   border-radius: 1rem;
   background: rgba(4, 8, 17, 0.88);
   color: #dbe6ff;
@@ -1226,13 +1250,13 @@ p {
   .eg-table {
     gap: 0;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--eg-border);
     border-radius: 1rem;
   }
 
   .eg-table__head {
     display: grid;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--eg-surface-strong);
     color: var(--eg-subtle);
     font-size: 0.76rem;
     text-transform: uppercase;
@@ -1244,9 +1268,9 @@ p {
     gap: 0.75rem;
     align-items: center;
     padding: 0.78rem 0.88rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--eg-border);
     border-radius: 0;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--eg-surface);
   }
 
   .eg-table__row:last-child {
