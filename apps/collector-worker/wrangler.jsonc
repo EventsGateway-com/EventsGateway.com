@@ -49,6 +49,7 @@
   },
   "env": {
     "production": {
+      "name": "eventsgateway-collector-worker",
       "d1_databases": [
         {
           "binding": "DB",

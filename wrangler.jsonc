@@ -47,6 +47,7 @@
 	],
 	"env": {
 		"production": {
+			"name": "eventsgateway",
 			"d1_databases": [
 				{
 					"binding": "DB",

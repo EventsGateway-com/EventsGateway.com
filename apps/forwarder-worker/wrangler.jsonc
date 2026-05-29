@@ -29,6 +29,7 @@
   },
   "env": {
     "production": {
+      "name": "eventsgateway-forwarder-worker",
       "d1_databases": [
         {
           "binding": "DB",

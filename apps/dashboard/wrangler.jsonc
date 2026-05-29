@@ -14,6 +14,7 @@
   "workers_dev": false,
   "env": {
     "production": {
+      "name": "eventsgateway-dashboard",
       "routes": [
         {
           "pattern": "dash.eventsgateway.com",

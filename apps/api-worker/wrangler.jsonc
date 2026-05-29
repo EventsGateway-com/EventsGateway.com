@@ -26,6 +26,7 @@
   ],
   "env": {
     "production": {
+      "name": "eventsgateway-api-worker",
       "d1_databases": [
         {
           "binding": "DB",
