@@ -583,12 +583,14 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     });
   };
 
-  const handleOutsideClick = (event: Event) => {
+  const handleOutsideInteraction = (event: Event) => {
     const target = event.target;
-    if (!(target instanceof Element)) return;
+    const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+
+    if (!(target instanceof Node)) return;
 
     document.querySelectorAll<HTMLDetailsElement>(openMenuSelector).forEach((details) => {
-      if (!details.contains(target)) {
+      if (!path.includes(details) && !details.contains(target)) {
         details.removeAttribute("open");
       }
     });
@@ -603,12 +605,12 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
   };
 
   function initNav() {
-    document.removeEventListener("click", handleOutsideClick);
-    document.removeEventListener("touchstart", handleOutsideClick);
+    window.removeEventListener("pointerdown", handleOutsideInteraction, true);
+    window.removeEventListener("click", handleOutsideInteraction, true);
     document.removeEventListener("click", handleHeaderLinkClick);
     
-    document.addEventListener("click", handleOutsideClick);
-    document.addEventListener("touchstart", handleOutsideClick, { passive: true });
+    window.addEventListener("pointerdown", handleOutsideInteraction, true);
+    window.addEventListener("click", handleOutsideInteraction, true);
     document.addEventListener("click", handleHeaderLinkClick);
   }
 
