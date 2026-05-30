@@ -1046,12 +1046,12 @@ export function getConsent(site_id: string) {
 }
 
 export function getInstallConfig(site_id: string) {
-  const collectorUrl = "https://collector.eventsgateway.local/v1/collect";
+  const collectorUrl = "https://collector.eventsgateway.local/i/";
   return {
     site_id,
     collector_url: collectorUrl,
-    loader_url: collectorUrl.replace(/\/v1\/collect$/, "/tracker.js"),
-    sdk_loader: "<script src=\"https://collector.eventsgateway.local/tracker.js\" data-site-id=\"site_alpha\" data-api-key=\"pk_demo_site_alpha\" data-endpoint=\"https://collector.eventsgateway.local/v1/collect\" async></script>",
+    loader_url: collectorUrl.replace(/\/i\/?$/, "/e/"),
+    sdk_loader: "<script src=\"https://collector.eventsgateway.local/e/\" data-site-id=\"site_alpha\" data-api-key=\"pk_demo_site_alpha\" data-endpoint=\"https://collector.eventsgateway.local/i/\" async></script>",
     npm_package: "@eventsgateway/tracker-sdk",
     sample_init: "window.eventsgateway.track({ type: 'Purchase', ecommerce: { order_id: 'ORDER-1001', value: 249.99, currency: 'RON' } })"
   };

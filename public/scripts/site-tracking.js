@@ -45,7 +45,7 @@
       }
 
       const script = document.createElement("script");
-      script.src = window.__egPublicTrackingLoaderUrl || "https://e.eventsgateway.com/tracker.js";
+      script.src = window.__egPublicTrackingLoaderUrl || "https://e.eventsgateway.com/e/";
       script.defer = true;
       script.dataset.siteTrackerLoader = "true";
       script.addEventListener("load", () => resolve(window.eventsgateway), { once: true });
@@ -83,11 +83,11 @@
       }
 
       const consent = readTrackerConsent();
-      window.__egPublicTrackingLoaderUrl = config.loader_url || "https://e.eventsgateway.com/tracker.js";
+      window.__egPublicTrackingLoaderUrl = config.loader_url || "https://e.eventsgateway.com/e/";
       window.eventsgateway.init({
         siteId: config.site_id,
         apiKey: config.api_key,
-        endpoint: config.endpoint || "https://e.eventsgateway.com/v1/collect",
+        endpoint: config.endpoint || "https://e.eventsgateway.com/i/",
         environment: "production",
         autoPageview: false,
         consent

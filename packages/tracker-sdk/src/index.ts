@@ -65,6 +65,13 @@ const STORAGE_KEYS = {
   lastSeen: "eg:last_seen"
 } as const;
 
+function buildIdentifyEndpoint(endpoint: string) {
+  if (endpoint.endsWith("/i/")) {
+    return `${endpoint}identify`;
+  }
+  return endpoint.replace(/\/collect$/, "/identify");
+}
+
 class EventsGatewayTracker {
   private options?: TrackerInitOptions;
   private queue: QueuedEvent[] = [];
@@ -169,7 +176,7 @@ class EventsGatewayTracker {
 
     const payload = this.queue.slice(0, 20);
     const body = payload.length === 1 ? payload[0] : { events: payload };
-    const endpoint = payload.length === 1 ? this.options.endpoint : this.options.endpoint.replace(/\/collect$/, "/batch");
+    const endpoint = this.options.endpoint;
 
     const response = await this.send(endpoint, body);
     if (!response.ok) return response;
@@ -183,7 +190,7 @@ class EventsGatewayTracker {
     const content = JSON.stringify(body);
 
     if (typeof navigator !== "undefined" && "sendBeacon" in navigator && content.length < 64 * 1024) {
-      const sent = navigator.sendBeacon(endpoint, new Blob([content], { type: "application/json" }));
+      const sent = navigator.sendBeacon(endpoint, new Blob([content], { type: "text/plain;charset=UTF-8" }));
       if (sent) {
         return new Response(null, { status: 202 });
       }
@@ -192,7 +199,7 @@ class EventsGatewayTracker {
     return fetch(endpoint, {
       method: "POST",
       headers: {
-        "content-type": "application/json"
+        "content-type": "text/plain;charset=UTF-8"
       },
       body: content,
       keepalive: true
@@ -201,11 +208,11 @@ class EventsGatewayTracker {
 
   private sendIdentify(canonicalUserId: string) {
     if (!this.options) throw new Error("Tracker not initialized");
-    const endpoint = this.options.endpoint.replace(/\/collect$/, "/identify");
+    const endpoint = buildIdentifyEndpoint(this.options.endpoint);
     return fetch(endpoint, {
       method: "POST",
       headers: {
-        "content-type": "application/json",
+        "content-type": "text/plain;charset=UTF-8",
         "x-site-key": this.options.apiKey
       },
       body: JSON.stringify({
@@ -322,7 +329,7 @@ export const tracker = new EventsGatewayTracker();
 
 export default tracker;
 
-export function createBrowserLoaderSource(defaultEndpoint = "https://e.eventsgateway.com/v1/collect") {
+export function createBrowserLoaderSource(defaultEndpoint = "https://e.eventsgateway.com/i/") {
   return `(() => {
   if (window.eventsgateway) return;
   const STORAGE_KEYS = {
@@ -411,12 +418,12 @@ export function createBrowserLoaderSource(defaultEndpoint = "https://e.eventsgat
   function send(endpoint, body, headers) {
     const content = JSON.stringify(body);
     if ((!headers || !Object.keys(headers).length) && navigator.sendBeacon && content.length < 64 * 1024) {
-      const sent = navigator.sendBeacon(endpoint, new Blob([content], { type: "application/json" }));
+      const sent = navigator.sendBeacon(endpoint, new Blob([content], { type: "text/plain;charset=UTF-8" }));
       if (sent) return Promise.resolve(new Response(null, { status: 202 }));
     }
     return fetch(endpoint, {
       method: "POST",
-      headers: { "content-type": "application/json", ...(headers || {}) },
+      headers: { "content-type": "text/plain;charset=UTF-8", ...(headers || {}) },
       body: content,
       keepalive: true
     });
@@ -458,8 +465,7 @@ export function createBrowserLoaderSource(defaultEndpoint = "https://e.eventsgat
     if (!state.queue.length) return Promise.resolve();
     const payload = state.queue.slice(0, 20);
     const body = payload.length === 1 ? payload[0] : { events: payload };
-    const endpoint = payload.length === 1 ? state.endpoint : state.endpoint.replace(/\\/collect$/, "/batch");
-    return send(endpoint, body).then((response) => {
+    return send(state.endpoint, body).then((response) => {
       if (response && response.ok) {
         state.queue = state.queue.slice(payload.length);
         persistQueue();
@@ -470,8 +476,11 @@ export function createBrowserLoaderSource(defaultEndpoint = "https://e.eventsgat
   function identify(canonicalUserId) {
     state.canonicalUserId = canonicalUserId;
     if (!state.siteId || !state.apiKey || !canonicalUserId) return Promise.resolve(false);
+    const identifyEndpoint = state.endpoint.endsWith("/i/")
+      ? state.endpoint + "identify"
+      : state.endpoint.replace(/\\/collect$/, "/identify");
     return send(
-      state.endpoint.replace(/\\/collect$/, "/identify"),
+      identifyEndpoint,
       {
         site_id: state.siteId,
         canonical_user_id: canonicalUserId,

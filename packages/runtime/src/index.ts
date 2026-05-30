@@ -198,6 +198,11 @@ export async function readJson<T>(request: Request): Promise<T> {
   return (await request.json()) as T;
 }
 
+export async function readTextJson<T>(request: Request): Promise<T> {
+  const raw = await request.text();
+  return JSON.parse(raw) as T;
+}
+
 export function ok(): Response {
   return new Response(null, {
     status: 204,

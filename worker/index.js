@@ -444,8 +444,8 @@ async function resolvePublicSiteTracking(env, hostname) {
     enabled: true,
     site_id: row.site_id,
     api_key: row.api_key,
-    loader_url: "https://e.eventsgateway.com/tracker.js",
-    endpoint: "https://e.eventsgateway.com/v1/collect"
+    loader_url: "https://e.eventsgateway.com/e/",
+    endpoint: "https://e.eventsgateway.com/i/"
   };
 }
 

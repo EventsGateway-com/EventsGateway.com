@@ -3480,7 +3480,7 @@ export async function createAdminSite(
     project_name: projectName,
     name,
     environment,
-    collector_url: "https://e.eventsgateway.com/v1/collect",
+    collector_url: "https://e.eventsgateway.com/i/",
     created_at: createdAt
   } satisfies DashboardSite;
 
@@ -4469,11 +4469,12 @@ export async function getInstallConfigFromDb(dbInput: DatabaseBinding | undefine
   const site = toDashboardSite(siteRecord);
 
   const key = await getPrimarySiteKey(dbInput, siteId);
-  const loaderUrl = site.collector_url.replace(/\/v1\/collect$/, "/tracker.js");
-  const snippet = `<script src="${loaderUrl}" data-site-id="${site.id}" data-api-key="${key.public_key}" data-endpoint="${site.collector_url}" async></script>`;
+  const collectorUrl = site.collector_url.replace(/\/v1\/collect$/, "/i/");
+  const loaderUrl = collectorUrl.replace(/\/i\/?$/, "/e/");
+  const snippet = `<script src="${loaderUrl}" data-site-id="${site.id}" data-api-key="${key.public_key}" data-endpoint="${collectorUrl}" async></script>`;
 
   return {
-    collector_url: site.collector_url,
+    collector_url: collectorUrl,
     loader_url: loaderUrl,
     npm_package: "@eventsgateway/tracker-sdk",
     site_id: site.id,

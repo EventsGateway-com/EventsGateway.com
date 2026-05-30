@@ -102,7 +102,7 @@ function buildInstallArtifacts(input: InstallWizardInput, seed?: InstallSeed) {
     ? {
       site: seed.site_name ?? "",
       site_id: seed.site_id ?? "",
-      collector_url: seed.collector_url ?? `https://${input.collector_domain}/v1/collect`,
+      collector_url: seed.collector_url ?? `https://${input.collector_domain}/i/`,
       public_key: seed.public_key ?? "",
       npm_package: seed.npm_package ?? "@eventsgateway/tracker-sdk",
       script: seed.sdk_loader ?? "",

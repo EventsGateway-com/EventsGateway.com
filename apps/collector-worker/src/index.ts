@@ -15,6 +15,7 @@ import {
   ok,
   pathSegments,
   readJson,
+  readTextJson,
   withOptions,
   type EnvironmentBindings
 } from "../../../packages/runtime/src/index";
@@ -308,6 +309,40 @@ async function handleCollect(request: Request, env?: EnvironmentBindings) {
   return json(context, collectEvent(body), { status: 202 });
 }
 
+async function handleIngest(request: Request, env?: EnvironmentBindings) {
+  const contentType = request.headers.get("content-type") || "";
+  const isTextRequest = contentType.toLowerCase().includes("text/plain");
+  const body = isTextRequest
+    ? await readTextJson<CollectBody | { events: CollectBody[] }>(request)
+    : await readJson<CollectBody | { events: CollectBody[] }>(request);
+
+  if (body && typeof body === "object" && "events" in body && Array.isArray(body.events)) {
+    const normalizedBody = {
+      events: body.events.map((event) => ({
+        ...event,
+        api_key: event.api_key || request.headers.get("x-site-key") || undefined
+      }))
+    };
+    const normalizedRequest = new Request(request, {
+      method: request.method,
+      headers: request.headers,
+      body: JSON.stringify(normalizedBody)
+    });
+    return handleBatch(normalizedRequest, env);
+  }
+
+  const normalizedBody = {
+    ...(body as CollectBody),
+    api_key: (body as CollectBody).api_key || request.headers.get("x-site-key") || undefined
+  };
+  const normalizedRequest = new Request(request, {
+    method: request.method,
+    headers: request.headers,
+    body: JSON.stringify(normalizedBody)
+  });
+  return handleCollect(normalizedRequest, env);
+}
+
 async function handleBatch(request: Request, env?: EnvironmentBindings) {
   const context = createRequestContext(request);
   const optionsResponse = withOptions(context);
@@ -494,7 +529,7 @@ function handleTrackerJs(request: Request) {
   const methodResponse = ensureMethod(context, ["GET"]);
   if (methodResponse) return methodResponse;
 
-  return new Response(createBrowserLoaderSource(), {
+  return new Response(createBrowserLoaderSource("https://e.eventsgateway.com/i/"), {
     status: 200,
     headers: {
       "content-type": "application/javascript; charset=utf-8",
@@ -514,7 +549,7 @@ function handleHealth(request: Request) {
   return json(context, {
     service: "collector-worker",
     status: "healthy",
-    supports: ["/v1/collect", "/v1/batch", "/v1/identify", "/v1/debug/collect", "/health"]
+    supports: ["/e/", "/i/", "/i/identify", "/v1/debug/collect", "/health"]
   });
 }
 
@@ -538,9 +573,17 @@ export async function handleCollectorRequest(request: Request, env?: Environment
   const segments = pathSegments(createRequestContext(request));
   const path = `/${segments.join("/")}`;
 
-  if (path === "/tracker.js") {
+  if (path === "/e") {
+    return Response.redirect(new URL("/e/", request.url).toString(), 301);
+  }
+  if (path === "/e/") {
     return handleTrackerJs(request);
   }
+  if (path === "/i") {
+    return Response.redirect(new URL("/i/", request.url).toString(), 307);
+  }
+  if (path === "/i/") return handleIngest(request, env);
+  if (path === "/i/identify") return handleIdentify(request, env);
   if (path === "/v1/collect") return handleCollect(request, env);
   if (path === "/v1/batch") return handleBatch(request, env);
   if (path === "/v1/identify") return handleIdentify(request, env);

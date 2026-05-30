@@ -156,10 +156,10 @@ set VITE_STRIPE_PUBLISHABLE_KEY=pk_test_replace_me`
     {
       title: "Add the tracker to your site",
       code: `<script
-  src="https://events.example.com/tracker.js"
+  src="https://events.example.com/e/"
   data-site-id="site_alpha"
   data-api-key="pk_live_replace_me"
-  data-endpoint="https://events.example.com/v1/collect"
+  data-endpoint="https://events.example.com/i/"
   async
 ></script>`
     }
