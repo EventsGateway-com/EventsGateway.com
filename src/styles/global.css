@@ -79,7 +79,7 @@ svg {
 
 main {
   display: block;
-  padding-top: calc(var(--header-height) + 10px);
+  padding-top: var(--header-offset);
 }
 
 .site-shell {
@@ -99,7 +99,7 @@ main {
 }
 
 .section--hero {
-  min-height: calc(100svh - var(--header-height));
+  min-height: calc(100svh - var(--header-offset));
   display: flex;
   align-items: center;
   padding-top: 0;
@@ -487,7 +487,7 @@ main {
 
 @media (max-width: 720px) {
   main {
-    padding-top: calc(var(--header-height) + 10px);
+    padding-top: var(--header-offset);
   }
 
   .section {

@@ -412,7 +412,7 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     right: 0;
     top: calc(100% + 0.8rem);
     width: min(18rem, 92vw);
-    max-height: calc(100vh - var(--header-height) - 1.5rem);
+    max-height: calc(100vh - var(--header-offset) - 0.75rem);
     overflow-y: auto;
     display: grid;
     gap: 0.5rem;
@@ -575,28 +575,46 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
 </style>
 
 <script>
+  const openMenuSelector = "details[open].mobile-nav, details[open].mobile-nav__group, details[open].nav-dropdown";
+
+  const closeOpenMenus = () => {
+    document.querySelectorAll<HTMLDetailsElement>(openMenuSelector).forEach((details) => {
+      details.removeAttribute("open");
+    });
+  };
+
   const handleOutsideClick = (event: Event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
 
-    const openDetails = document.querySelectorAll<HTMLDetailsElement>("details[open].mobile-nav, details[open].desktop-dropdown");
-    
-    openDetails.forEach((details) => {
+    document.querySelectorAll<HTMLDetailsElement>(openMenuSelector).forEach((details) => {
       if (!details.contains(target)) {
         details.removeAttribute("open");
       }
     });
   };
 
+  const handleHeaderLinkClick = (event: Event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest(".site-header a")) {
+      closeOpenMenus();
+    }
+  };
+
   function initNav() {
     document.removeEventListener("click", handleOutsideClick);
     document.removeEventListener("touchstart", handleOutsideClick);
+    document.removeEventListener("click", handleHeaderLinkClick);
     
     document.addEventListener("click", handleOutsideClick);
     document.addEventListener("touchstart", handleOutsideClick, { passive: true });
+    document.addEventListener("click", handleHeaderLinkClick);
   }
 
   // Support for Astro View Transitions
+  document.addEventListener("astro:before-preparation", closeOpenMenus);
+  document.addEventListener("astro:before-swap", closeOpenMenus);
   document.addEventListener("astro:page-load", initNav);
   // Initial load
   if (document.readyState === "loading") {
