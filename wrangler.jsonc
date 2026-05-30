@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "eventsgateway-www-worker",
+	"name": "eventsgateway",
 	"main": "./worker/index.js",
 	"compatibility_date": "2026-05-28",
 	"assets": {
@@ -34,6 +34,20 @@
 			"remote": true
 		}
 	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "VISITOR_STATE_DO",
+				"class_name": "VisitorStateDurableObject"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["VisitorStateDurableObject"]
+		}
+	],
 	"vars": {
 		"PUBLIC_STATS_SITE_ID": "site_alpha"
 	},
@@ -53,7 +67,7 @@
 	],
 	"env": {
 		"production": {
-			"name": "eventsgateway-www-worker",
+			"name": "eventsgateway",
 			"d1_databases": [
 				{
 					"binding": "DB",
@@ -67,6 +81,20 @@
 					"binding": "CACHE",
 					"id": "91a458b7d3ea404cb830dcda48397d5c",
 					"remote": true
+				}
+			],
+			"durable_objects": {
+				"bindings": [
+					{
+						"name": "VISITOR_STATE_DO",
+						"class_name": "VisitorStateDurableObject"
+					}
+				]
+			},
+			"migrations": [
+				{
+					"tag": "v1",
+					"new_sqlite_classes": ["VisitorStateDurableObject"]
 				}
 			],
 			"vars": {

@@ -1,3 +1,5 @@
+import { VisitorStateDurableObject } from "../apps/collector-worker/src/index.ts";
+
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
     status: init.status ?? 200,
@@ -582,3 +584,5 @@ export default {
     return env.ASSETS.fetch(request);
   }
 };
+
+export { VisitorStateDurableObject };
