@@ -9,8 +9,11 @@ EVENTS Gateway is an open source tracking and event routing platform built for t
 This repository currently includes:
 
 - the public marketing site for `eventsgateway.com`
-- the public dashboard shell for `dash.eventsgateway.com`
-- the unified Cloudflare Worker that serves `eventsgateway.com`, `dash.eventsgateway.com`, `api.eventsgateway.com`, and `e.eventsgateway.com`
+- the `www` Worker for `eventsgateway.com` and `www.eventsgateway.com`
+- the dashboard Worker for `dash.eventsgateway.com`
+- the API Worker for `api.eventsgateway.com`
+- the collector Worker for `e.eventsgateway.com` and `sources.eventsgateway.com`
+- the forwarder Worker for queue delivery processing
 - shared TypeScript packages used across the dashboard and Workers
 
 ## Product Scope
@@ -88,13 +91,14 @@ The public site explains the platform. The dashboard and Workers expose the oper
 
 The current Cloudflare production map is:
 
-- `eventsgateway.com` -> public marketing site
-- `www.eventsgateway.com` -> redirect to `eventsgateway.com` handled by the root Worker
-- `dash.eventsgateway.com` -> dashboard served by the unified root Worker
-- `api.eventsgateway.com` -> API surface served by the unified root Worker
-- `e.eventsgateway.com` -> collector surface served by the unified root Worker
+- `eventsgateway.com` -> public marketing site served by the `www` Worker
+- `www.eventsgateway.com` -> redirect to `eventsgateway.com` handled by the `www` Worker
+- `dash.eventsgateway.com` -> dashboard Worker
+- `api.eventsgateway.com` -> API Worker
+- `e.eventsgateway.com` -> collector Worker
+- `sources.eventsgateway.com` -> collector Worker dummy surface that always returns `200`
 
-All public domains are now routed through one Cloudflare Worker script with shared queue, cron, Durable Object, D1, KV, and R2 bindings.
+The production surfaces are intentionally split so Cloudflare Git integration can publish the affected worker independently when only one area changes.
 
 ## Repository Layout
 
@@ -122,11 +126,13 @@ All public domains are now routed through one Cloudflare Worker script with shar
 
 ## Canonical Deploy Targets
 
-The canonical production target is the repository root:
+The canonical production targets are:
 
-- root app `./` -> unified marketing, dashboard, API, collector, queue consumer, cron, and Durable Object entrypoint
-
-The `apps/*` folders remain as source modules reused by the single production Worker.
+- root app `./` -> `www` Worker and public marketing site
+- `apps/dashboard` -> dashboard Worker
+- `apps/api-worker` -> API Worker
+- `apps/collector-worker` -> collector Worker
+- `apps/forwarder-worker` -> forwarder Worker
 
 ## Core Stack
 
@@ -187,25 +193,23 @@ npm --prefix apps/dashboard run build
 Run from the repository root:
 
 ```bash
-npm run deploy
-npm run deploy:public
-npm run deploy:hosted
+npm run build:www
+npm run build:dashboard
+npm run build:api
+npm run build:collector
+npm run build:forwarder
 ```
 
-Deploy the full hosted EVENTS Gateway surface with the unified root Worker:
+Build the workers directly from each app when needed:
 
 ```bash
-npm run deploy:public
-npm run deploy:hosted
+npm --prefix apps/dashboard run build
+npm --prefix apps/api-worker run build
+npm --prefix apps/collector-worker run build
+npm --prefix apps/forwarder-worker run build
 ```
 
-Both commands currently map to the same unified deploy sequence:
-
-```bash
-npm run deploy:all
-```
-
-When a deployment platform runs `npx wrangler deploy` from the repository root, the repository installs a local Wrangler wrapper during `postinstall`. The default deploy publishes the unified root Worker and all configured custom domains in `wrangler.jsonc`.
+Cloudflare Git integration should point each Worker project at its own directory and build command so a normal `git push` can publish only the surface that changed, or all surfaces when shared code changes.
 
 ## Supported Destinations
 

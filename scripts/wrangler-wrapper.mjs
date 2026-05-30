@@ -81,7 +81,7 @@ async function runRealWrangler(commandArgs, cwd) {
 }
 
 async function runHostedDeploy() {
-  console.log("[eventsgateway] Running unified deploy for the single root worker");
+  console.log("[eventsgateway] Running deploy for the www worker");
   await runRealWrangler(["deploy", "--env", "production"], rootDir);
 }
 

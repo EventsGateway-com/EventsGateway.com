@@ -1,11 +1,3 @@
-import { handleApiRequest } from "../apps/api-worker/src/index.ts";
-import {
-  handleCollectorRequest,
-  handleCollectorScheduled,
-  VisitorStateDurableObject as CollectorVisitorStateDurableObject
-} from "../apps/collector-worker/src/index.ts";
-import { handleForwarderQueue } from "../apps/forwarder-worker/src/index.ts";
-
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
     status: init.status ?? 200,
@@ -452,7 +444,8 @@ async function resolvePublicSiteTracking(env, hostname) {
     enabled: true,
     site_id: row.site_id,
     api_key: row.api_key,
-    endpoint: "/v1/collect"
+    loader_url: "https://e.eventsgateway.com/tracker.js",
+    endpoint: "https://e.eventsgateway.com/v1/collect"
   };
 }
 
@@ -560,48 +553,6 @@ async function handleContactRequest(request, env) {
   return json({ success: true });
 }
 
-function createAssetRequest(request, pathname) {
-  const url = new URL(request.url);
-  url.pathname = pathname;
-  return new Request(url.toString(), request);
-}
-
-function isFileLikePath(pathname) {
-  if (pathname === "/") {
-    return false;
-  }
-
-  const lastSegment = pathname.split("/").pop() || "";
-  return lastSegment.includes(".");
-}
-
-async function serveDashboardShell(request, env) {
-  const shellResponse = await env.ASSETS.fetch(createAssetRequest(request, "/__dashboard/dashboard-shell.txt"));
-  const headers = new Headers(shellResponse.headers);
-  headers.set("content-type", "text/html; charset=utf-8");
-  headers.set("cache-control", "no-store, max-age=0");
-  return new Response(shellResponse.body, {
-    status: shellResponse.status,
-    headers
-  });
-}
-
-async function handleDashboardRequest(request, env) {
-  const url = new URL(request.url);
-
-  if (url.pathname === "/__dashboard" || url.pathname === "/__dashboard/" || url.pathname === "/__dashboard/index.html") {
-    return serveDashboardShell(request, env);
-  }
-
-  if (isFileLikePath(url.pathname) || url.pathname.startsWith("/assets/")) {
-    return env.ASSETS.fetch(request);
-  }
-
-  return serveDashboardShell(request, env);
-}
-
-export { CollectorVisitorStateDurableObject as VisitorStateDurableObject };
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -612,38 +563,12 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
-    if (hostname === "api.eventsgateway.com") {
-      return handleApiRequest(request, env);
-    }
-
-    if (hostname === "e.eventsgateway.com") {
-      return handleCollectorRequest(request, env);
-    }
-
-    if (hostname === "sources.eventsgateway.com") {
-      return new Response("dummy", {
-        status: 200,
-        headers: {
-          "content-type": "text/plain; charset=utf-8",
-          "cache-control": "no-store"
-        }
-      });
-    }
-
-    if (hostname === "dash.eventsgateway.com") {
-      return handleDashboardRequest(request, env);
-    }
-
     if (url.pathname === "/api/public-site-tracking") {
       return handlePublicSiteTracking(request, env);
     }
 
     if (url.pathname === "/api/contact") {
       return handleContactRequest(request, env);
-    }
-
-    if (url.pathname === "/tracker.js" || url.pathname === "/v1/collect" || url.pathname === "/v1/batch" || url.pathname === "/v1/identify") {
-      return handleCollectorRequest(request, env);
     }
 
     if (url.pathname === "/api/live-stats") {
@@ -655,11 +580,5 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
-  },
-  async queue(batch, env) {
-    await handleForwarderQueue(batch, env);
-  },
-  async scheduled(controller, env) {
-    await handleCollectorScheduled(controller, env);
   }
 };

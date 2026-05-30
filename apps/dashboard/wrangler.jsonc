@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "eventsgateway-dashboard",
+  "name": "eventsgateway-dashboard-worker",
   "compatibility_date": "2026-05-28",
   "assets": {
     "directory": "./dist",
@@ -14,7 +14,7 @@
   "workers_dev": false,
   "env": {
     "production": {
-      "name": "eventsgateway-dashboard",
+      "name": "eventsgateway-dashboard-worker",
       "routes": [
         {
           "pattern": "dash.eventsgateway.com",
