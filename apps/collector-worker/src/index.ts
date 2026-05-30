@@ -570,8 +570,7 @@ export async function handleCollectorRequest(request: Request, env?: Environment
     });
   }
 
-  const segments = pathSegments(createRequestContext(request));
-  const path = `/${segments.join("/")}`;
+  const path = new URL(request.url).pathname;
 
   if (path === "/e") {
     return Response.redirect(new URL("/e/", request.url).toString(), 301);
