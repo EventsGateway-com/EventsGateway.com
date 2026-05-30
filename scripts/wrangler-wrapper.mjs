@@ -8,6 +8,10 @@ import { fileURLToPath } from "node:url";
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const realWranglerCli = path.join(rootDir, "node_modules", "wrangler", "wrangler-dist", "cli.js");
 const args = process.argv.slice(2);
+const dashboardDir = path.join(rootDir, "apps", "dashboard");
+const apiWorkerDir = path.join(rootDir, "apps", "api-worker");
+const collectorWorkerDir = path.join(rootDir, "apps", "collector-worker");
+const forwarderWorkerDir = path.join(rootDir, "apps", "forwarder-worker");
 
 function hasExplicitEnvironment(input) {
   if (process.env.CLOUDFLARE_ENV?.trim()) {
@@ -80,9 +84,26 @@ async function runRealWrangler(commandArgs, cwd) {
   );
 }
 
+async function runNpm(commandArgs, cwd) {
+  const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
+  await spawnCommand(npmExecutable, commandArgs, cwd);
+}
+
 async function runHostedDeploy() {
   console.log("[eventsgateway] Running deploy for the www worker");
   await runRealWrangler(["deploy", "--env", "production"], rootDir);
+  console.log("[eventsgateway] Installing dashboard dependencies");
+  await runNpm(["clean-install", "--progress=false"], dashboardDir);
+  console.log("[eventsgateway] Building dashboard worker assets");
+  await runNpm(["run", "build"], dashboardDir);
+  console.log("[eventsgateway] Deploying dashboard worker");
+  await runRealWrangler(["deploy", "--env", "production"], dashboardDir);
+  console.log("[eventsgateway] Deploying api worker");
+  await runRealWrangler(["deploy", "--env", "production"], apiWorkerDir);
+  console.log("[eventsgateway] Deploying collector worker");
+  await runRealWrangler(["deploy", "--env", "production"], collectorWorkerDir);
+  console.log("[eventsgateway] Deploying forwarder worker");
+  await runRealWrangler(["deploy", "--env", "production"], forwarderWorkerDir);
 }
 
 async function main() {
