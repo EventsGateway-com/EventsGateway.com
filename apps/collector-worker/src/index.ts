@@ -524,6 +524,17 @@ export async function handleCollectorScheduled(_controller: unknown, env?: Envir
 }
 
 export async function handleCollectorRequest(request: Request, env?: EnvironmentBindings) {
+  const url = new URL(request.url);
+  if (url.hostname === "sources.eventsgateway.com") {
+    return new Response("dummy", {
+      status: 200,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store"
+      }
+    });
+  }
+
   const segments = pathSegments(createRequestContext(request));
   const path = `/${segments.join("/")}`;
 
