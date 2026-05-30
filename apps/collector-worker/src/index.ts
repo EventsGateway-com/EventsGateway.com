@@ -559,17 +559,6 @@ export async function handleCollectorScheduled(_controller: unknown, env?: Envir
 }
 
 export async function handleCollectorRequest(request: Request, env?: EnvironmentBindings) {
-  const hostname = new URL(request.url).hostname.toLowerCase();
-  if (hostname === "sources.eventsgateway.com" || hostname === "v.infiniteage.com") {
-    return new Response("dummy", {
-      status: 200,
-      headers: {
-        "content-type": "text/plain; charset=utf-8",
-        "cache-control": "no-store"
-      }
-    });
-  }
-
   const path = new URL(request.url).pathname;
 
   if (path === "/e") {

@@ -603,6 +603,10 @@ export default {
     const hostname = url.hostname.toLowerCase();
     const pathname = url.pathname;
 
+    if (isCollectorPath(pathname)) {
+      return handleCollectorRequest(request, env);
+    }
+
     if (hostname === "www.eventsgateway.com") {
       url.hostname = "eventsgateway.com";
       return Response.redirect(url.toString(), 301);
@@ -617,10 +621,6 @@ export default {
     }
 
     if (hostname === "e.eventsgateway.com" || hostname === "sources.eventsgateway.com") {
-      return handleCollectorRequest(request, env);
-    }
-
-    if (isCollectorPath(pathname)) {
       return handleCollectorRequest(request, env);
     }
 
