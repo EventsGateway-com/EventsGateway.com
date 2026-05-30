@@ -657,6 +657,14 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     }
   };
 
+  const handleBeforePreparation = () => {
+    closeOpenMenus();
+  };
+
+  const handleBeforeSwap = () => {
+    closeOpenMenus();
+  };
+
   function initNav() {
     document.removeEventListener("click", handleSummaryClick, true);
     document.removeEventListener("click", handleDocumentClick, true);
@@ -675,8 +683,8 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     document.addEventListener("keydown", handleEscape);
   }
 
-  document.addEventListener("astro:before-preparation", closeOpenMenus);
-  document.addEventListener("astro:before-swap", closeOpenMenus);
+  document.addEventListener("astro:before-preparation", handleBeforePreparation);
+  document.addEventListener("astro:before-swap", handleBeforeSwap);
   document.addEventListener("astro:page-load", initNav);
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initNav);
