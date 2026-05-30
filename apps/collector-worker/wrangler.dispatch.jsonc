@@ -1,0 +1,56 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "collector",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-30",
+  "account_id": "ce74f36f0eaf8e06b7c94ec7442d364d",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "eventsgateway-control-plane",
+      "database_id": "4ad76441-1626-4e3d-a13a-ee73c7a20a34",
+      "remote": true
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "91a458b7d3ea404cb830dcda48397d5c"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "LEDGER_BUCKET",
+      "bucket_name": "eventsgateway-ledger-production"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "VISITOR_STATE_DO",
+        "class_name": "VisitorStateDurableObject"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["VisitorStateDurableObject"]
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "EVENTS_QUEUE",
+        "queue": "eventsgateway-ingest-production"
+      }
+    ]
+  },
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
+  "vars": {
+    "CORS_ORIGIN": "*"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eventsgateway-platform-dispatch",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-30",
+  "account_id": "ce74f36f0eaf8e06b7c94ec7442d364d",
+  "workers_dev": true,
+  "dispatch_namespaces": [
+    {
+      "binding": "DISPATCHER",
+      "namespace": "eventsgateway"
+    }
+  ],
+  "vars": {
+    "PLATFORM_USER_WORKER": "collector"
+  },
+  "env": {
+    "production": {
+      "name": "eventsgateway-platform-dispatch",
+      "dispatch_namespaces": [
+        {
+          "binding": "DISPATCHER",
+          "namespace": "eventsgateway"
+        }
+      ],
+      "vars": {
+        "PLATFORM_USER_WORKER": "collector"
+      }
+    }
+  }
+}
