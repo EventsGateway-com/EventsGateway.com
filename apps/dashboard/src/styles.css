@@ -779,6 +779,10 @@ select.eg-input option {
   gap: 0.45rem;
 }
 
+.eg-page-intro__actions .eg-button {
+  width: auto;
+}
+
 .eg-actions {
   display: grid;
   gap: 0.45rem;
@@ -813,6 +817,42 @@ select.eg-input option {
   border-color: rgba(125, 211, 252, 0.22);
   background: linear-gradient(135deg, rgba(125, 211, 252, 0.18), rgba(167, 139, 250, 0.18));
   color: var(--eg-text);
+}
+
+.eg-shortcut-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--eg-border);
+  border-radius: 1rem;
+  background: var(--eg-surface);
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.eg-shortcut-card:hover {
+  border-color: rgba(125, 211, 252, 0.28);
+  background: rgba(125, 211, 252, 0.08);
+  transform: translateY(-1px);
+}
+
+.eg-shortcut-card__copy {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.eg-shortcut-card__copy strong {
+  font-size: 0.96rem;
+  letter-spacing: -0.03em;
+}
+
+.eg-shortcut-card__copy p {
+  color: var(--eg-muted);
+  line-height: 1.45;
 }
 
 .eg-grid,

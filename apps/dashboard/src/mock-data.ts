@@ -68,7 +68,18 @@ import {
   updateAdminUserRecord
 } from "./api-client";
 
-export const currentContext = {
+type CurrentContext = {
+  orgId: string;
+  orgName: string;
+  projectId: string;
+  projectName: string;
+  siteId: string;
+  siteName: string;
+  environment: string;
+  dateRange: string;
+};
+
+const DEFAULT_CONTEXT: CurrentContext = {
   orgId: "org_open",
   orgName: "Open Commerce Lab",
   projectId: "project_gateway",
@@ -77,7 +88,57 @@ export const currentContext = {
   siteName: "goldring.ro",
   environment: "production",
   dateRange: "24h"
-} as const;
+};
+
+function readCurrentContext(): CurrentContext {
+  if (typeof window === "undefined") {
+    return DEFAULT_CONTEXT;
+  }
+
+  const match = window.location.pathname.match(/\/app\/orgs\/([^/]+)\/projects\/([^/]+)\/sites\/([^/]+)/);
+  if (!match) {
+    return DEFAULT_CONTEXT;
+  }
+
+  const [, orgId, projectId, siteId] = match;
+
+  return {
+    ...DEFAULT_CONTEXT,
+    orgId: decodeURIComponent(orgId),
+    orgName: decodeURIComponent(orgId),
+    projectId: decodeURIComponent(projectId),
+    projectName: decodeURIComponent(projectId),
+    siteId: decodeURIComponent(siteId),
+    siteName: decodeURIComponent(siteId)
+  };
+}
+
+export const currentContext: Readonly<CurrentContext> = {
+  get orgId() {
+    return readCurrentContext().orgId;
+  },
+  get orgName() {
+    return readCurrentContext().orgName;
+  },
+  get projectId() {
+    return readCurrentContext().projectId;
+  },
+  get projectName() {
+    return readCurrentContext().projectName;
+  },
+  get siteId() {
+    return readCurrentContext().siteId;
+  },
+  get siteName() {
+    return readCurrentContext().siteName;
+  },
+  get environment() {
+    return readCurrentContext().environment;
+  },
+  get dateRange() {
+    return readCurrentContext().dateRange;
+  }
+};
 
 export const qk = {
   overview: (siteId: string, range: string) => ["sites", siteId, "overview", range],

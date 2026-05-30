@@ -238,7 +238,18 @@ function sitePath(segment: string): string {
 function getNavGroups(isAdmin: boolean): NavGroup[] {
   const groups: NavGroup[] = [
     {
-      label: "Insights",
+      label: "Get started",
+      items: [
+        { label: "Install", href: sitePath("settings/install") },
+        { label: "Destinations", href: sitePath("destinations") },
+        { label: "Triggers", href: sitePath("triggers") },
+        { label: "Variables", href: sitePath("variables") },
+        { label: "Events", href: sitePath("events") },
+        { label: "Settings", href: sitePath("settings/general") }
+      ]
+    },
+    {
+      label: "Advanced",
       items: [
         { label: "Overview", href: sitePath("overview") },
         { label: "Realtime", href: sitePath("realtime") },
@@ -246,44 +257,35 @@ function getNavGroups(isAdmin: boolean): NavGroup[] {
         { label: "Attribution", href: sitePath("attribution") },
         { label: "Funnels", href: sitePath("funnels") },
         { label: "Event Explorer", href: sitePath("events/explorer") },
-        { label: "Event Schemas", href: sitePath("events/schemas") }
-      ]
-    },
-    {
-      label: "Events Gateway",
-      items: [
+        { label: "Event Schemas", href: sitePath("events/schemas") },
         { label: "Routing Rules", href: sitePath("routing/routes") },
         { label: "Transformations", href: sitePath("routing/transformations") },
-        { label: "Destinations", href: sitePath("destinations") },
         { label: "Delivery Logs", href: sitePath("deliveries") },
-        { label: "Replay", href: sitePath("operations/replay") }
-      ]
-    },
-    {
-      label: "Identity",
-      items: [
+        { label: "Replay", href: sitePath("operations/replay") },
         { label: "Users", href: sitePath("identity/users") },
         { label: "Journeys", href: sitePath("identity/journeys") },
         { label: "Merge Rules", href: sitePath("identity/merge-rules") },
-        { label: "Consent", href: sitePath("identity/consent") }
-      ]
-    },
-    {
-      label: "Operations",
-      items: [
+        { label: "Consent", href: sitePath("identity/consent") },
         { label: "Health", href: sitePath("operations/health") },
         { label: "Queues", href: sitePath("operations/queues") },
         { label: "Audit", href: sitePath("operations/audit") },
-        { label: "Install", href: sitePath("settings/install") },
         { label: "Billing", href: sitePath("settings/billing") },
         { label: "Tag Manager", href: sitePath("settings/tag-manager") },
         { label: "Domains", href: sitePath("settings/domains") },
         { label: "API Keys", href: sitePath("settings/api-keys") },
-        { label: "Members", href: sitePath("settings/members") },
-        { label: "Settings", href: sitePath("settings/general") }
+        { label: "Members", href: sitePath("settings/members") }
       ]
     }
   ];
+
+  if (isAdmin) {
+    groups.push({
+      label: "Platform",
+      items: [
+        { label: "Admin", href: "/admin/overview" }
+      ]
+    });
+  }
 
   return groups;
 }
@@ -401,7 +403,7 @@ function AppShell() {
               value={bootstrap?.site.id || ""}
               onChange={(e) => {
                 const s = bootstrap?.accessible_sites.find(x => x.id === e.target.value);
-                if (s) window.location.assign(`/app/orgs/${s.org_id}/projects/${s.project_id}/sites/${s.id}/overview`);
+                if (s) window.location.assign(`/app/orgs/${s.org_id}/projects/${s.project_id}/sites/${s.id}/settings/install`);
               }}
             >
               {bootstrap?.accessible_sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -2577,6 +2579,19 @@ const DESTINATION_FORM_ALIASES: Record<string, string> = {
   ga4: "google-analytics-4"
 };
 
+const DESTINATION_KIND_DESCRIPTIONS: Partial<Record<DestinationCreateInput["kind"], string>> = {
+  "facebook-pixel": "Send browser and server events to Meta for ads optimization.",
+  "google-analytics-4": "Send website events to GA4 for analytics and reporting.",
+  google_ads: "Send conversions and enhanced events to Google Ads.",
+  tiktok: "Send conversion events to TikTok Ads.",
+  linkedin: "Send matched events to LinkedIn Insights.",
+  webhook: "Send event payloads to your own endpoint."
+};
+
+function getDestinationKindLabel(kind: DestinationCreateInput["kind"]) {
+  return DESTINATION_KIND_OPTIONS.find((option) => option.value === kind)?.label ?? kind;
+}
+
 const DESTINATION_CONFIG_DEFAULTS: Record<string, Record<string, unknown>> = {
   bing: {
     ti: "bing_uet_tag_id"
@@ -3097,13 +3112,14 @@ function DestinationPicker({
 
 function DestinationsPage() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const destinationsQuery = useQuery({
     queryKey: qk.destinations(currentContext.siteId),
     queryFn: dashboardApi.fetchDestinations
   });
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
+  const [showCreatePane, setShowCreatePane] = useState(false);
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     kind: "facebook-pixel" as DestinationCreateInput["kind"],
@@ -3112,12 +3128,15 @@ function DestinationsPage() {
   const [configDraft, setConfigDraft] = useState<Record<string, unknown>>(getDefaultDestinationConfig("facebook-pixel"));
   const [configText, setConfigText] = useState(stringifyDestinationConfig(getDefaultDestinationConfig("facebook-pixel")));
   const [configTextError, setConfigTextError] = useState("");
+  const selectedDestination = destinationsQuery.data?.find((destination) => destination.id === selectedDestinationId) ?? null;
 
   const createMutation = useMutation({
     mutationFn: (input: DestinationCreateInput) => dashboardApi.createDestination(input),
     onSuccess: async (destination) => {
-      setNotice(`Destination ${destination.name} created in the control panel.`);
+      setNotice(`Destination ${destination.name} is ready to be configured.`);
       setError("");
+      setShowCreatePane(false);
+      setSelectedDestinationId(destination.id);
       setForm({
         name: "",
         kind: "facebook-pixel",
@@ -3128,7 +3147,6 @@ function DestinationsPage() {
       setConfigText(stringifyDestinationConfig(defaultConfig));
       setConfigTextError("");
       await queryClient.invalidateQueries({ queryKey: qk.destinations(currentContext.siteId) });
-      navigate(sitePath(`destinations/${destination.id}`));
     },
     onError: (mutationError) => {
       setError(mutationError instanceof Error ? mutationError.message : "Unable to create destination.");
@@ -3185,113 +3203,196 @@ function DestinationsPage() {
     }
   }
 
+  function openCreatePane(kind?: DestinationCreateInput["kind"]) {
+    const nextKind = kind ?? "facebook-pixel";
+    const defaultConfig = getDefaultDestinationConfig(nextKind);
+    setForm({
+      name: getDestinationKindLabel(nextKind),
+      kind: nextKind,
+      status: "active"
+    });
+    setConfigDraft(defaultConfig);
+    setConfigText(stringifyDestinationConfig(defaultConfig));
+    setConfigTextError("");
+    setShowCreatePane(true);
+  }
+
   const panels: WindowPanelDefinition[] = [
     {
-      id: "destinations-add",
-      title: "Add destination",
+      id: "destinations-popular",
+      title: "Popular tools",
       content: (
-        <form className="eg-auth-form" onSubmit={handleCreateDestination}>
-            <label className="eg-field">
-              <span>Name</span>
-              <input
-                className="eg-input"
-                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                required
-                type="text"
-                value={form.name}
-              />
-            </label>
-            <label className="eg-field">
-              <span>Kind</span>
-              <select
-                className="eg-input"
-                onChange={(event) => handleKindChange(event.target.value as DestinationCreateInput["kind"])}
-                value={form.kind}
-              >
-                {DESTINATION_KIND_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
-            <label className="eg-field">
-              <span>Status</span>
-              <select
-                className="eg-input"
-                onChange={(event) => setForm((current) => ({
-                  ...current,
-                  status: event.target.value as DestinationCreateInput["status"]
-                }))}
-                value={form.status}
-              >
-                <option value="active">Active</option>
-                <option value="paused">Paused</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </label>
-            <DestinationConfigEditor
-              config={configDraft}
-              configText={configText}
-              configTextError={configTextError}
-              kind={form.kind}
-              onConfigTextChange={handleConfigTextChange}
-              onFieldChange={handleConfigFieldChange}
-            />
-            <button className="eg-button eg-button--primary" disabled={createMutation.isPending} type="submit">
-              {createMutation.isPending ? "Creating..." : "Create destination"}
+        <div className="eg-grid eg-grid--two">
+          {(["facebook-pixel", "google-analytics-4", "google_ads", "tiktok", "linkedin", "webhook"] as DestinationCreateInput["kind"][]).map((kind) => (
+            <button
+              className="eg-shortcut-card"
+              key={kind}
+              onClick={() => openCreatePane(kind)}
+              type="button"
+            >
+              <div className="eg-shortcut-card__copy">
+                <strong>{getDestinationKindLabel(kind)}</strong>
+                <p>{DESTINATION_KIND_DESCRIPTIONS[kind] ?? "Connect this tool to receive events from your site."}</p>
+              </div>
+              <span className="eg-pill eg-pill--accent">Add</span>
             </button>
-          </form>
+          ))}
+        </div>
       )
     },
     {
       id: "destinations-connected",
-      title: "Connected destinations",
+      title: "Connected tools",
+      variant: "full",
       content: !destinationsQuery.data ? (
-        <StateCard title="Loading destinations" description="Fetching destination configs and secret status." compact />
+        <StateCard title="Loading tools" description="Fetching connected tools and their current status." compact />
       ) : !destinationsQuery.data.length ? (
-        <StateCard title="No destinations yet" description="Create the first destination to start wiring vendor delivery from the control panel." compact />
+        <StateCard title="No tools yet" description="Add the first tool to start sending events outside your site." compact />
       ) : (
         <div className="eg-table">
           <div className="eg-table__head eg-table__row">
-            <span className="eg-table__cell">Destination</span>
-            <span className="eg-table__cell">Kind</span>
-            <span className="eg-table__cell">Secret</span>
-            <span className="eg-table__cell">Status</span>
+            <span className="eg-table__cell">Tool</span>
+            <span className="eg-table__cell">Type</span>
+            <span className="eg-table__cell">Connection</span>
+            <span className="eg-table__cell">Enabled</span>
           </div>
           {destinationsQuery.data.map((destination) => (
-            <div className="eg-table__row" key={destination.id}>
-              <span className="eg-table__cell" data-label="Destination">
-                <NavLink className="eg-inline-link" to={sitePath(`destinations/${destination.id}`)}>
-                  {destination.name}
-                </NavLink>
-                <small>{destination.id}</small>
+            <button
+              className="eg-table__row eg-table__row--interactive"
+              key={destination.id}
+              onClick={() => setSelectedDestinationId(destination.id)}
+              type="button"
+            >
+              <span className="eg-table__cell" data-label="Tool">
+                <strong>{destination.name}</strong>
+                <small>{DESTINATION_KIND_DESCRIPTIONS[destination.kind] ?? destination.id}</small>
               </span>
-              <span className="eg-table__cell" data-label="Kind">{destination.kind}</span>
-              <span className="eg-table__cell" data-label="Secret">{destination.secret_preview}</span>
-              <div className="eg-table__cell" data-label="Status">
+              <span className="eg-table__cell" data-label="Type">{getDestinationKindLabel(destination.kind)}</span>
+              <span className="eg-table__cell" data-label="Connection">{destination.secret_preview}</span>
+              <div className="eg-table__cell" data-label="Enabled">
                 <StatusBadge status={destination.status === "active" ? "healthy" : destination.status}>
                   {destination.status}
                 </StatusBadge>
               </div>
-            </div>
+            </button>
           ))}
+        </div>
+      )
+    },
+    {
+      id: "destinations-help",
+      title: "How this works",
+      content: (
+        <div className="eg-stack">
+          <ActionLine title="1. Add a tool" text="Choose the destination you want to connect, like Meta or GA4." />
+          <ActionLine title="2. Paste credentials" text="Add the IDs or tokens required by that tool in the side pane." />
+          <ActionLine title="3. Use triggers" text="Choose when the tool should fire from the Triggers page." />
+          <ActionLine title="4. Verify in Events" text="Check whether recent events were delivered successfully." />
         </div>
       )
     }
   ];
 
   return (
-    <WindowedPage
-      pageKey="destinations"
-      introTitle="Destinations"
-      introDescription="Choose delivery destinations from the control panel and manage credentials, runtime config and delivery posture."
-      notices={
-        <>
-          {notice ? <StateCard compact title="Destination updated" description={notice} /> : null}
-          {error ? <StateCard compact title="Destination error" description={error} /> : null}
-        </>
-      }
-      panels={panels}
-    />
+    <>
+      <WindowedPage
+        pageKey="destinations"
+        introTitle="Destinations"
+        introDescription="Connect the tools where you want EventsGateway to send your events."
+        introAction={
+          <button className="eg-button eg-button--primary" onClick={() => openCreatePane()} type="button">
+            Add destination
+          </button>
+        }
+        notices={
+          <>
+            {notice ? <StateCard compact title="Destination updated" description={notice} /> : null}
+            {error ? <StateCard compact title="Destination error" description={error} /> : null}
+          </>
+        }
+        panels={panels}
+      />
+      <SidePane
+        isOpen={showCreatePane}
+        onClose={() => setShowCreatePane(false)}
+        title="Add destination"
+        subtitle="Choose the tool, paste the credentials and save it to this site"
+      >
+        <form className="eg-auth-form" onSubmit={handleCreateDestination}>
+          <label className="eg-field">
+            <span>Name</span>
+            <input
+              className="eg-input"
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              required
+              type="text"
+              value={form.name}
+            />
+          </label>
+          <label className="eg-field">
+            <span>Type</span>
+            <select
+              className="eg-input"
+              onChange={(event) => handleKindChange(event.target.value as DestinationCreateInput["kind"])}
+              value={form.kind}
+            >
+              {DESTINATION_KIND_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="eg-field">
+            <span>Status</span>
+            <select
+              className="eg-input"
+              onChange={(event) => setForm((current) => ({
+                ...current,
+                status: event.target.value as DestinationCreateInput["status"]
+              }))}
+              value={form.status}
+            >
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </label>
+          <DestinationConfigEditor
+            config={configDraft}
+            configText={configText}
+            configTextError={configTextError}
+            kind={form.kind}
+            onConfigTextChange={handleConfigTextChange}
+            onFieldChange={handleConfigFieldChange}
+          />
+          <button className="eg-button eg-button--primary" disabled={createMutation.isPending} type="submit">
+            {createMutation.isPending ? "Creating..." : "Save destination"}
+          </button>
+        </form>
+      </SidePane>
+      <SidePane
+        isOpen={Boolean(selectedDestination)}
+        onClose={() => setSelectedDestinationId(null)}
+        title={selectedDestination?.name ?? "Destination"}
+        subtitle={selectedDestination ? getDestinationKindLabel(selectedDestination.kind) : undefined}
+      >
+        {selectedDestination ? (
+          <div className="eg-stack">
+            <ActionLine title="Status" text={selectedDestination.status} />
+            <ActionLine title="Connection" text={selectedDestination.secret_preview} />
+            <ActionLine
+              title="What it does"
+              text={DESTINATION_KIND_DESCRIPTIONS[selectedDestination.kind] ?? "This tool receives events from your current site."}
+            />
+            <div className="eg-inline-actions">
+              <NavLink className="eg-button eg-button--compact eg-button--primary" to={sitePath(`destinations/${selectedDestination.id}`)}>
+                Open advanced settings
+              </NavLink>
+            </div>
+            <JsonPanel value={selectedDestination.config} />
+          </div>
+        ) : null}
+      </SidePane>
+    </>
   );
 }
 
@@ -4120,13 +4221,437 @@ function InstallPage() {
     );
   }
 
+  const install = installQuery.data;
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "install-script",
+      title: "Install code",
+      variant: "full",
+      content: (
+        <div className="eg-stack">
+          <div className="eg-inline-actions">
+            <CopyButton label="Copy script" value={install.sdk_loader} />
+          </div>
+          <CodePanel value={install.sdk_loader} />
+        </div>
+      )
+    },
+    {
+      id: "install-test-event",
+      title: "Test event",
+      variant: "full",
+      content: (
+        <div className="eg-stack">
+          <div className="eg-inline-actions">
+            <CopyButton label="Copy test event" value={install.sample_init.join("\n")} />
+          </div>
+          <CodePanel value={install.sample_init.join("\n")} />
+        </div>
+      )
+    },
+    {
+      id: "install-checklist",
+      title: "What to do next",
+      content: (
+        <div className="eg-stack">
+          <ActionLine title="1. Add the script" text="Paste the loader into your site before the closing body tag." />
+          <ActionLine title="2. Send a test event" text="Use the sample event to confirm the collector receives traffic." />
+          <ActionLine title="3. Check events" text="Open Events to see whether the event arrived and where it was delivered." />
+          <ActionLine title="4. Add destinations" text="Connect Meta, GA4, Google Ads, TikTok or custom tools." />
+        </div>
+      )
+    },
+    {
+      id: "install-details",
+      title: "Connection details",
+      content: (
+        <div className="eg-stack">
+          <MetricMini label="Site" value={install.site_name} />
+          <MetricMini label="Site ID" value={install.site_id} mono />
+          <MetricMini label="Collector URL" value={install.collector_url} mono />
+          <MetricMini label="Public key" value={install.public_key} mono />
+        </div>
+      )
+    }
+  ];
+
   return (
-    <SetupWizardSection
-      compact
-      windowed
-      title="Install Tracker"
-      description="Connect the browser tracker and generate private deployment values for self-hosted installs."
-      seed={installQuery.data}
+    <WindowedPage
+      pageKey="install"
+      introTitle="Install"
+      introDescription="Copy the JavaScript snippet, send a test event, then verify that events arrive."
+      introAction={
+        <div className="eg-page-intro__actions">
+          <NavLink className="eg-button eg-button--compact" to={sitePath("events")}>
+            Open events
+          </NavLink>
+          <NavLink className="eg-button eg-button--compact eg-button--primary" to={sitePath("destinations")}>
+            Open destinations
+          </NavLink>
+        </div>
+      }
+      panels={panels}
+    />
+  );
+}
+
+function TriggersPage() {
+  const tagManagerQuery = useQuery({
+    queryKey: qk.tagManager(currentContext.siteId),
+    queryFn: dashboardApi.fetchTagManager
+  });
+
+  const panels: WindowPanelDefinition[] = !tagManagerQuery.data ? [{
+    id: "triggers-loading",
+    title: "Loading triggers",
+    variant: "full",
+    content: <StateCard title="Loading triggers" description="Preparing trigger rules for this site." compact />
+  }] : [
+    {
+      id: "triggers-metric-active",
+      title: "Active triggers",
+      variant: "metric",
+      content: <WindowMetricContent value={tagManagerQuery.data.triggers.filter((item) => item.status === "active").length} detail="Rules currently firing for this site" />
+    },
+    {
+      id: "triggers-metric-draft",
+      title: "Draft triggers",
+      variant: "metric",
+      content: <WindowMetricContent value={tagManagerQuery.data.triggers.filter((item) => item.status === "draft").length} detail="Rules still waiting to be published" />
+    },
+    {
+      id: "triggers-list",
+      title: "Trigger list",
+      variant: "full",
+      content: (
+        <div className="eg-table">
+          <div className="eg-table__head eg-table__row">
+            <span className="eg-table__cell">Trigger</span>
+            <span className="eg-table__cell">Event</span>
+            <span className="eg-table__cell">Condition</span>
+            <span className="eg-table__cell">Status</span>
+          </div>
+          {tagManagerQuery.data.triggers.map((trigger) => (
+            <div className="eg-table__row" key={trigger.id}>
+              <span className="eg-table__cell" data-label="Trigger">
+                <strong>{trigger.name}</strong>
+                <small>{trigger.scope}</small>
+              </span>
+              <span className="eg-table__cell" data-label="Event">{trigger.event || "Any event"}</span>
+              <span className="eg-table__cell" data-label="Condition">{trigger.match || "No extra condition"}</span>
+              <span className="eg-table__cell" data-label="Status">
+                <StatusBadge status={trigger.status === "active" ? "healthy" : trigger.status === "paused" ? "warning" : "pending"}>
+                  {trigger.status}
+                </StatusBadge>
+              </span>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      id: "triggers-help",
+      title: "Recommended trigger types",
+      content: (
+        <div className="eg-stack">
+          <ActionLine title="Page view" text="Fire when a page is loaded or viewed by a user." />
+          <ActionLine title="Click" text="Use for CTA buttons, outbound links or custom actions." />
+          <ActionLine title="Form submit" text="Track lead forms, newsletter forms and request callbacks." />
+          <ActionLine title="Purchase" text="Use the event name that carries ecommerce value." />
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey="triggers"
+      introTitle="Triggers"
+      introDescription="Define when a tool should fire, using simple event rules and conditions."
+      introAction={
+        <div className="eg-page-intro__actions">
+          <NavLink className="eg-button eg-button--compact eg-button--primary" to={sitePath("settings/tag-manager")}>
+            Open advanced editor
+          </NavLink>
+        </div>
+      }
+      panels={panels}
+    />
+  );
+}
+
+function VariablesPage() {
+  const tagManagerQuery = useQuery({
+    queryKey: qk.tagManager(currentContext.siteId),
+    queryFn: dashboardApi.fetchTagManager
+  });
+
+  const panels: WindowPanelDefinition[] = !tagManagerQuery.data ? [{
+    id: "variables-loading",
+    title: "Loading variables",
+    variant: "full",
+    content: <StateCard title="Loading variables" description="Preparing reusable values for triggers and tools." compact />
+  }] : [
+    {
+      id: "variables-metric-total",
+      title: "Variables",
+      variant: "metric",
+      content: <WindowMetricContent value={tagManagerQuery.data.variables.length} detail="Reusable values available in this workspace" />
+    },
+    {
+      id: "variables-metric-active",
+      title: "Active variables",
+      variant: "metric",
+      content: <WindowMetricContent value={tagManagerQuery.data.variables.filter((item) => item.status === "active").length} detail="Values ready to be used by tags and triggers" />
+    },
+    {
+      id: "variables-list",
+      title: "Variable list",
+      variant: "full",
+      content: (
+        <div className="eg-table">
+          <div className="eg-table__head eg-table__row">
+            <span className="eg-table__cell">Variable</span>
+            <span className="eg-table__cell">Type</span>
+            <span className="eg-table__cell">Source</span>
+            <span className="eg-table__cell">Fallback</span>
+          </div>
+          {tagManagerQuery.data.variables.map((variable) => (
+            <div className="eg-table__row" key={variable.id}>
+              <span className="eg-table__cell" data-label="Variable">
+                <strong>{variable.name}</strong>
+                <small>{variable.scope}</small>
+              </span>
+              <span className="eg-table__cell" data-label="Type">{variable.kind}</span>
+              <span className="eg-table__cell" data-label="Source">{variable.source || "Not set"}</span>
+              <span className="eg-table__cell" data-label="Fallback">{variable.fallback || "None"}</span>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      id: "variables-examples",
+      title: "Useful variables",
+      content: (
+        <div className="eg-stack">
+          <ActionLine title="URL path" text="Useful for page-specific tools and event filters." />
+          <ActionLine title="Query parameter" text="Capture campaign details such as utm_source or utm_campaign." />
+          <ActionLine title="Cookie" text="Read identifiers already stored in the browser." />
+          <ActionLine title="Event property" text="Reuse values like order ID, value, currency or lead type." />
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey="variables"
+      introTitle="Variables"
+      introDescription="Create reusable values for events, tools and trigger conditions."
+      introAction={
+        <div className="eg-page-intro__actions">
+          <NavLink className="eg-button eg-button--compact eg-button--primary" to={sitePath("settings/tag-manager")}>
+            Open advanced editor
+          </NavLink>
+        </div>
+      }
+      panels={panels}
+    />
+  );
+}
+
+function EventsPage() {
+  const realtimeQuery = useQuery({
+    queryKey: ["sites", currentContext.siteId, "realtime"],
+    queryFn: dashboardApi.fetchRealtime,
+    refetchInterval: 5000
+  });
+  const eventsQuery = useQuery({
+    queryKey: qk.events(currentContext.siteId),
+    queryFn: dashboardApi.fetchEvents
+  });
+  const deliveriesQuery = useQuery({
+    queryKey: qk.deliveries(currentContext.siteId),
+    queryFn: dashboardApi.fetchDeliveries,
+    refetchInterval: 15000
+  });
+
+  const receivedEvents = eventsQuery.data ?? [];
+  const deliveries = deliveriesQuery.data ?? [];
+  const deliveredCount = deliveries.filter((item) => item.status === "delivered").length;
+  const failedCount = deliveries.filter((item) => item.status !== "delivered").length;
+
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "events-metric-received",
+      title: "Recent events",
+      variant: "metric",
+      content: <WindowMetricContent value={receivedEvents.length} detail="Events recently received by the collector" />
+    },
+    {
+      id: "events-metric-delivered",
+      title: "Delivered",
+      variant: "metric",
+      content: <WindowMetricContent value={deliveredCount} detail="Deliveries successfully sent to tools" />
+    },
+    {
+      id: "events-metric-failed",
+      title: "Needs attention",
+      variant: "metric",
+      content: <WindowMetricContent value={failedCount} detail="Deliveries that should be checked in advanced logs" />
+    },
+    {
+      id: "events-live-stream",
+      title: "Live stream",
+      variant: "full",
+      content: !realtimeQuery.data ? (
+        <StateCard title="Loading live stream" description="Waiting for the latest events to arrive." compact />
+      ) : (
+        <div className="eg-stream">
+          {realtimeQuery.data.slice(0, 10).map((item) => (
+            <div className="eg-stream__row" key={`${item.time}-${item.eventType}-${item.destination}`}>
+              <span className="eg-stream__time">{item.time}</span>
+              <div>
+                <strong>{item.eventType}</strong>
+                <p>{item.route}</p>
+              </div>
+              <StatusBadge status={item.status}>{item.status}</StatusBadge>
+              <span className="eg-stream__dest">{item.destination}</span>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      id: "events-recent-list",
+      title: "Recent events",
+      content: !receivedEvents.length ? (
+        <StateCard title="No events yet" description="Install the script and send a test event to populate this page." compact />
+      ) : (
+        <div className="eg-table">
+          <div className="eg-table__head eg-table__row">
+            <span className="eg-table__cell">Event</span>
+            <span className="eg-table__cell">Source</span>
+            <span className="eg-table__cell">Page</span>
+            <span className="eg-table__cell">Consent</span>
+          </div>
+          {receivedEvents.slice(0, 8).map((event) => (
+            <div className="eg-table__row" key={event.event_id}>
+              <span className="eg-table__cell" data-label="Event">
+                <strong>{event.type}</strong>
+                <small>{event.event_id}</small>
+              </span>
+              <span className="eg-table__cell" data-label="Source">{event.source}</span>
+              <span className="eg-table__cell" data-label="Page">{event.page?.path ?? "/"}</span>
+              <span className="eg-table__cell" data-label="Consent">
+                {event.consent?.ads ? "Ads enabled" : "Analytics only"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      id: "events-delivery-status",
+      title: "Destination delivery status",
+      content: !deliveries.length ? (
+        <StateCard title="No deliveries yet" description="Connect a destination to see whether events are being forwarded." compact />
+      ) : (
+        <div className="eg-table">
+          <div className="eg-table__head eg-table__row">
+            <span className="eg-table__cell">Destination</span>
+            <span className="eg-table__cell">Event</span>
+            <span className="eg-table__cell">Status</span>
+            <span className="eg-table__cell">Latency</span>
+          </div>
+          {deliveries.slice(0, 8).map((delivery) => (
+            <div className="eg-table__row" key={`${delivery.eventId}-${delivery.destination}-${delivery.attempts}`}>
+              <span className="eg-table__cell" data-label="Destination">{delivery.destination}</span>
+              <span className="eg-table__cell" data-label="Event">{delivery.route}</span>
+              <span className="eg-table__cell" data-label="Status">
+                <StatusBadge status={delivery.status}>{delivery.status}</StatusBadge>
+              </span>
+              <span className="eg-table__cell" data-label="Latency">{delivery.latency}</span>
+            </div>
+          ))}
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey="events"
+      introTitle="Events"
+      introDescription="Check whether events arrived, inspect a few recent payloads and confirm destination delivery."
+      introAction={
+        <div className="eg-page-intro__actions">
+          <NavLink className="eg-button eg-button--compact" to={sitePath("events/explorer")}>
+            Open explorer
+          </NavLink>
+          <NavLink className="eg-button eg-button--compact" to={sitePath("deliveries")}>
+            Open logs
+          </NavLink>
+        </div>
+      }
+      panels={panels}
+    />
+  );
+}
+
+function AdvancedPage() {
+  const panels: WindowPanelDefinition[] = [
+    {
+      id: "advanced-routing",
+      title: "Routing and delivery",
+      content: (
+        <div className="eg-grid eg-grid--two">
+          <ShortcutCard title="Overview" description="Open the technical control surface and metrics overview." to={sitePath("overview")} />
+          <ShortcutCard title="Routing rules" description="Edit routes, conditions and compiled delivery plans." to={sitePath("routing/routes")} />
+          <ShortcutCard title="Transformations" description="Change payload transforms before delivery." to={sitePath("routing/transformations")} />
+          <ShortcutCard title="Delivery logs" description="Inspect detailed delivery status and retries." to={sitePath("deliveries")} />
+          <ShortcutCard title="Replay" description="Replay failed deliveries and export raw data." to={sitePath("operations/replay")} />
+          <ShortcutCard title="Queues" description="Inspect queue depth and worker backlog." to={sitePath("operations/queues")} />
+        </div>
+      )
+    },
+    {
+      id: "advanced-data",
+      title: "Data and identity",
+      content: (
+        <div className="eg-grid eg-grid--two">
+          <ShortcutCard title="Realtime" description="See the live event rail in technical detail." to={sitePath("realtime")} />
+          <ShortcutCard title="Acquisition" description="Inspect source, campaign and landing page data." to={sitePath("acquisition")} />
+          <ShortcutCard title="Attribution" description="Review attributed revenue and backfill operations." to={sitePath("attribution")} />
+          <ShortcutCard title="Funnels" description="Inspect step completion and drop-off stages." to={sitePath("funnels")} />
+          <ShortcutCard title="Users" description="Inspect identity graph and canonical users." to={sitePath("identity/users")} />
+          <ShortcutCard title="Journeys" description="Review stitched cross-session user journeys." to={sitePath("identity/journeys")} />
+        </div>
+      )
+    },
+    {
+      id: "advanced-governance",
+      title: "Governance and diagnostics",
+      content: (
+        <div className="eg-grid eg-grid--two">
+          <ShortcutCard title="Schemas" description="Inspect tracked event types and discovered fields." to={sitePath("events/schemas")} />
+          <ShortcutCard title="Consent" description="Review consent-related controls and user posture." to={sitePath("identity/consent")} />
+          <ShortcutCard title="Audit" description="See operator-visible publish and delivery activity." to={sitePath("operations/audit")} />
+          <ShortcutCard title="Health" description="Inspect runtime health and worker state." to={sitePath("operations/health")} />
+          <ShortcutCard title="Billing" description="Open subscription and invoice details." to={sitePath("settings/billing")} />
+          <ShortcutCard title="Tag Manager" description="Open the full technical editor for tags and publish workflow." to={sitePath("settings/tag-manager")} />
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <WindowedPage
+      pageKey="advanced"
+      introTitle="Advanced"
+      introDescription="Technical tools remain available here without crowding the main marketer workflow."
+      panels={panels}
     />
   );
 }
@@ -5682,20 +6207,30 @@ function TagManagerPage() {
 }
 
 function SettingsPage() {
-  return <WindowedPage pageKey="settings" introTitle="General Settings" introDescription="Administrative hub for install, domains, API access and team membership." panels={[{
-    id: "settings-roadmap",
-    title: "Settings roadmap",
-    variant: "full",
-    content: (
-      <div className="eg-stack">
-        <ActionLine title="Install" text="Use the install module to expose browser SDK and collector setup details." />
-        <ActionLine title="Tag manager" text="Control tags, triggers, variables, consent firing and publish workflow from one dashboard module." />
-        <ActionLine title="Domains" text="Review verified domains and trusted collection origins." />
-        <ActionLine title="API keys" text="Prepare scoped access for debug, routing and operations." />
-        <ActionLine title="Members" text="Document team roles until RBAC is fully wired." />
-      </div>
-    )
-  }]} />;
+  return (
+    <WindowedPage
+      pageKey="settings"
+      introTitle="Settings"
+      introDescription="Manage the core site settings without digging through technical modules."
+      panels={[
+        {
+          id: "settings-primary",
+          title: "Site settings",
+          variant: "full",
+          content: (
+            <div className="eg-grid eg-grid--two">
+              <ShortcutCard title="Team" description="Invite teammates and manage access to this site." to={sitePath("settings/members")} />
+              <ShortcutCard title="Domains" description="Verify the domains allowed to send or use EventsGateway." to={sitePath("settings/domains")} />
+              <ShortcutCard title="Billing" description="Review plan, invoices and payment status." to={sitePath("settings/billing")} />
+              <ShortcutCard title="API access" description="View the public keys used by the tracker loader." to={sitePath("settings/api-keys")} />
+              <ShortcutCard title="Install" description="Open the JavaScript snippet and tracker setup details." to={sitePath("settings/install")} />
+              <ShortcutCard title="Advanced" description="Open the technical workspace for routing and diagnostics." to={sitePath("advanced")} />
+            </div>
+          )
+        }
+      ]}
+    />
+  );
 }
 
 function BillingPage() {
@@ -8357,6 +8892,24 @@ function JsonPanel({ value }: { value: unknown }) {
   return <pre className="eg-json">{json}</pre>;
 }
 
+function CodePanel({ value }: { value: string }) {
+  return <pre className="eg-json">{value}</pre>;
+}
+
+function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
+  return (
+    <button
+      className="eg-button eg-button--compact"
+      onClick={() => {
+        void navigator.clipboard.writeText(value);
+      }}
+      type="button"
+    >
+      {label}
+    </button>
+  );
+}
+
 function PageIntro({
   title,
   description,
@@ -8442,6 +8995,28 @@ function ActionLine({ title, text }: { title: string; text: string }) {
   );
 }
 
+function ShortcutCard({
+  title,
+  description,
+  to,
+  cta = "Open"
+}: {
+  title: string;
+  description: string;
+  to: string;
+  cta?: string;
+}) {
+  return (
+    <NavLink className="eg-shortcut-card" to={to}>
+      <div className="eg-shortcut-card__copy">
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+      <span className="eg-pill eg-pill--accent">{cta}</span>
+    </NavLink>
+  );
+}
+
 function StateCard({
   title,
   description,
@@ -8484,7 +9059,7 @@ function SiteSelectorPage() {
     title: site.name,
     content: (
       <a
-        href={`/app/orgs/${site.org_id}/projects/${site.project_id}/sites/${site.id}/overview`}
+        href={`/app/orgs/${site.org_id}/projects/${site.project_id}/sites/${site.id}/settings/install`}
         style={{ display: "grid", gap: "0.8rem", textDecoration: "none" }}
       >
         <div className="eg-stack">
@@ -8492,7 +9067,7 @@ function SiteSelectorPage() {
           <ActionLine title="Project" text={site.project_name} />
           <ActionLine title="Role" text={site.role} />
         </div>
-        <span className="eg-button eg-button--primary">Open control plane</span>
+        <span className="eg-button eg-button--primary">Open workspace</span>
       </a>
     ),
     h: 10
@@ -8733,8 +9308,12 @@ export default function App() {
       </Route>
       <Route path="/app/orgs/:orgId/projects/:projectId/sites/:siteId" element={<ProtectedAppShell />}>
         <Route path="profile" element={<MyProfilePage />} />
-        <Route index element={<Navigate replace to="overview" />} />
+        <Route index element={<Navigate replace to="settings/install" />} />
         <Route path="overview" element={<OverviewPage />} />
+        <Route path="events" element={<EventsPage />} />
+        <Route path="triggers" element={<TriggersPage />} />
+        <Route path="variables" element={<VariablesPage />} />
+        <Route path="advanced" element={<AdvancedPage />} />
         <Route path="realtime" element={<RealtimePage />} />
         <Route path="acquisition" element={<AcquisitionPage />} />
         <Route path="attribution" element={<AttributionPage />} />
