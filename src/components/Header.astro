@@ -414,7 +414,7 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     width: min(18rem, 92vw);
     max-height: calc(100vh - var(--header-offset) - 0.75rem);
     overflow-y: auto;
-    display: grid;
+    display: none;
     gap: 0.5rem;
     padding: 0.6rem;
     border: 1px solid rgba(125, 211, 252, 0.14);
@@ -423,6 +423,10 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
       linear-gradient(180deg, rgba(125, 211, 252, 0.06), rgba(255, 255, 255, 0.02)),
       rgba(7, 11, 20, 0.96);
     box-shadow: var(--shadow-card);
+  }
+
+  .mobile-nav[open] > .mobile-nav__panel {
+    display: grid;
   }
 
   .mobile-nav__panel nav {
@@ -447,7 +451,7 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     position: absolute;
     top: calc(100% + 0.55rem);
     left: 0;
-    display: grid;
+    display: none;
     min-width: 12rem;
     gap: 0.25rem;
     padding: 0.65rem;
@@ -457,6 +461,10 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
       linear-gradient(180deg, rgba(125, 211, 252, 0.06), rgba(255, 255, 255, 0.02)),
       rgba(7, 11, 20, 0.96);
     box-shadow: var(--shadow-card);
+  }
+
+  .nav-dropdown[open] > .nav-dropdown__panel {
+    display: grid;
   }
 
   .nav-dropdown__panel--wide {
@@ -532,10 +540,14 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
   }
 
   .mobile-nav__group-content {
-    display: grid;
+    display: none;
     gap: 0.15rem;
     padding-left: 0.5rem;
     margin-top: 0.25rem;
+  }
+
+  .mobile-nav__group[open] > .mobile-nav__group-content {
+    display: grid;
   }
 
   .mobile-link--subtle {
@@ -663,11 +675,9 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     document.addEventListener("keydown", handleEscape);
   }
 
-  // Support for Astro View Transitions
   document.addEventListener("astro:before-preparation", closeOpenMenus);
   document.addEventListener("astro:before-swap", closeOpenMenus);
   document.addEventListener("astro:page-load", initNav);
-  // Initial load
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initNav);
   } else {
