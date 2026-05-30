@@ -1,5 +1,5 @@
-import { VisitorStateDurableObject } from "../apps/collector-worker/src/index.ts";
 import { handleForwarderQueue } from "../apps/forwarder-worker/src/index.ts";
+import { VisitorStateDurableObject as BaseVisitorStateDurableObject } from "../packages/runtime/src/visitor-state.ts";
 
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
@@ -589,4 +589,4 @@ export default {
   }
 };
 
-export { VisitorStateDurableObject };
+export class VisitorStateDurableObject extends BaseVisitorStateDurableObject {}
