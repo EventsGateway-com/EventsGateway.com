@@ -1,4 +1,5 @@
 import { VisitorStateDurableObject } from "../apps/collector-worker/src/index.ts";
+import { handleForwarderQueue } from "../apps/forwarder-worker/src/index.ts";
 
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
@@ -582,6 +583,9 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
+  },
+  async queue(batch, env) {
+    await handleForwarderQueue(batch, env);
   }
 };
 
