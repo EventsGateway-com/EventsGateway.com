@@ -575,25 +575,60 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
 </style>
 
 <script>
-  const openMenuSelector = "details[open].mobile-nav, details[open].mobile-nav__group, details[open].nav-dropdown";
+  const menuSelector = ".site-header details.mobile-nav, .site-header details.mobile-nav__group, .site-header details.nav-dropdown";
+  const openMenuSelector = ".site-header details[open].mobile-nav, .site-header details[open].mobile-nav__group, .site-header details[open].nav-dropdown";
 
-  const closeOpenMenus = () => {
-    document.querySelectorAll<HTMLDetailsElement>(openMenuSelector).forEach((details) => {
-      details.removeAttribute("open");
-    });
-  };
+  const getManagedMenus = () => Array.from(document.querySelectorAll<HTMLDetailsElement>(menuSelector));
+  const getOpenMenus = () => Array.from(document.querySelectorAll<HTMLDetailsElement>(openMenuSelector));
 
-  const handleOutsideInteraction = (event: Event) => {
-    const target = event.target;
-    const path = typeof event.composedPath === "function" ? event.composedPath() : [];
-
-    if (!(target instanceof Node)) return;
-
-    document.querySelectorAll<HTMLDetailsElement>(openMenuSelector).forEach((details) => {
-      if (!path.includes(details) && !details.contains(target)) {
+  const closeOpenMenus = (except: HTMLDetailsElement[] = []) => {
+    const keep = new Set(except);
+    getOpenMenus().forEach((details) => {
+      if (!keep.has(details)) {
         details.removeAttribute("open");
       }
     });
+  };
+
+  const getMenuChain = (details: HTMLDetailsElement) => {
+    const chain: HTMLDetailsElement[] = [details];
+    let parent = details.parentElement?.closest("details");
+    while (parent instanceof HTMLDetailsElement) {
+      chain.push(parent);
+      parent = parent.parentElement?.closest("details");
+    }
+    return chain;
+  };
+
+  const handleSummaryClick = (event: Event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    const summary = target.closest("summary");
+    if (!(summary instanceof HTMLElement)) return;
+
+    const details = summary.parentElement;
+    if (!(details instanceof HTMLDetailsElement) || !details.matches(menuSelector)) return;
+
+    event.preventDefault();
+
+    const willOpen = !details.hasAttribute("open");
+    const chain = getMenuChain(details);
+    closeOpenMenus(chain);
+
+    if (willOpen) {
+      chain.forEach((item) => item.setAttribute("open", ""));
+    } else {
+      details.removeAttribute("open");
+    }
+  };
+
+  const handleDocumentClick = (event: Event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    if (target.closest(".site-header")) return;
+    closeOpenMenus();
   };
 
   const handleHeaderLinkClick = (event: Event) => {
@@ -604,14 +639,28 @@ const contactActive = pathname.startsWith("/contact/") || pathname.startsWith("/
     }
   };
 
+  const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      closeOpenMenus();
+    }
+  };
+
   function initNav() {
-    window.removeEventListener("pointerdown", handleOutsideInteraction, true);
-    window.removeEventListener("click", handleOutsideInteraction, true);
+    document.removeEventListener("click", handleSummaryClick, true);
+    document.removeEventListener("click", handleDocumentClick, true);
     document.removeEventListener("click", handleHeaderLinkClick);
-    
-    window.addEventListener("pointerdown", handleOutsideInteraction, true);
-    window.addEventListener("click", handleOutsideInteraction, true);
+    document.removeEventListener("keydown", handleEscape);
+
+    getManagedMenus().forEach((details) => {
+      if (!details.querySelector("summary")) {
+        details.removeAttribute("open");
+      }
+    });
+
+    document.addEventListener("click", handleSummaryClick, true);
+    document.addEventListener("click", handleDocumentClick, true);
     document.addEventListener("click", handleHeaderLinkClick);
+    document.addEventListener("keydown", handleEscape);
   }
 
   // Support for Astro View Transitions
