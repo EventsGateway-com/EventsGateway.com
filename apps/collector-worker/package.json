@@ -8,7 +8,7 @@
     "check": "tsc --project tsconfig.json --noEmit",
     "build": "tsc --project tsconfig.json --noEmit",
     "deploy": "wrangler deploy --env production",
-    "deploy:dispatch": "wrangler deploy collector --config wrangler.dispatch.jsonc --dispatch-namespace eventsgateway"
+    "deploy:dispatch": "wrangler deploy --config wrangler.dispatch.jsonc --dispatch-namespace eventsgateway"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
