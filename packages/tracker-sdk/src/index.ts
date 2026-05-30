@@ -329,7 +329,7 @@ export const tracker = new EventsGatewayTracker();
 
 export default tracker;
 
-export function createBrowserLoaderSource(defaultEndpoint = "https://e.eventsgateway.com/i/") {
+export function createBrowserLoaderSource(defaultEndpoint = "/i/") {
   return `(() => {
   if (window.eventsgateway) return;
   const STORAGE_KEYS = {

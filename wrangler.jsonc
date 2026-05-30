@@ -34,6 +34,12 @@
 			"remote": true
 		}
 	],
+	"r2_buckets": [
+		{
+			"binding": "LEDGER_BUCKET",
+			"bucket_name": "eventsgateway-ledger-production"
+		}
+	],
 	"durable_objects": {
 		"bindings": [
 			{
@@ -48,7 +54,28 @@
 			"new_sqlite_classes": ["VisitorStateDurableObject"]
 		}
 	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "EVENTS_QUEUE",
+				"queue": "eventsgateway-ingest-production"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "eventsgateway-ingest-production",
+				"max_batch_size": 10,
+				"max_batch_timeout": 5,
+				"max_retries": 3,
+				"retry_delay": 10
+			}
+		]
+	},
+	"triggers": {
+		"crons": ["0 3 * * *"]
+	},
 	"vars": {
+		"CORS_ORIGIN": "https://dash.eventsgateway.com",
 		"PUBLIC_STATS_SITE_ID": "site_alpha"
 	},
 	"account_id": "ce74f36f0eaf8e06b7c94ec7442d364d",
@@ -61,6 +88,26 @@
 		},
 		{
 			"pattern": "www.eventsgateway.com",
+			"custom_domain": true,
+			"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+		},
+		{
+			"pattern": "dash.eventsgateway.com",
+			"custom_domain": true,
+			"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+		},
+		{
+			"pattern": "api.eventsgateway.com",
+			"custom_domain": true,
+			"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+		},
+		{
+			"pattern": "e.eventsgateway.com",
+			"custom_domain": true,
+			"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+		},
+		{
+			"pattern": "sources.eventsgateway.com",
 			"custom_domain": true,
 			"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
 		},
@@ -83,6 +130,12 @@
 					"remote": true
 				}
 			],
+			"r2_buckets": [
+				{
+					"binding": "LEDGER_BUCKET",
+					"bucket_name": "eventsgateway-ledger-production"
+				}
+			],
 			"durable_objects": {
 				"bindings": [
 					{
@@ -97,7 +150,28 @@
 					"new_sqlite_classes": ["VisitorStateDurableObject"]
 				}
 			],
+			"queues": {
+				"producers": [
+					{
+						"binding": "EVENTS_QUEUE",
+						"queue": "eventsgateway-ingest-production"
+					}
+				],
+				"consumers": [
+					{
+						"queue": "eventsgateway-ingest-production",
+						"max_batch_size": 10,
+						"max_batch_timeout": 5,
+						"max_retries": 3,
+						"retry_delay": 10
+					}
+				]
+			},
+			"triggers": {
+				"crons": ["0 3 * * *"]
+			},
 			"vars": {
+				"CORS_ORIGIN": "https://dash.eventsgateway.com",
 				"PUBLIC_STATS_SITE_ID": "site_alpha"
 			},
 			"routes": [
@@ -108,6 +182,26 @@
 				},
 				{
 					"pattern": "www.eventsgateway.com",
+					"custom_domain": true,
+					"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+				},
+				{
+					"pattern": "dash.eventsgateway.com",
+					"custom_domain": true,
+					"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+				},
+				{
+					"pattern": "api.eventsgateway.com",
+					"custom_domain": true,
+					"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+				},
+				{
+					"pattern": "e.eventsgateway.com",
+					"custom_domain": true,
+					"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+				},
+				{
+					"pattern": "sources.eventsgateway.com",
 					"custom_domain": true,
 					"zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
 				}

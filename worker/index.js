@@ -1,3 +1,8 @@
+import { handleApiRequest } from "../apps/api-worker/src/index.ts";
+import {
+  handleCollectorRequest,
+  handleCollectorScheduled
+} from "../apps/collector-worker/src/index.ts";
 import { handleForwarderQueue } from "../apps/forwarder-worker/src/index.ts";
 import { VisitorStateDurableObject as BaseVisitorStateDurableObject } from "../packages/runtime/src/visitor-state.ts";
 
@@ -447,9 +452,45 @@ async function resolvePublicSiteTracking(env, hostname) {
     enabled: true,
     site_id: row.site_id,
     api_key: row.api_key,
-    loader_url: "https://e.eventsgateway.com/e/",
-    endpoint: "https://e.eventsgateway.com/i/"
+    loader_url: "/e/",
+    endpoint: "/i/"
   };
+}
+
+function isCollectorPath(pathname) {
+  return pathname === "/e"
+    || pathname === "/e/"
+    || pathname === "/i"
+    || pathname === "/i/"
+    || pathname === "/i/identify"
+    || pathname === "/v1/collect"
+    || pathname === "/v1/batch"
+    || pathname === "/v1/identify"
+    || pathname === "/v1/debug/collect"
+    || pathname === "/health";
+}
+
+async function handleDashboardRequest(request, env) {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  if (pathname.startsWith("/assets/") || pathname === "/favicon.ico" || pathname === "/manifest.webmanifest") {
+    return env.ASSETS.fetch(request);
+  }
+
+  const shellRequest = new Request(new URL("/__dashboard/dashboard-shell.txt", request.url), request);
+  const shellResponse = await env.ASSETS.fetch(shellRequest);
+  if (!shellResponse.ok) {
+    return shellResponse;
+  }
+
+  const headers = new Headers(shellResponse.headers);
+  headers.set("content-type", "text/html; charset=utf-8");
+  headers.set("cache-control", "no-store");
+  return new Response(shellResponse.body, {
+    status: 200,
+    headers
+  });
 }
 
 async function handlePublicSiteTracking(request, env) {
@@ -560,25 +601,42 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const hostname = url.hostname.toLowerCase();
+    const pathname = url.pathname;
 
     if (hostname === "www.eventsgateway.com") {
       url.hostname = "eventsgateway.com";
       return Response.redirect(url.toString(), 301);
     }
 
-    if (url.pathname === "/api/public-site-tracking") {
+    if (hostname === "dash.eventsgateway.com") {
+      return handleDashboardRequest(request, env);
+    }
+
+    if (hostname === "api.eventsgateway.com") {
+      return handleApiRequest(request, env);
+    }
+
+    if (hostname === "e.eventsgateway.com" || hostname === "sources.eventsgateway.com") {
+      return handleCollectorRequest(request, env);
+    }
+
+    if (isCollectorPath(pathname)) {
+      return handleCollectorRequest(request, env);
+    }
+
+    if (pathname === "/api/public-site-tracking") {
       return handlePublicSiteTracking(request, env);
     }
 
-    if (url.pathname === "/api/contact") {
+    if (pathname === "/api/contact") {
       return handleContactRequest(request, env);
     }
 
-    if (url.pathname === "/api/live-stats") {
+    if (pathname === "/api/live-stats") {
       return handleLiveStats(env);
     }
 
-    if (url.pathname === "/api/infrastructure-status") {
+    if (pathname === "/api/infrastructure-status") {
       return handleInfrastructureStatus(env);
     }
 
@@ -586,6 +644,9 @@ export default {
   },
   async queue(batch, env) {
     await handleForwarderQueue(batch, env);
+  },
+  async scheduled(controller, env) {
+    await handleCollectorScheduled(controller, env);
   }
 };
 

@@ -529,7 +529,7 @@ function handleTrackerJs(request: Request) {
   const methodResponse = ensureMethod(context, ["GET"]);
   if (methodResponse) return methodResponse;
 
-  return new Response(createBrowserLoaderSource("https://e.eventsgateway.com/i/"), {
+  return new Response(createBrowserLoaderSource("/i/"), {
     status: 200,
     headers: {
       "content-type": "application/javascript; charset=utf-8",

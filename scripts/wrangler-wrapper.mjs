@@ -8,64 +8,23 @@ import { fileURLToPath } from "node:url";
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const realWranglerCli = path.join(rootDir, "node_modules", "wrangler", "wrangler-dist", "cli.js");
 const args = process.argv.slice(2);
-const dashboardDir = path.join(rootDir, "apps", "dashboard");
-const apiWorkerDir = path.join(rootDir, "apps", "api-worker");
-const collectorWorkerDir = path.join(rootDir, "apps", "collector-worker");
-const forwarderWorkerDir = path.join(rootDir, "apps", "forwarder-worker");
 
-function hasExplicitEnvironment(input) {
-  if (process.env.CLOUDFLARE_ENV?.trim()) {
-    return true;
+async function main() {
+  if (!existsSync(realWranglerCli)) {
+    throw new Error(`Wrangler CLI not found at ${realWranglerCli}`);
   }
 
-  for (let index = 0; index < input.length; index += 1) {
-    const value = input[index];
-    if (value === "--env" || value === "-e") {
-      return true;
-    }
-    if (value.startsWith("--env=")) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function shouldRunHostedDeploy() {
-  if (process.env.EVENTSGATEWAY_WRANGLER_WRAPPER_BYPASS === "1") {
-    return false;
-  }
-  if (process.env.EVENTSGATEWAY_FULL_STACK_DEPLOY === "0") {
-    return false;
-  }
-  if (process.cwd() !== rootDir) {
-    return false;
-  }
-  if (args[0] !== "deploy") {
-    return false;
-  }
-
-  return !hasExplicitEnvironment(args);
-}
-
-function spawnCommand(command, commandArgs, cwd, options = {}) {
-  const env = {
-    ...process.env,
-    EVENTSGATEWAY_WRANGLER_WRAPPER_BYPASS: "1",
-    ...options.env
-  };
-
-  for (const key of options.unsetEnv ?? []) {
-    delete env[key];
-  }
-
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, commandArgs, {
-      cwd,
-      stdio: "inherit",
-      env,
-      shell: false
-    });
+  await new Promise((resolve, reject) => {
+    const child = spawn(
+      process.execPath,
+      ["--no-warnings", "--experimental-vm-modules", ...process.execArgv, realWranglerCli, ...args],
+      {
+        cwd: process.cwd(),
+        stdio: "inherit",
+        env: process.env,
+        shell: false
+      }
+    );
 
     child.on("error", reject);
     child.on("exit", (code) => {
@@ -73,57 +32,9 @@ function spawnCommand(command, commandArgs, cwd, options = {}) {
         resolve();
         return;
       }
-
       reject(new Error(`Command failed with exit code ${code ?? 1}`));
     });
   });
-}
-
-async function runRealWrangler(commandArgs, cwd, options) {
-  if (!existsSync(realWranglerCli)) {
-    throw new Error(`Wrangler CLI not found at ${realWranglerCli}`);
-  }
-
-  await spawnCommand(
-    process.execPath,
-    ["--no-warnings", "--experimental-vm-modules", ...process.execArgv, realWranglerCli, ...commandArgs],
-    cwd,
-    options
-  );
-}
-
-async function runNpm(commandArgs, cwd) {
-  const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
-  await spawnCommand(npmExecutable, commandArgs, cwd);
-}
-
-async function runHostedDeploy() {
-  console.log("[eventsgateway] Running deploy for the www worker");
-  await runRealWrangler(["deploy", "--env", "production"], rootDir);
-  const subworkerWranglerOptions = {
-    unsetEnv: ["WRANGLER_CI_OVERRIDE_NAME", "WRANGLER_CI_MATCH_TAG"]
-  };
-  console.log("[eventsgateway] Installing dashboard dependencies");
-  await runNpm(["clean-install", "--progress=false"], dashboardDir);
-  console.log("[eventsgateway] Building dashboard worker assets");
-  await runNpm(["run", "build"], dashboardDir);
-  console.log("[eventsgateway] Deploying dashboard worker");
-  await runRealWrangler(["deploy", "--env", "production"], dashboardDir, subworkerWranglerOptions);
-  console.log("[eventsgateway] Deploying api worker");
-  await runRealWrangler(["deploy", "--env", "production"], apiWorkerDir, subworkerWranglerOptions);
-  console.log("[eventsgateway] Deploying collector worker");
-  await runRealWrangler(["deploy", "--env", "production"], collectorWorkerDir, subworkerWranglerOptions);
-  console.log("[eventsgateway] Deploying forwarder worker");
-  await runRealWrangler(["deploy", "--env", "production"], forwarderWorkerDir, subworkerWranglerOptions);
-}
-
-async function main() {
-  if (shouldRunHostedDeploy()) {
-    await runHostedDeploy();
-    return;
-  }
-
-  await runRealWrangler(args, process.cwd());
 }
 
 main().catch((error) => {

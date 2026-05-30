@@ -16,7 +16,7 @@
     "check:collector": "npm --prefix apps/collector-worker run check",
     "check:forwarder": "npm --prefix apps/forwarder-worker run check",
     "build": "npm run build:www",
-    "build:www": "node scripts/build-www-worker.mjs",
+    "build:www": "node scripts/build-unified-app.mjs",
     "build:dashboard": "npm --prefix apps/dashboard run build",
     "build:api": "npm --prefix apps/api-worker run build",
     "build:collector": "npm --prefix apps/collector-worker run build",
