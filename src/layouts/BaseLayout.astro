@@ -75,62 +75,7 @@ const ogImageUrl = new URL(ogImage, siteConfig.domain).toString();
     </div>
     <script is:inline src="/scripts/floating-labels.js" defer></script>
     <script is:inline src="/scripts/cookie-consent.js" defer></script>
-    <script is:inline>
-      (() => {
-        async function initPublicSiteTracking() {
-          try {
-            await new Promise((resolve, reject) => {
-              if (window.eventsgateway) {
-                resolve(window.eventsgateway);
-                return;
-              }
-
-              const existing = document.querySelector('script[data-site-tracker-loader="true"]');
-              if (existing) {
-                existing.addEventListener("load", () => resolve(window.eventsgateway), { once: true });
-                existing.addEventListener("error", reject, { once: true });
-                return;
-              }
-
-              const script = document.createElement("script");
-              script.src = "/e/";
-              script.defer = true;
-              script.dataset.siteTrackerLoader = "true";
-              script.addEventListener("load", () => resolve(window.eventsgateway), { once: true });
-              script.addEventListener("error", reject, { once: true });
-              document.head.appendChild(script);
-            });
-
-            const response = await fetch("/api/public-site-tracking", {
-              headers: {
-                accept: "application/json"
-              }
-            });
-            if (!response.ok) {
-              return;
-            }
-
-            const config = await response.json();
-            if (!config?.enabled || !config.site_id || !config.api_key || !window.eventsgateway?.init) {
-              return;
-            }
-
-            window.eventsgateway.init({
-              siteId: config.site_id,
-              apiKey: config.api_key,
-              endpoint: config.endpoint || "/i/",
-              environment: "production",
-              autoPageview: false
-            });
-            window.eventsgateway.pageview({
-              page_group: "marketing-site"
-            });
-          } catch {}
-        }
-
-        void initPublicSiteTracking();
-      })();
-    </script>
+    <script is:inline src="https://e.eventsgateway.com/e/" defer></script>
     <script is:inline src="/scripts/card-drag.js" defer></script>
   </body>
 </html>
