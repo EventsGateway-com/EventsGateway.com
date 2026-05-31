@@ -4523,16 +4523,6 @@ export async function validateCollectAccess(
   );
   if (!key) return null;
 
-  if (normalizedOrigin) {
-    const allowed = await firstRecord(
-      db,
-      "SELECT id FROM site_domains WHERE site_id = ? AND domain = ? LIMIT 1",
-      input.siteId,
-      normalizedOrigin
-    );
-    if (!allowed) return null;
-  }
-
   await db.prepare("UPDATE site_keys SET last_used_at = ? WHERE id = ?").bind(nowIso(), asString(key.id)).run();
   const authorization = {
     site_id: asString(site.id),

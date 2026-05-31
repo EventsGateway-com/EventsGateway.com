@@ -23,6 +23,18 @@
           "namespace": "eventsgateway"
         }
       ],
+      "routes": [
+        {
+          "pattern": "e.eventsgateway.com",
+          "custom_domain": true,
+          "zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+        },
+        {
+          "pattern": "sources.eventsgateway.com",
+          "custom_domain": true,
+          "zone_id": "6a47b0d26d8566017da0a5aa7931e28f"
+        }
+      ],
       "vars": {
         "PLATFORM_USER_WORKER": "collector"
       }
