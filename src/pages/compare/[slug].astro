@@ -6,6 +6,7 @@ import PremiumCard from "../../components/PremiumCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import { compareMeta } from "../../content/compare-meta";
 import { comparePages, type CompareSlug } from "../../content/compare-pages";
+import { emphasizeBrand } from "../../utils/emphasize-brand";
 
 export function getStaticPaths() {
   return Object.keys(comparePages).map((slug) => ({
@@ -47,15 +48,15 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
     <Container>
       <div class="stack">
         <span class="eyebrow">Comparison</span>
-        <h1 class="page-title">{page.title}</h1>
-        <p class="page-copy">{page.description}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(page.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(page.description)} />
         <div class="pill-row">
           <span class="status-pill">{meta.category}</span>
           <span class="status-pill">{meta.bestFor}</span>
         </div>
         <div class="button-row">
           <Button href="/compare/" variant="secondary" icon="arrow-right">Back to comparisons</Button>
-          <Button href="/install/" variant="primary" icon="download">Install EVENTS Gateway</Button>
+          <Button href="/install/" variant="primary" icon="download">Install <strong>EVENTS Gateway</strong></Button>
           <Button href="/why-not-direct-pixels/" variant="secondary" icon="arrow-right">Why not direct pixels?</Button>
         </div>
       </div>
@@ -79,7 +80,7 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
                   <code>{renderScore(item.alternative)}</code>
                 </div>
                 <div class="score-rail__row">
-                  <span>EVENTS Gateway</span>
+                  <span><strong>EVENTS Gateway</strong></span>
                   <code>{renderScore(item.eventsgateway)}</code>
                 </div>
               </div>
@@ -122,7 +123,7 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
                 <tr>
                   <th>Dimension</th>
                   <th>{alternativeName}</th>
-                  <th>EVENTS Gateway</th>
+                  <th><strong>EVENTS Gateway</strong></th>
                 </tr>
               </thead>
               <tbody>

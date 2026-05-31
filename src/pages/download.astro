@@ -6,6 +6,7 @@ import PremiumCard from "../components/PremiumCard.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import { downloadContent } from "../content/download";
 import { siteConfig } from "../config/site";
+import { emphasizeBrand } from "../utils/emphasize-brand";
 ---
 
 <BaseLayout
@@ -17,8 +18,8 @@ import { siteConfig } from "../config/site";
     <Container>
       <div class="stack">
         <span class="eyebrow">{downloadContent.status}</span>
-        <h1 class="page-title">{downloadContent.title}</h1>
-        <p class="page-copy">{downloadContent.intro}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(downloadContent.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(downloadContent.intro)} />
         <div class="button-row">
           <Button href={siteConfig.social.github} variant="primary" icon="arrow-right">View GitHub</Button>
           <Button href="/" variant="ghost" icon="arrow-right">View platform overview</Button>

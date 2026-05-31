@@ -6,6 +6,7 @@ import PremiumCard from "../components/PremiumCard.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import { installGuideContent } from "../content/install-guide";
 import { siteConfig } from "../config/site";
+import { emphasizeBrand } from "../utils/emphasize-brand";
 
 const repositoryUrl = siteConfig.social.github;
 const repositoryConfigured = Boolean(repositoryUrl);
@@ -34,8 +35,8 @@ const installJsonLd = {
     <Container>
       <div class="stack">
         <span class="eyebrow">{installGuideContent.eyebrow}</span>
-        <h1 class="page-title">{installGuideContent.title}</h1>
-        <p class="page-copy">{installGuideContent.intro}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(installGuideContent.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(installGuideContent.intro)} />
         <div class="button-row">
           {
             repositoryConfigured ? (
@@ -238,7 +239,7 @@ const installJsonLd = {
               <span class="floating-label">Stripe webhook secret</span>
             </label>
             <div class="wizard-note">
-              The public repository ships with deployment defaults for the hosted EVENTS Gateway instance. Replace them in your own copy during install.
+              The public repository ships with deployment defaults for the hosted <strong>EVENTS Gateway</strong> instance. Replace them in your own copy during install.
             </div>
             <div class="wizard-note">
               Create D1, KV, R2, Queue, and Durable Object resources in Cloudflare first, then paste the generated IDs and names below without changing the preset runtime names used by the project.
@@ -247,7 +248,7 @@ const installJsonLd = {
               Secret values should stay only in private local files, CI secrets, or Cloudflare secret storage.
             </div>
             <div class="wizard-note">
-              Stripe keeps card data off your infrastructure. EVENTS Gateway stores billing state, invoices, reminders, and suspension controls while Stripe handles sensitive payment details.
+              Stripe keeps card data off your infrastructure. <strong>EVENTS Gateway</strong> stores billing state, invoices, reminders, and suspension controls while Stripe handles sensitive payment details.
             </div>
           </div>
         </div>

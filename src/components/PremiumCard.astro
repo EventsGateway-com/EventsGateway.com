@@ -1,5 +1,6 @@
 ---
 import Icon from "./Icon.astro";
+import { emphasizeBrand, emphasizeBrandInHtml } from "../utils/emphasize-brand";
 
 type IconName =
   | "spark"
@@ -42,6 +43,8 @@ const {
 };
 
 const Tag = href && !disabled ? "a" : "div";
+const resolvedTitleHtml = titleHtml ? emphasizeBrandInHtml(titleHtml) : emphasizeBrand(title);
+const resolvedTextHtml = textHtml ? emphasizeBrandInHtml(textHtml) : emphasizeBrand(text);
 ---
 
 <Tag
@@ -63,8 +66,8 @@ const Tag = href && !disabled ? "a" : "div";
       )}
       {eyebrow && <span class="premium-card__eyebrow">{eyebrow}</span>}
     </div>
-    {titleHtml ? <h3 class="premium-card__title" set:html={titleHtml} /> : title && <h3 class="premium-card__title">{title}</h3>}
-    {textHtml ? <p class="premium-card__text" set:html={textHtml} /> : text && <p class="premium-card__text">{text}</p>}
+    {resolvedTitleHtml ? <h3 class="premium-card__title" set:html={resolvedTitleHtml} /> : title && <h3 class="premium-card__title">{title}</h3>}
+    {resolvedTextHtml ? <p class="premium-card__text" set:html={resolvedTextHtml} /> : text && <p class="premium-card__text">{text}</p>}
     <slot />
   </div>
 </Tag>

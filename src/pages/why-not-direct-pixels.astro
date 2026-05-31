@@ -5,6 +5,7 @@ import Container from "../components/Container.astro";
 import PremiumCard from "../components/PremiumCard.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import { whyNotDirectPixelsContent } from "../content/why-not-direct-pixels";
+import { emphasizeBrand } from "../utils/emphasize-brand";
 
 const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - value);
 ---
@@ -18,8 +19,8 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
     <Container>
       <div class="stack">
         <span class="eyebrow">{whyNotDirectPixelsContent.eyebrow}</span>
-        <h1 class="page-title">{whyNotDirectPixelsContent.title}</h1>
-        <p class="page-copy">{whyNotDirectPixelsContent.intro}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(whyNotDirectPixelsContent.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(whyNotDirectPixelsContent.intro)} />
         <div class="button-row">
           <Button href="/compare/meta-pixel-direct/" variant="primary" icon="arrow-right">Read Meta comparison</Button>
           <Button href="/compare/" variant="secondary" icon="arrow-right">Browse comparisons</Button>
@@ -63,7 +64,7 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
                   <code>{renderScore(item.pixels)}</code>
                 </div>
                 <div class="score-rail__row">
-                  <span>EVENTS Gateway</span>
+                  <span><strong>EVENTS Gateway</strong></span>
                   <code>{renderScore(item.gateway)}</code>
                 </div>
               </div>
@@ -89,7 +90,7 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
                 <tr>
                   <th>Dimension</th>
                   <th>Direct Pixels</th>
-                  <th>EVENTS Gateway</th>
+                  <th><strong>EVENTS Gateway</strong></th>
                 </tr>
               </thead>
               <tbody>
@@ -114,7 +115,7 @@ const renderScore = (value: number) => "●".repeat(value) + "○".repeat(5 - va
     <Container>
       <div class="surface-panel cta-panel">
         <div class="surface-panel__inner stack">
-          <span class="kicker">Why EVENTS Gateway</span>
+          <span class="kicker">Why <strong>EVENTS Gateway</strong></span>
           <h2 class="section-title">{whyNotDirectPixelsContent.ctaTitle}</h2>
           <p class="section-copy">{whyNotDirectPixelsContent.ctaText}</p>
           <div class="button-row">

@@ -7,6 +7,7 @@ import SectionHeader from "../../components/SectionHeader.astro";
 import { compareContent } from "../../content/compare";
 import { compareMeta } from "../../content/compare-meta";
 import { comparePages, type CompareSlug } from "../../content/compare-pages";
+import { emphasizeBrand } from "../../utils/emphasize-brand";
 
 const comparisonEntries = Object.entries(comparePages).map(([slug, page]) => {
   const meta = compareMeta[slug as CompareSlug];
@@ -50,10 +51,10 @@ const categorySlug = (value: string) => value.toLowerCase().replace(/\s+/g, "-")
     <Container>
       <div class="stack">
         <span class="eyebrow">{compareContent.eyebrow}</span>
-        <h1 class="page-title">{compareContent.title}</h1>
-        <p class="page-copy">{compareContent.intro}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(compareContent.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(compareContent.intro)} />
         <div class="button-row">
-          <Button href="/why-not-direct-pixels/" variant="primary" icon="arrow-right">Why EVENTS Gateway wins over direct pixels</Button>
+          <Button href="/why-not-direct-pixels/" variant="primary" icon="arrow-right">Why <strong>EVENTS Gateway</strong> wins over direct pixels</Button>
           <Button href="/docs/" variant="secondary" icon="arrow-right">Open playbooks</Button>
           <Button href="/install/" variant="secondary" icon="download">Self-hosted install</Button>
         </div>
@@ -142,7 +143,7 @@ const categorySlug = (value: string) => value.toLowerCase().replace(/\s+/g, "-")
             {compareContent.summary.map((item) => <li>{item}</li>)}
           </ul>
           <div class="button-row">
-            <Button href="/why-not-direct-pixels/" variant="primary" icon="arrow-right">Why EVENTS Gateway beats direct pixels</Button>
+            <Button href="/why-not-direct-pixels/" variant="primary" icon="arrow-right">Why <strong>EVENTS Gateway</strong> beats direct pixels</Button>
             <Button href="/docs/" variant="secondary" icon="arrow-right">Open playbooks</Button>
             <Button href="/install/" variant="secondary" icon="download">Self-hosted install</Button>
           </div>

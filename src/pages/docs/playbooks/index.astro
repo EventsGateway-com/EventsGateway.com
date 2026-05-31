@@ -5,6 +5,7 @@ import Container from "../../../components/Container.astro";
 import PremiumCard from "../../../components/PremiumCard.astro";
 import SectionHeader from "../../../components/SectionHeader.astro";
 import { docsContent } from "../../../content/docs";
+import { emphasizeBrand } from "../../../utils/emphasize-brand";
 ---
 
 <BaseLayout
@@ -18,7 +19,7 @@ import { docsContent } from "../../../content/docs";
         <span class="eyebrow">Implementation Playbooks</span>
         <h1 class="page-title">Use-case playbooks for e_g.</h1>
         <p class="page-copy">
-          These guides show how to apply the canonical EVENTS Gateway event model in real funnels instead of treating all
+          <Fragment set:html={emphasizeBrand("These guides show how to apply the canonical EVENTS Gateway event model in real funnels instead of treating all")} />
           websites the same.
         </p>
       </div>

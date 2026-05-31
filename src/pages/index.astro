@@ -7,6 +7,7 @@ import RealtimeHeroStats from "../components/RealtimeHeroStats.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import { homeContent } from "../content/homepage";
 import { siteConfig } from "../config/site";
+import { emphasizeBrand } from "../utils/emphasize-brand";
 
 const heroTelemetry = homeContent.stats;
 const heroOutcomes = [
@@ -36,7 +37,7 @@ const softwareJsonLd = {
       <div class="stack hero-stack">
         <span class="eyebrow">{homeContent.eyebrow}</span>
         <h1 class="hero-title" set:html={homeContent.title} />
-        <p class="hero-copy">{homeContent.description}</p>
+        <p class="hero-copy" set:html={emphasizeBrand(homeContent.description)} />
         <ul class="hero-proof-list">
           {
             heroOutcomes.map((item) => (

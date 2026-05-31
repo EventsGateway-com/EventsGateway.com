@@ -5,6 +5,7 @@ import Container from "../../components/Container.astro";
 import PremiumCard from "../../components/PremiumCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import { stripeBillingDocsContent } from "../../content/docs-stripe-billing";
+import { emphasizeBrand } from "../../utils/emphasize-brand";
 
 const docsJsonLd = {
   "@context": "https://schema.org",
@@ -24,10 +25,10 @@ const docsJsonLd = {
     <Container>
       <div class="stack">
         <span class="eyebrow">{stripeBillingDocsContent.eyebrow}</span>
-        <h1 class="page-title">{stripeBillingDocsContent.title}</h1>
-        <p class="page-copy">{stripeBillingDocsContent.intro}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(stripeBillingDocsContent.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(stripeBillingDocsContent.intro)} />
         <div class="button-row">
-          <Button href="/install/" variant="primary" icon="download">Install EVENTS Gateway</Button>
+          <Button href="/install/" variant="primary" icon="download">Install <strong>EVENTS Gateway</strong></Button>
           <Button href="/pricing/" variant="secondary" icon="arrow-right">Open Pricing</Button>
           <Button href="/docs/" variant="secondary" icon="arrow-right">Back to Docs</Button>
         </div>
@@ -119,7 +120,7 @@ const docsJsonLd = {
               <thead>
                 <tr>
                   <th>Stripe Event</th>
-                  <th>Purpose In EVENTS Gateway</th>
+                  <th>Purpose In <strong>EVENTS Gateway</strong></th>
                 </tr>
               </thead>
               <tbody>

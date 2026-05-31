@@ -5,6 +5,7 @@ import Container from "../components/Container.astro";
 import PremiumCard from "../components/PremiumCard.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import { docsContent } from "../content/docs";
+import { emphasizeBrand } from "../utils/emphasize-brand";
 
 const docsJsonLd = {
   "@context": "https://schema.org",
@@ -24,8 +25,8 @@ const docsJsonLd = {
     <Container>
       <div class="stack">
         <span class="eyebrow">{docsContent.eyebrow}</span>
-        <h1 class="page-title">{docsContent.title}</h1>
-        <p class="page-copy">{docsContent.intro}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(docsContent.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(docsContent.intro)} />
         <div class="button-row">
           <Button href="/docs/playbooks/" variant="primary" icon="arrow-right">Browse Playbooks</Button>
           <Button href="/docs/stripe-billing/" variant="secondary" icon="arrow-right">Billing Guide</Button>
@@ -229,7 +230,7 @@ const docsJsonLd = {
           <span class="eyebrow">Documentation Strategy</span>
           <h2 class="section-title">Define one event layer, then reuse it across destinations.</h2>
           <p class="section-copy">
-            That is the point of EVENTS Gateway. Your site sends canonical events through <code>e_g</code>, while the
+            That is the point of <strong>EVENTS Gateway</strong>. Your site sends canonical events through <code>e_g</code>, while the
             platform handles routing, platform naming, payload enrichment, and destination-specific delivery logic.
           </p>
           <div class="button-row">

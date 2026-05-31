@@ -5,6 +5,7 @@ import Container from "../../components/Container.astro";
 import PremiumCard from "../../components/PremiumCard.astro";
 import SectionHeader from "../../components/SectionHeader.astro";
 import { integrationsContent } from "../../content/integrations";
+import { emphasizeBrand } from "../../utils/emphasize-brand";
 ---
 
 <BaseLayout
@@ -16,8 +17,8 @@ import { integrationsContent } from "../../content/integrations";
     <Container>
       <div class="stack">
         <span class="eyebrow">{integrationsContent.eyebrow}</span>
-        <h1 class="page-title">{integrationsContent.title}</h1>
-        <p class="page-copy">{integrationsContent.intro}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(integrationsContent.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(integrationsContent.intro)} />
         <p class="page-copy">Browse {integrationsContent.items.length} integrations built to improve signal quality, reduce reporting drift, and keep launch work lighter.</p>
         <div class="button-row">
           <Button href="https://dash.eventsgateway.com/register" variant="primary" icon="arrow-right">Start free</Button>
@@ -53,7 +54,7 @@ import { integrationsContent } from "../../content/integrations";
           <span class="eyebrow">Next Step</span>
           <h2 class="section-title">Stop rebuilding the same tracking logic for every destination.</h2>
           <p class="section-copy">
-            EVENTS Gateway helps your team collect once, route everywhere, and keep ads, analytics, CRM, and reporting
+            <strong>EVENTS Gateway</strong> helps your team collect once, route everywhere, and keep ads, analytics, CRM, and reporting
             closer to the same clean conversion truth.
           </p>
           <div class="button-row">

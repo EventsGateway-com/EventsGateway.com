@@ -1,4 +1,6 @@
 ---
+import { emphasizeBrand, emphasizeBrandInHtml } from "../utils/emphasize-brand";
+
 const {
   eyebrow,
   title,
@@ -16,12 +18,15 @@ const {
   align?: "left" | "center";
   class?: string;
 };
+
+const resolvedTitleHtml = titleHtml ? emphasizeBrandInHtml(titleHtml) : emphasizeBrand(title);
+const resolvedDescriptionHtml = descriptionHtml ? emphasizeBrandInHtml(descriptionHtml) : emphasizeBrand(description);
 ---
 
 <div class:list={["content-lead", align === "center" && "content-lead--center", className]}>
   {eyebrow && <span class="eyebrow">{eyebrow}</span>}
-  {titleHtml ? <h2 class="section-title" set:html={titleHtml} /> : <h2 class="section-title">{title}</h2>}
-  {descriptionHtml ? <p class="section-copy" set:html={descriptionHtml} /> : description && <p class="section-copy">{description}</p>}
+  {resolvedTitleHtml ? <h2 class="section-title" set:html={resolvedTitleHtml} /> : <h2 class="section-title">{title}</h2>}
+  {resolvedDescriptionHtml ? <p class="section-copy" set:html={resolvedDescriptionHtml} /> : description && <p class="section-copy">{description}</p>}
 </div>
 
 <style>

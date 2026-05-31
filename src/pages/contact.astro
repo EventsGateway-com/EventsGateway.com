@@ -5,6 +5,7 @@ import Container from "../components/Container.astro";
 import PremiumCard from "../components/PremiumCard.astro";
 import SectionHeader from "../components/SectionHeader.astro";
 import { contactContent } from "../content/contact";
+import { emphasizeBrand } from "../utils/emphasize-brand";
 ---
 
 <BaseLayout
@@ -16,8 +17,8 @@ import { contactContent } from "../content/contact";
     <Container>
       <div class="stack">
         <span class="eyebrow">Contact</span>
-        <h1 class="page-title">{contactContent.title}</h1>
-        <p class="page-copy">{contactContent.intro}</p>
+        <h1 class="page-title" set:html={emphasizeBrand(contactContent.title)} />
+        <p class="page-copy" set:html={emphasizeBrand(contactContent.intro)} />
         <p class="small-note">{contactContent.responseTime}</p>
         <div class="pill-row">
           {contactContent.departments.map((item) => <span class="status-pill">{item.label}</span>)}
